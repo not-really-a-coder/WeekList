@@ -30,7 +30,7 @@ export function StatusCell({ status, onStatusChange, className }: StatusCellProp
         className
       )}
     >
-      <div className="flex items-center justify-center scale-125">{statusIcons[status]}</div>
+      <div className="flex items-center justify-center scale-125 relative top-px">{statusIcons[status]}</div>
     </div>
   );
 }
