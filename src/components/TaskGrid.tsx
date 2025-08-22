@@ -75,11 +75,11 @@ export function TaskGrid({
     <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-muted/50 p-2 font-bold font-headline text-muted-foreground flex items-center justify-center">
+        <div key={index} className="bg-card p-2 font-bold font-headline text-muted-foreground flex items-center justify-center">
           {day}
         </div>
       ))}
-      <div className="bg-muted/50 p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
+      <div className="bg-card p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
         <span>Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
