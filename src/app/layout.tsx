@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${fontPoppins.variable} ${fontPtSans.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${fontPoppins.variable} ${fontPtSans.variable}`} suppressHydrationWarning={true}>
       <body className="font-body antialiased">
         {children}
         <Toaster />

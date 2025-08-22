@@ -317,9 +317,9 @@ export default function Home() {
       const task = currentTasks[taskIndex];
       const [year, weekNumber] = task.week.split('-').map(Number);
       
-      // We parse the date for the Monday of that week.
       const referenceDate = new Date(year, 0, 1 + (weekNumber - 1) * 7);
-      const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2,'0')}-1`, 'Y-Www-i', referenceDate);
+      const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2,'0')}-1`, "yyyy-'W'ww-i", referenceDate);
+
       const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
       
       const newWeek = getWeek(newDate, { weekStartsOn: 1 });
