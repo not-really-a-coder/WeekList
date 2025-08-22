@@ -51,9 +51,11 @@ export function TaskGrid({
             {weekdays.map((day) => (
               <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors")}>
                 <StatusCell
+                  task={task}
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
                   disabled={task.isDone}
+                  onSetParent={onSetTaskParent}
                 />
               </div>
             ))}

@@ -91,14 +91,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
 
       const deltaX = currentClientOffset.x - initialClientOffset.x;
       const isIndenting = deltaX > INDENT_WIDTH;
-      const isOutdenting = deltaX < -INDENT_WIDTH;
-
-      // Logic for un-nesting by dragging left
-      if (isOutdenting && item.level > 0) {
-        onSetParent(item.id, null);
-        item.level = 0; // Update dragged item's level optimistically
-        return; // Prevent other actions when outdenting
-      }
 
       // Logic for nesting by dragging right
       if (isIndenting && item.level === 0) {
@@ -126,7 +118,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
         return;
       }
 
-      if (!isIndenting && !isOutdenting) {
+      if (!isIndenting) {
         onMove(dragIndex, hoverIndex);
         item.index = hoverIndex;
       }
@@ -179,89 +171,89 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-      <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-        <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-            <GripVertical className="size-4 text-muted-foreground" />
+        <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
+          <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+              <GripVertical className="size-4 text-muted-foreground" />
+          </div>
+          <div className="flex items-center flex-grow min-w-0 gap-2">
+            {level > 0 && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+            {isEditing ? (
+              <>
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleSave}
+                  className="flex-grow mr-2 bg-background"
+                />
+                <Button size="icon" variant="ghost" onClick={handleSave}>
+                  <Save className="size-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
+                <p
+                  className={cn(
+                    "text-sm font-medium flex-grow cursor-pointer truncate",
+                    task.isDone && "line-through"
+                  )}
+                  onClick={() => setIsEditing(true)}
+                >
+                  {displayTitle}
+                </p>
+              </>
+            )}
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn("transition-opacity", task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
+            aria-label="Mark as done"
+            onClick={() => onToggleDone(task.id)}
+          >
+            <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
+          </Button>
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  aria-label="More options"
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive">
+                    <Trash2 className="mr-2 size-4" />
+                    <span>Delete task</span>
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  task "{displayTitle}" and all its sub-tasks.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onDelete(task.id)}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-        <div className="flex items-center flex-grow min-w-0 gap-2">
-          {level > 0 && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
-          {isEditing ? (
-            <>
-              <Input
-                ref={inputRef}
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onBlur={handleSave}
-                className="flex-grow mr-2 bg-background"
-              />
-              <Button size="icon" variant="ghost" onClick={handleSave}>
-                <Save className="size-4" />
-              </Button>
-            </>
-          ) : (
-            <>
-              {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
-              <p
-                className={cn(
-                  "text-sm font-medium flex-grow cursor-pointer truncate",
-                  task.isDone && "line-through"
-                )}
-                onClick={() => setIsEditing(true)}
-              >
-                {displayTitle}
-              </p>
-            </>
-          )}
-        </div>
-        <Button
-          size="icon"
-          variant="ghost"
-          className={cn("transition-opacity", task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
-          aria-label="Mark as done"
-          onClick={() => onToggleDone(task.id)}
-        >
-          <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
-        </Button>
-        <AlertDialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 transition-opacity"
-                aria-label="More options"
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem className="text-destructive focus:text-destructive">
-                  <Trash2 className="mr-2 size-4" />
-                  <span>Delete task</span>
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                task "{displayTitle}" and all its sub-tasks.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(task.id)}>
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
     </div>
   );
 }
