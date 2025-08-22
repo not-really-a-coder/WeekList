@@ -174,11 +174,6 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
                 {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
-                <div className="w-6 shrink-0 h-full flex items-center">
-                  {isImportant && !isEditing && (
-                      <AlertCircle className="size-4 text-destructive" />
-                  )}
-                </div>
                 {isEditing ? (
                      <Input
                         ref={inputRef}
@@ -190,15 +185,18 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                         className="flex-grow bg-background text-base"
                     />
                 ) : (
-                    <CardTitle
-                      className={cn(
-                        "text-base font-medium flex-grow cursor-pointer truncate",
-                        task.isDone && "line-through"
-                      )}
-                      onClick={() => setIsEditing(true)}
-                    >
-                      {displayTitle}
-                    </CardTitle>
+                    <>
+                        {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
+                        <CardTitle
+                          className={cn(
+                            "text-base font-medium flex-grow cursor-pointer truncate",
+                            task.isDone && "line-through"
+                          )}
+                          onClick={() => setIsEditing(true)}
+                        >
+                          {displayTitle}
+                        </CardTitle>
+                    </>
                 )}
             </div>
             <div className="flex items-center flex-shrink-0">
