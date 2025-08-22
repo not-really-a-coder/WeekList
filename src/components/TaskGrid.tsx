@@ -43,14 +43,14 @@ export function TaskGrid({
       <React.Fragment key={task.id}>
         <div className="contents group/row">
             {weekdays.map((day) => (
-              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors")}>
+              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors", isImportant ? '' : '')}>
                 <StatusCell
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors")}>
+            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isImportant ? '' : '')}>
               <TaskRow
                 task={task}
                 index={taskIndex}
@@ -75,11 +75,11 @@ export function TaskGrid({
     <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-card p-2 font-bold font-headline text-muted-foreground flex items-center justify-center">
+        <div key={index} className="bg-muted/50 p-2 font-bold font-headline text-muted-foreground flex items-center justify-center">
           {day}
         </div>
       ))}
-      <div className="bg-card p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
+      <div className="bg-muted/50 p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
         <span>Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
