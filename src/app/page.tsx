@@ -245,6 +245,10 @@ export default function Home() {
         const dragItemGlobalIndex = newTasks.findIndex(t => t.id === dragItem.id);
         const hoverItemGlobalIndex = newTasks.findIndex(t => t.id === hoverItem.id);
 
+        if (dragItemGlobalIndex === -1 || hoverItemGlobalIndex === -1) {
+            return newTasks;
+        }
+
         const [movedTask] = newTasks.splice(dragItemGlobalIndex, 1);
         newTasks.splice(hoverItemGlobalIndex, 0, movedTask);
         
@@ -277,26 +281,28 @@ export default function Home() {
 
         // When indenting, move child to be right after the parent
         if (parentId) {
-            const parentIndex = newTasks.findIndex(t => t.id === parentId);
-            if (childIndex !== parentIndex + 1) {
-                const [movedTask] = newTasks.splice(childIndex, 1);
-                // After splice, parent index might have shifted
-                const newParentIndex = newTasks.findIndex(t => t.id === parentId);
-                newTasks.splice(newParentIndex + 1, 0, movedTask);
+            let parentIndex = newTasks.findIndex(t => t.id === parentId);
+            if(parentIndex > -1){
+                const childToMove = newTasks.splice(childIndex, 1)[0];
+                parentIndex = newTasks.findIndex(t => t.id === parentId);
+                newTasks.splice(parentIndex + 1, 0, childToMove);
             }
+
         } 
         // When un-indenting, move to top level right after its old parent group
         else if (childTaskData.parentId) {
-            const [movedTask] = newTasks.splice(childIndex, 1);
-            
             const oldParentId = childTaskData.parentId;
             const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
-            const siblings = newTasks.filter(t => t.parentId === oldParentId);
-            const lastSiblingIndex = siblings.length > 0
-                ? newTasks.findIndex(t => t.id === siblings[siblings.length - 1].id)
-                : oldParentIndex;
 
-            newTasks.splice(lastSiblingIndex + 1, 0, movedTask);
+            if(oldParentIndex > -1){
+                const childToMove = newTasks.splice(childIndex, 1)[0];
+                const siblings = newTasks.filter(t => t.parentId === oldParentId);
+                const lastSiblingIndex = siblings.length > 0
+                    ? newTasks.findIndex(t => t.id === siblings[siblings.length - 1].id)
+                    : newTasks.findIndex(t => t.id === oldParentId);
+                
+                newTasks.splice(lastSiblingIndex + 1, 0, childToMove);
+            }
         }
 
         return newTasks;
@@ -434,3 +440,4 @@ export default function Home() {
     </DndProvider>
   );
 }
+
