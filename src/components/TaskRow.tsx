@@ -175,7 +175,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
 
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-      <div ref={ref} className={cn('flex items-center w-full p-2', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
+      <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow min-w-0">
           <div ref={drag} className="cursor-move p-1 -m-1 mr-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4 text-muted-foreground" />
@@ -204,7 +204,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
             <p
               className={cn(
                 "text-sm font-medium flex-grow cursor-pointer truncate",
-                task.isDone && "line-through text-muted-foreground"
+                task.isDone && "line-through"
               )}
               onClick={() => setIsEditing(true)}
             >
@@ -216,7 +216,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
         <Button
           size="icon"
           variant="ghost"
-          className="opacity-0 group-hover/row:opacity-100 transition-opacity"
+          className={cn("transition-opacity", task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
           aria-label="Mark as done"
           onClick={() => onToggleDone(task.id)}
         >

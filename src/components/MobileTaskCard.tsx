@@ -192,7 +192,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                     <CardTitle
                       className={cn(
                         "text-base font-medium flex-grow cursor-pointer truncate",
-                        task.isDone && "line-through text-muted-foreground"
+                        task.isDone && "line-through"
                       )}
                       onClick={() => setIsEditing(true)}
                     >
