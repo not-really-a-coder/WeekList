@@ -7,6 +7,7 @@ import { TaskRow } from './TaskRow';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface TaskGridProps {
   tasks: Task[];
@@ -17,6 +18,7 @@ interface TaskGridProps {
   onMoveTask: (dragIndex: number, hoverIndex: number) => void;
   onSetTaskParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
+  weekDates: Date[];
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -31,6 +33,7 @@ export function TaskGrid({
   onMoveTask,
   onSetTaskParent,
   getTaskById,
+  weekDates,
 }: TaskGridProps) {
   const taskTree = tasks.filter(task => !task.parentId);
 
@@ -43,14 +46,14 @@ export function TaskGrid({
       <React.Fragment key={task.id}>
         <div className="contents group/row">
             {weekdays.map((day) => (
-              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors", isImportant ? '' : '')}>
+              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors")}>
                 <StatusCell
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isImportant ? '' : '')}>
+            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors")}>
               <TaskRow
                 task={task}
                 index={taskIndex}
@@ -75,8 +78,9 @@ export function TaskGrid({
     <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-card p-2 font-bold font-headline text-muted-foreground flex items-center justify-center">
-          {day}
+        <div key={index} className="bg-card p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center">
+          <span>{day}</span>
+          <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
       <div className="bg-card p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">

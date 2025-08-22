@@ -13,7 +13,7 @@ import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { format, startOfWeek } from 'date-fns';
+import { format, startOfWeek, addDays } from 'date-fns';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
@@ -294,6 +294,7 @@ export default function Home() {
 
   const startOfWeekDate = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM, do')}`;
+  const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
 
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
@@ -323,6 +324,7 @@ export default function Home() {
                   onMoveTask={handleMoveTask}
                   onSetTaskParent={handleSetTaskParent}
                   getTaskById={getTaskById}
+                  weekDates={weekDates}
                 />
               </div>
             )}
