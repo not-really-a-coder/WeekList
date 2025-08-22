@@ -14,7 +14,7 @@ import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { format, startOfWeek, addDays, getWeek, getYear, parse } from 'date-fns';
+import { format, startOfWeek, addDays, getWeek, getYear, parseISO, startOfISOWeek, parse } from 'date-fns';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
@@ -317,8 +317,7 @@ export default function Home() {
       const task = currentTasks[taskIndex];
       const [year, weekNumber] = task.week.split('-').map(Number);
       
-      const referenceDate = new Date(year, 0, 1 + (weekNumber - 1) * 7);
-      const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2,'0')}-1`, "yyyy-'W'ww-i", referenceDate);
+      const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2,'0')}-1`, "YYYY-'W'ww-i", new Date());
 
       const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
       
