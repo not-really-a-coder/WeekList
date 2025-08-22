@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { GripVertical, Save, Trash2 } from 'lucide-react';
+import { GripVertical, Save, Trash2, AlertCircle } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
@@ -40,8 +40,11 @@ const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 
 const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
-  const [isEditing, setIsEditing] = useState(task.title === 'New Task');
-  const [title, setTitle] = useState(task.title);
+  const isImportant = task.title.startsWith('!');
+  const initialTitle = isImportant ? task.title.substring(1).trim() : task.title;
+
+  const [isEditing, setIsEditing] = useState(initialTitle === 'New Task');
+  const [title, setTitle] = useState(initialTitle);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const dragRef = useRef<HTMLDivElement>(null);
@@ -110,9 +113,10 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
 
   const handleSave = () => {
     if (title.trim()) {
-      onUpdateTask(task.id, title.trim());
+      const newTitle = isImportant ? `! ${title.trim()}` : title.trim();
+      onUpdateTask(task.id, newTitle);
     } else {
-      setTitle(task.title);
+      setTitle(initialTitle);
     }
     setIsEditing(false);
   };
@@ -120,7 +124,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSave();
     if (e.key === 'Escape') {
-        setTitle(task.title);
+        setTitle(initialTitle);
         setIsEditing(false);
     }
   };
@@ -156,12 +160,15 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   return (
     <div ref={preview} className="relative">
        <div ref={drop(ref) as React.Ref<HTMLDivElement>} style={indentStyle}>
-        <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '')}>
-          <CardHeader className="flex flex-row items-center justify-between p-4 bg-card-foreground/5">
+        <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '', isImportant ? 'border-destructive/50' : '')}>
+          <CardHeader className={cn("flex flex-row items-center justify-between p-4", isImportant ? 'bg-destructive/5' : 'bg-card-foreground/5')}>
             <div className="flex items-center gap-2 flex-grow min-w-0">
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
+                {isImportant && !isEditing && (
+                    <AlertCircle className="size-4 text-destructive shrink-0" />
+                )}
                 {isEditing ? (
                      <Input
                         ref={inputRef}
@@ -174,7 +181,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                     />
                 ) : (
                     <CardTitle className="text-base font-medium flex-grow cursor-pointer truncate" onClick={() => setIsEditing(true)}>
-                        {task.title}
+                        {title}
                     </CardTitle>
                 )}
             </div>
@@ -194,7 +201,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete the task "{task.title}".
+                        This will permanently delete the task "{title}".
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -210,13 +217,14 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
           <CardContent className="p-0">
             <div className="grid grid-cols-7 border-t bg-border gap-px">
                 {dayHeaders.map((day) => (
-                    <div key={day} className="p-2 text-center font-bold text-xs bg-card text-muted-foreground">{day}</div>
+                    <div key={day} className={cn("p-2 text-center font-bold text-xs bg-card text-muted-foreground", isImportant && 'bg-destructive/5')}>{day}</div>
                 ))}
                 {weekdays.map((day) => (
                     <StatusCell
                         key={day}
                         status={task.statuses[day]}
                         onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
+                        className={cn('bg-card', isImportant && 'bg-destructive/5')}
                     />
                 ))}
             </div>

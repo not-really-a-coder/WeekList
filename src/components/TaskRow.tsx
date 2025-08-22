@@ -5,7 +5,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -44,8 +44,11 @@ const ItemTypes = {
 };
 
 export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
-  const [isEditing, setIsEditing] = useState(task.title === 'New Task');
-  const [title, setTitle] = useState(task.title);
+  const isImportant = task.title.startsWith('!');
+  const initialTitle = isImportant ? task.title.substring(1).trim() : task.title;
+
+  const [isEditing, setIsEditing] = useState(initialTitle === 'New Task');
+  const [title, setTitle] = useState(initialTitle);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 24;
@@ -143,9 +146,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
 
   const handleSave = () => {
     if (title.trim()) {
-      onUpdate(task.id, title.trim());
+      const newTitle = isImportant ? `! ${title.trim()}` : title.trim();
+      onUpdate(task.id, newTitle);
     } else {
-      setTitle(task.title);
+      setTitle(initialTitle);
     }
     setIsEditing(false);
   };
@@ -154,7 +158,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
     if (e.key === 'Enter') {
       handleSave();
     } else if (e.key === 'Escape') {
-      setTitle(task.title);
+      setTitle(initialTitle);
       setIsEditing(false);
     }
   };
@@ -163,11 +167,14 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
 
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-      <div ref={ref} className={cn('flex items-center w-full p-2 group', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
-        <div className="flex items-center flex-grow">
+      <div ref={ref} className={cn('flex items-center w-full p-2', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
+        <div className="flex items-center flex-grow min-w-0">
           <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
             <GripVertical className="size-4" />
           </Button>
+           {isImportant && !isEditing && (
+            <AlertCircle className="size-4 text-destructive mr-2 shrink-0" />
+          )}
           {isEditing ? (
             <>
               <Input
@@ -185,10 +192,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
             </>
           ) : (
             <p
-              className="text-sm font-medium flex-grow cursor-pointer"
+              className="text-sm font-medium flex-grow cursor-pointer truncate"
               onClick={() => setIsEditing(true)}
             >
-              {task.title}
+              {title}
             </p>
           )}
         </div>
@@ -198,7 +205,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
             <Button
               size="icon"
               variant="ghost"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className="opacity-0 group-hover/row:opacity-100 transition-opacity"
               aria-label="Delete task"
             >
               <Trash2 className="size-4 text-destructive" />
@@ -209,7 +216,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the
-                task "{task.title}" and all its sub-tasks.
+                task "{title}" and all its sub-tasks.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

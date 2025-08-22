@@ -16,7 +16,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
-    title: 'Plan summer vacation',
+    title: '!Plan summer vacation',
     statuses: {
       monday: 'planned',
       tuesday: 'planned',
@@ -64,7 +64,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
     },
   },
   {
-    title: 'Call the plumber',
+    title: '!Call the plumber',
     statuses: {
       monday: 'cancelled',
       tuesday: 'default',
@@ -169,7 +169,6 @@ export default function Home() {
         monday: 'default',
         tuesday: 'default',
         wednesday: 'default',
-
         thursday: 'default',
         friday: 'default',
         saturday: 'default',

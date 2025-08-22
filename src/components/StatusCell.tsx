@@ -9,6 +9,7 @@ import { Dot } from './Dot';
 interface StatusCellProps {
   status: TaskStatus;
   onStatusChange: (newStatus: TaskStatus) => void;
+  className?: string;
 }
 
 const statusIcons: Record<TaskStatus, React.ReactNode> = {
@@ -19,13 +20,14 @@ const statusIcons: Record<TaskStatus, React.ReactNode> = {
   cancelled: <X className="size-4 text-red-500" />,
 };
 
-export function StatusCell({ status, onStatusChange }: StatusCellProps) {
+export function StatusCell({ status, onStatusChange, className }: StatusCellProps) {
 
   return (
     <div
       onClick={() => onStatusChange(status)}
       className={cn(
-        'bg-card h-12 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors'
+        'h-12 flex items-center justify-center cursor-pointer transition-colors',
+        className
       )}
     >
       <div className="scale-125">{statusIcons[status]}</div>
