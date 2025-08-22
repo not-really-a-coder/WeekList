@@ -43,14 +43,14 @@ export function TaskGrid({
       <React.Fragment key={task.id}>
         <div className="contents group/row">
             {weekdays.map((day) => (
-              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors", isImportant && 'bg-destructive/5')}>
+              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors", isImportant && 'bg-destructive/10')}>
                 <StatusCell
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isImportant && 'bg-destructive/5')}>
+            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isImportant && 'bg-destructive/10')}>
               <TaskRow
                 task={task}
                 index={taskIndex}
