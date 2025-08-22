@@ -7,18 +7,17 @@ import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddTaskFormProps {
-  onAddTask: (title: string, parentId?: string | null) => void;
-  parentId?: string | null;
+  onAddTask: (title: string) => void;
 }
 
-export function AddTaskForm({ onAddTask, parentId = null }: AddTaskFormProps) {
+export function AddTaskForm({ onAddTask }: AddTaskFormProps) {
   const [title, setTitle] = useState('');
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onAddTask(title.trim(), parentId);
+      onAddTask(title.trim());
       setTitle('');
     } else {
       toast({
@@ -35,7 +34,7 @@ export function AddTaskForm({ onAddTask, parentId = null }: AddTaskFormProps) {
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder={parentId ? "Add a sub-task..." : "Add a new task..."}
+        placeholder="Add a new task..."
         className="flex-grow bg-card focus:bg-background"
       />
       <Button type="submit" size="icon" aria-label="Add task">

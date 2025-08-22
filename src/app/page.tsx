@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { TaskGrid } from '@/components/TaskGrid';
 import { STATUS_CYCLE } from '@/lib/types';
+import { AddTaskForm } from '@/components/AddTaskForm';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt'>[] = [
   {
@@ -128,6 +129,8 @@ export default function Home() {
     setTasks(initialTasks);
     setIsClient(true);
   }, []);
+  
+  const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const runSuggestTasks = () => {
     startAiTransition(async () => {
@@ -150,6 +153,37 @@ export default function Home() {
       })
     );
   };
+  
+  const handleAddTask = (title: string) => {
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title,
+      createdAt: new Date().toISOString(),
+      statuses: {
+        monday: 'default',
+        tuesday: 'default',
+        wednesday: 'default',
+        thursday: 'default',
+        friday: 'default',
+        saturday: 'default',
+        sunday: 'default',
+      },
+    };
+    setTasks(currentTasks => [newTask, ...currentTasks]);
+  };
+
+  const handleUpdateTask = (taskId: string, newTitle: string) => {
+    setTasks(currentTasks =>
+      currentTasks.map(task =>
+        task.id === taskId ? { ...task, title: newTitle } : task
+      )
+    );
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId));
+  };
+
 
   if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -159,7 +193,17 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header onSuggestTasks={runSuggestTasks} isAiLoading={isAiLoading} />
       <main className="flex-grow p-4 lg:p-8">
-        <TaskGrid tasks={tasks} onStatusChange={handleStatusChange} />
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-4">
+            <AddTaskForm onAddTask={handleAddTask} />
+          </div>
+          <TaskGrid
+            tasks={sortedTasks}
+            onStatusChange={handleStatusChange}
+            onUpdateTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+          />
+        </div>
       </main>
     </div>
   );
