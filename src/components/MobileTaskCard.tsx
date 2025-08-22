@@ -44,6 +44,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 20;
 
   const [{ isDragging }, drag, preview] = useDrag({
@@ -130,6 +131,25 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  // Attach the drag source to the dragRef
+  drag(dragRef);
+
+  useEffect(() => {
+    // This is the fix for the text selection issue on touch devices
+    const node = dragRef.current;
+    if (node) {
+      const preventDefault = (e: TouchEvent) => {
+        e.preventDefault();
+      };
+      node.addEventListener('touchstart', preventDefault, { passive: false });
+      node.addEventListener('touchmove', preventDefault, { passive: false });
+      return () => {
+        node.removeEventListener('touchstart', preventDefault);
+        node.removeEventListener('touchmove', preventDefault);
+      };
+    }
+  }, []);
   
   const indentStyle = { paddingLeft: `${level * INDENT_WIDTH}px` };
 
@@ -139,7 +159,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
         <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '')}>
           <CardHeader className="flex flex-row items-center justify-between p-4 bg-card-foreground/5">
             <div className="flex items-center gap-2 flex-grow min-w-0">
-                <div ref={drag} className="cursor-move touch-none p-2 -m-2">
+                <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
                 {isEditing ? (
