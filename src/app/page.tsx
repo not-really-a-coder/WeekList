@@ -318,7 +318,7 @@ export default function Home() {
       const [year, weekNumber] = task.week.split('-').map(Number);
       
       const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2, '0')}-1`, "yyyy-'W'ww-i", new Date());
-
+      
       const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
       
       const newWeek = getWeek(newDate, { weekStartsOn: 1 });
