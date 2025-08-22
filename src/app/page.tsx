@@ -16,6 +16,7 @@ import { ChevronLeft, ChevronRight, Plus, Calendar, ArrowRight } from 'lucide-re
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { format, startOfWeek, addDays, getWeek, getYear, parseISO, setWeek, isSameDay } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Legend } from '@/components/Legend';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
@@ -480,7 +481,8 @@ export default function Home() {
                   weekDates={weekDates}
                   onMoveToWeek={handleMoveTaskToWeek}
                 />
-                 <div className="mt-4 flex justify-end">
+                 <div className="mt-4 flex justify-between items-start">
+                    <Legend />
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="link">
