@@ -146,8 +146,21 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
 
   const handleSave = () => {
     if (title.trim()) {
-      const newTitle = isImportant ? `! ${title.trim()}` : title.trim();
-      onUpdate(task.id, newTitle);
+      const newTitleIsImportant = title.trim().startsWith('!');
+      const finalTitle = newTitleIsImportant
+        ? title.trim()
+        : isImportant
+        ? `! ${title.trim()}`
+        : title.trim();
+
+      // If the user adds '!' manually, we want to respect that.
+      // If they remove it, we want to update the original task's ! status.
+      if (newTitleIsImportant) {
+        onUpdate(task.id, title.trim());
+      } else {
+        const newTitle = isImportant ? `! ${title.trim()}` : title.trim();
+        onUpdate(task.id, newTitle);
+      }
     } else {
       setTitle(initialTitle);
     }
@@ -169,7 +182,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
       <div ref={ref} className={cn('flex items-center w-full p-2', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow min-w-0">
-          <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
+          <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4" />
           </Button>
            {isImportant && !isEditing && (

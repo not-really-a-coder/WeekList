@@ -113,8 +113,19 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
 
   const handleSave = () => {
     if (title.trim()) {
-      const newTitle = isImportant ? `! ${title.trim()}` : title.trim();
-      onUpdateTask(task.id, newTitle);
+      // Check if user is trying to add '!' manually, or if the task was already important
+      const newTitleIsImportant = title.trim().startsWith('!');
+      let finalTitle = title.trim();
+
+      if (newTitleIsImportant) {
+        // User added '!', use the title as is
+        finalTitle = title.trim();
+      } else if (isImportant) {
+        // Task was important, user did not add '!', so keep it important
+        finalTitle = `! ${title.trim()}`;
+      }
+      
+      onUpdateTask(task.id, finalTitle);
     } else {
       setTitle(initialTitle);
     }
