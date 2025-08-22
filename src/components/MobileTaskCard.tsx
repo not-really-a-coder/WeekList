@@ -134,9 +134,9 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   const indentStyle = { paddingLeft: `${level * INDENT_WIDTH}px` };
 
   return (
-    <div ref={preview} style={{ opacity: isDragging ? 0.5 : 1 }} className="relative">
+    <div ref={preview} className="relative">
        <div ref={drop(ref) as React.Ref<HTMLDivElement>} style={indentStyle}>
-        <Card className={cn('overflow-hidden', isDragging ? 'bg-muted' : '')}>
+        <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '')}>
           <CardHeader className="flex flex-row items-center justify-between p-4 bg-card-foreground/5">
             <div className="flex items-center gap-2 flex-grow min-w-0">
                 <div ref={drag} className="cursor-move touch-none">
