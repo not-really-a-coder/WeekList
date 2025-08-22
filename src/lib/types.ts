@@ -1,9 +1,18 @@
+export type TaskStatus = 'default' | 'planned' | 'completed' | 'rescheduled' | 'cancelled';
+
+export const STATUS_CYCLE: TaskStatus[] = ['default', 'planned', 'completed', 'rescheduled', 'cancelled'];
+
 export interface Task {
   id: string;
   title: string;
-  status: 'todo' | 'done';
-  parentId: string | null;
-  subTasks: Task[];
   createdAt: string;
-  day?: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  statuses: {
+    monday: TaskStatus;
+    tuesday: TaskStatus;
+    wednesday: TaskStatus;
+    thursday: TaskStatus;
+    friday: TaskStatus;
+    saturday: TaskStatus;
+    sunday: TaskStatus;
+  };
 }

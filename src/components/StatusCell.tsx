@@ -1,0 +1,34 @@
+
+'use client';
+
+import { Check, X, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { TaskStatus } from '@/lib/types';
+import { Dot } from './Dot';
+
+interface StatusCellProps {
+  status: TaskStatus;
+  onStatusChange: (newStatus: TaskStatus) => void;
+}
+
+const statusIcons: Record<TaskStatus, React.ReactNode> = {
+  default: null,
+  planned: <Dot className="size-3 text-muted-foreground/50" />,
+  completed: <Check className="size-4 text-green-500" />,
+  rescheduled: <ArrowRight className="size-4 text-blue-500" />,
+  cancelled: <X className="size-4 text-red-500" />,
+};
+
+export function StatusCell({ status, onStatusChange }: StatusCellProps) {
+
+  return (
+    <div
+      onClick={() => onStatusChange(status)}
+      className={cn(
+        'bg-card h-12 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors'
+      )}
+    >
+      <div className="scale-125">{statusIcons[status]}</div>
+    </div>
+  );
+}
