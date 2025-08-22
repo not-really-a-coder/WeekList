@@ -12,7 +12,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, ArrowRight } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { format, startOfWeek, addDays, getWeek, getYear, parseISO, setWeek, isSameDay } from 'date-fns';
 
@@ -342,7 +342,7 @@ export default function Home() {
     const unfinishedTasks = tasks.filter(t => t.week === currentWeekKey && !t.isDone);
     
     if (unfinishedTasks.length === 0) {
-      toast({ title: "No unfinished tasks to move." });
+      toast({ title: "All tasks are finished!", description: "Nothing to move to the next week." });
       return;
     }
 
@@ -361,7 +361,7 @@ export default function Home() {
       )
     );
     
-    toast({ title: `Moved ${unfinishedTasks.length} tasks to the next week.` });
+    toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
   }, [tasks, currentDate, toast]);
 
   const goToPreviousWeek = () => {
@@ -482,6 +482,7 @@ export default function Home() {
                  <div className="mt-4 flex justify-end">
                     <Button variant="link" onClick={handleMoveUnfinishedToNextWeek}>
                         Move all unfinished tasks to next week
+                        <ArrowRight className="ml-2 size-4" />
                     </Button>
                  </div>
               </div>
@@ -492,5 +493,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
