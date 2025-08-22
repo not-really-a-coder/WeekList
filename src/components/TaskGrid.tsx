@@ -73,7 +73,7 @@ export function TaskGrid({
     <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-card p-2 text-center font-bold font-headline text-muted-foreground">
+        <div key={index} className="bg-card p-2 font-bold font-headline text-muted-foreground flex items-center justify-center">
           {day}
         </div>
       ))}
