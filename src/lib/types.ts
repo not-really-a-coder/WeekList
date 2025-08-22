@@ -5,4 +5,5 @@ export interface Task {
   parentId: string | null;
   subTasks: Task[];
   createdAt: string;
+  day?: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 }
