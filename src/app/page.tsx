@@ -13,6 +13,7 @@ import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
+import { format, startOfWeek } from 'date-fns';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
@@ -291,6 +292,9 @@ export default function Home() {
 
   const taskTree = tasks.filter(task => !task.parentId);
 
+  const startOfWeekDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM, do')}`;
+
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -308,16 +312,19 @@ export default function Home() {
                   {renderTaskTree(taskTree, tasks)}
               </div>
             ) : (
-              <TaskGrid
-                tasks={tasks}
-                onStatusChange={handleStatusChange}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
-                onAddTask={handleAddTask}
-                onMoveTask={handleMoveTask}
-                onSetTaskParent={handleSetTaskParent}
-                getTaskById={getTaskById}
-              />
+              <div>
+                <h2 className="text-xl font-bold font-headline mb-4">{weekDisplay}</h2>
+                <TaskGrid
+                  tasks={tasks}
+                  onStatusChange={handleStatusChange}
+                  onUpdateTask={handleUpdateTask}
+                  onDeleteTask={handleDeleteTask}
+                  onAddTask={handleAddTask}
+                  onMoveTask={handleMoveTask}
+                  onSetTaskParent={handleSetTaskParent}
+                  getTaskById={getTaskById}
+                />
+              </div>
             )}
           </div>
         </main>
