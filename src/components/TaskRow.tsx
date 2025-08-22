@@ -177,10 +177,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
       <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow min-w-0">
-          {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
           <div ref={drag} className="cursor-move p-1 -m-1 mr-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4 text-muted-foreground" />
           </div>
+          {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
           <div className="w-6 shrink-0 h-full flex items-center">
             {isImportant && !isEditing && (
                 <AlertCircle className="size-4 text-destructive" />
