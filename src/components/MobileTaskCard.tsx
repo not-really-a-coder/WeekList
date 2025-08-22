@@ -11,8 +11,9 @@ import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
 import { Input } from './ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StatusCell } from './StatusCell';
+import { format } from 'date-fns';
 
 interface MobileTaskCardProps {
   task: Task;
@@ -209,6 +210,10 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                        <DropdownMenuLabel className="font-normal text-muted-foreground">
+                            Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
                           <ArrowRight className="mr-2 size-4" />
                           <span>Move to next week</span>

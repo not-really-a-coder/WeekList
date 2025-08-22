@@ -23,10 +23,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface TaskRowProps {
   task: Task;
@@ -232,6 +234,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="font-normal text-muted-foreground">
+                    Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
                   <ArrowRight className="mr-2 size-4" />
                   <span>Move to next week</span>
