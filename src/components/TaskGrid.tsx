@@ -15,26 +15,27 @@ const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export function TaskGrid({ tasks, onStatusChange }: TaskGridProps) {
   return (
-    <div className="grid grid-cols-8 gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
+    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,4fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
-      {dayHeaders.map(day => (
-        <div key={day} className="bg-card p-2 text-center font-bold font-headline text-muted-foreground">
+      {dayHeaders.map((day, index) => (
+        <div key={index} className="bg-card p-2 text-center font-bold font-headline text-muted-foreground">
           {day}
         </div>
       ))}
-      <div className="bg-card p-2 font-bold font-headline text-muted-foreground">Task</div>
+      <div className="bg-card p-2 font-bold font-headline text-muted-foreground col-start-8">Task</div>
 
       {/* Grid Content */}
       {tasks.map(task => (
         <React.Fragment key={task.id}>
-          {weekdays.map(day => (
-            <StatusCell
-              key={day}
-              status={task.statuses[day]}
-              onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
-            />
+          {weekdays.map((day, index) => (
+            <div key={day} className={`col-start-${index + 1}`}>
+              <StatusCell
+                status={task.statuses[day]}
+                onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
+              />
+            </div>
           ))}
-          <div className="bg-card p-2 flex items-center">
+          <div className="bg-card p-2 flex items-center col-start-8">
             <p className="text-sm font-medium">{task.title}</p>
           </div>
         </React.Fragment>
