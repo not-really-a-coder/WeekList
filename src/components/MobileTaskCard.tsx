@@ -5,12 +5,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2, CornerDownRight } from 'lucide-react';
+import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
 import { Input } from './ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StatusCell } from './StatusCell';
 
 interface MobileTaskCardProps {
@@ -169,10 +170,10 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
        <div ref={drop(ref) as React.Ref<HTMLDivElement>} style={indentStyle}>
         <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '', isImportant ? 'border-destructive/50' : '')}>
           <CardHeader className={cn("flex flex-row items-center justify-between p-4")}>
+            <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
+                <GripVertical className="size-5 text-muted-foreground" />
+            </div>
             <div className="flex items-center gap-2 flex-grow min-w-0">
-                <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
-                    <GripVertical className="size-5 text-muted-foreground" />
-                </div>
                 {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
                 {isEditing ? (
                      <Input
@@ -215,11 +216,25 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                   <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
                 </Button>
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="icon" variant="ghost" aria-label="Delete task">
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
-                  </AlertDialogTrigger>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="More options"
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                          <Trash2 className="mr-2 size-4" />
+                          <span>Delete task</span>
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>

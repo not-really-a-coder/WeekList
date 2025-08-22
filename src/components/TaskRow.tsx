@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -19,6 +19,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 interface TaskRowProps {
@@ -176,10 +182,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
       <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
-        <div className="flex items-center flex-grow min-w-0 gap-2">
-          <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4 text-muted-foreground" />
-          </div>
+        </div>
+        <div className="flex items-center flex-grow min-w-0 gap-2">
           {level > 0 && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
           {isEditing ? (
             <>
@@ -211,7 +217,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
             </>
           )}
         </div>
-
         <Button
           size="icon"
           variant="ghost"
@@ -222,16 +227,26 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
           <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
         </Button>
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="opacity-0 group-hover/row:opacity-100 transition-opacity"
-              aria-label="Delete task"
-            >
-              <Trash2 className="size-4 text-destructive" />
-            </Button>
-          </AlertDialogTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="opacity-0 group-hover/row:opacity-100 transition-opacity"
+                aria-label="More options"
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 size-4" />
+                  <span>Delete task</span>
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
