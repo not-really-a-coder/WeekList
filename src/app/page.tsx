@@ -12,9 +12,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { format, startOfWeek, addDays, getWeek, getYear, parseISO, setWeek } from 'date-fns';
+import { format, startOfWeek, addDays, getWeek, getYear, parseISO, setWeek, isSameDay } from 'date-fns';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
@@ -313,10 +313,10 @@ export default function Home() {
     setTasks(currentTasks => {
       const taskToMove = currentTasks.find(t => t.id === taskId);
       if (!taskToMove) return currentTasks;
-
+  
       const childrenToMove = currentTasks.filter(t => t.parentId === taskId);
       const taskIdsToMove = [taskId, ...childrenToMove.map(t => t.id)];
-
+  
       const [year, weekNumber] = taskToMove.week.split('-').map(Number);
       
       const firstDayOfYear = parseISO(`${year}-01-01`);
@@ -327,7 +327,7 @@ export default function Home() {
       const newWeek = getWeek(newDate, { weekStartsOn: 1 });
       const newYear = getYear(newDate);
       const newWeekKey = `${newYear}-${newWeek}`;
-
+  
       return currentTasks.map(task => {
         if (taskIdsToMove.includes(task.id)) {
           return { ...task, week: newWeekKey };
@@ -372,6 +372,10 @@ export default function Home() {
     setCurrentDate(newDate => addDays(newDate, 7));
   };
   
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
   if (!isClient || DndBackend === null) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -385,6 +389,9 @@ export default function Home() {
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
   const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
+
+  const today = new Date();
+  const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
   const getTaskLevel = (taskId: string, tasks: Task[]): number => {
     let level = 0;
@@ -447,7 +454,14 @@ export default function Home() {
                     <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <h2 className="text-xl font-bold font-headline text-center flex-grow">{weekDisplay}</h2>
+                    <div className="flex items-center gap-2 text-center flex-grow justify-center">
+                      <h2 className="text-xl font-bold font-headline">{weekDisplay}</h2>
+                      {!isCurrentWeek && (
+                        <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
+                          <Calendar className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
                         <ChevronRight className="h-4 w-4" />
                     </Button>
