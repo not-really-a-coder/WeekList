@@ -143,8 +143,6 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
     }
   }, [isEditing, task.isNew]);
 
-  const indentStyle = { paddingLeft: `${level * INDENT_WIDTH}px` };
-
   return (
     <div ref={preview} className="relative">
       <div ref={drop(ref) as React.Ref<HTMLDivElement>}>
@@ -153,7 +151,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
             <div ref={drag} className="cursor-move touch-none p-2 -m-2">
                 <GripVertical className="size-5 text-muted-foreground" />
             </div>
-            <div className="flex items-center gap-2 flex-grow min-w-0" style={indentStyle}>
+            <div className="flex items-center gap-2 flex-grow min-w-0">
                 {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
                 {isEditing ? (
                      <Input
