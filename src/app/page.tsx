@@ -337,6 +337,33 @@ export default function Home() {
     });
   }, []);
 
+  const handleMoveUnfinishedToNextWeek = useCallback(() => {
+    const currentWeekKey = `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`;
+    const unfinishedTasks = tasks.filter(t => t.week === currentWeekKey && !t.isDone);
+    
+    if (unfinishedTasks.length === 0) {
+      toast({ title: "No unfinished tasks to move." });
+      return;
+    }
+
+    const nextWeekDate = addDays(currentDate, 7);
+    const nextWeek = getWeek(nextWeekDate, { weekStartsOn: 1 });
+    const nextYear = getYear(nextWeekDate);
+    const nextWeekKey = `${nextYear}-${nextWeek}`;
+
+    const unfinishedTaskIds = unfinishedTasks.map(t => t.id);
+
+    setTasks(currentTasks => 
+      currentTasks.map(task => 
+        unfinishedTaskIds.includes(task.id) 
+          ? { ...task, week: nextWeekKey } 
+          : task
+      )
+    );
+    
+    toast({ title: `Moved ${unfinishedTasks.length} tasks to the next week.` });
+  }, [tasks, currentDate, toast]);
+
   const goToPreviousWeek = () => {
     setCurrentDate(prevDate => addDays(prevDate, -7));
   };
@@ -438,6 +465,11 @@ export default function Home() {
                   weekDates={weekDates}
                   onMoveToWeek={handleMoveTaskToWeek}
                 />
+                 <div className="mt-4 flex justify-end">
+                    <Button variant="link" onClick={handleMoveUnfinishedToNextWeek}>
+                        Move all unfinished tasks to next week
+                    </Button>
+                 </div>
               </div>
             )}
           </div>
@@ -446,3 +478,5 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    
