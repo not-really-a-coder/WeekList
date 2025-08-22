@@ -60,7 +60,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
-
+  const isParent = tasks.some(t => t.parentId === task.id);
 
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
@@ -176,7 +176,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
               <GripVertical className="size-4 text-muted-foreground" />
           </div>
           <div className="flex items-center flex-grow min-w-0 gap-2">
-            {level > 0 && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+            {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
             {isEditing ? (
               <>
                 <Input
@@ -193,18 +193,19 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 </Button>
               </>
             ) : (
-              <>
+              <div className="flex items-center flex-grow min-w-0 gap-2">
                 {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
                 <p
                   className={cn(
                     "text-sm font-medium flex-grow cursor-pointer truncate",
-                    task.isDone && "line-through"
+                    task.isDone && "line-through",
+                    isParent && "font-bold"
                   )}
                   onClick={() => setIsEditing(true)}
                 >
                   {displayTitle}
                 </p>
-              </>
+              </div>
             )}
           </div>
           <Button

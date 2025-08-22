@@ -64,7 +64,6 @@ export function StatusCell({ status, onStatusChange, className, disabled = false
         'h-12 flex items-center justify-center transition-colors',
         !disabled && 'cursor-pointer',
         disabled && 'opacity-40',
-        isOver && 'bg-accent',
         className
       )}
     >

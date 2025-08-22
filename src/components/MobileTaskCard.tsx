@@ -45,6 +45,8 @@ const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onToggleDone, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
+  const isParent = tasks.some(t => t.parentId === task.id);
+
 
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [title, setTitle] = useState(task.title);
@@ -152,7 +154,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                 <GripVertical className="size-5 text-muted-foreground" />
             </div>
             <div className="flex items-center gap-2 flex-grow min-w-0">
-                {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
+                {task.parentId && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
                 {isEditing ? (
                      <Input
                         ref={inputRef}
@@ -164,18 +166,19 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                         className="flex-grow bg-background text-base"
                     />
                 ) : (
-                    <>
+                    <div className="flex items-center gap-2 flex-grow min-w-0">
                         {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
                         <CardTitle
                           className={cn(
                             "text-base font-medium flex-grow cursor-pointer truncate",
-                            task.isDone && "line-through"
+                            task.isDone && "line-through",
+                            isParent && "font-bold"
                           )}
                           onClick={() => setIsEditing(true)}
                         >
                           {displayTitle}
                         </CardTitle>
-                    </>
+                    </div>
                 )}
             </div>
             <div className="flex items-center flex-shrink-0">
@@ -242,6 +245,8 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                         onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
                         disabled={task.isDone}
                         className={cn('bg-card')}
+                        task={task}
+                        onSetParent={onSetTaskParent}
                     />
                 ))}
             </div>
