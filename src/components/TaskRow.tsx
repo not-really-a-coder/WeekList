@@ -181,11 +181,11 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
 
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-      <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
+      <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
         <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4 text-muted-foreground" />
         </div>
-        <div className="flex items-center flex-grow min-w-0 gap-2">
+        <div className="flex items-center flex-grow min-w-0 gap-2" style={indentStyle}>
           {level > 0 && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
           {isEditing ? (
             <>
@@ -232,7 +232,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
               <Button
                 size="icon"
                 variant="ghost"
-                className="opacity-0 group-hover/row:opacity-100 transition-opacity"
+                className="opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                 aria-label="More options"
               >
                 <MoreHorizontal className="size-4" />
