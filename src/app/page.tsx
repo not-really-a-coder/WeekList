@@ -8,6 +8,10 @@ import { TaskGrid } from '@/components/TaskGrid';
 import { STATUS_CYCLE } from '@/lib/types';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileTaskCard } from '@/components/MobileTaskCard';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
@@ -123,6 +127,7 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const initialTasks = addIdsAndDates(initialTasksData);
@@ -244,6 +249,29 @@ export default function Home() {
   if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
+  
+  const taskTree = tasks.filter(task => !task.parentId);
+
+  const renderMobileTask = (task: Task, index: number, allTasks: Task[], level = 0) => {
+    const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
+    const taskIndex = allTasks.findIndex(t => t.id === task.id);
+    return (
+      <React.Fragment key={task.id}>
+        <MobileTaskCard
+            task={task}
+            index={taskIndex}
+            onStatusChange={handleStatusChange}
+            onUpdateTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+            onMoveTask={handleMoveTask}
+            onSetTaskParent={handleSetTaskParent}
+            level={level}
+            getTaskById={getTaskById}
+          />
+        {children.map(child => renderMobileTask(child, index, allTasks, level + 1))}
+      </React.Fragment>
+    )
+  }
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -251,16 +279,28 @@ export default function Home() {
         <Header />
         <main className="flex-grow p-4 lg:p-8">
           <div className="max-w-7xl mx-auto">
-            <TaskGrid
-              tasks={tasks}
-              onStatusChange={handleStatusChange}
-              onUpdateTask={handleUpdateTask}
-              onDeleteTask={handleDeleteTask}
-              onAddTask={handleAddTask}
-              onMoveTask={handleMoveTask}
-              onSetTaskParent={handleSetTaskParent}
-              getTaskById={getTaskById}
-            />
+            {isMobile ? (
+              <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-bold font-headline">Tasks</h2>
+                     <Button size="icon" variant="default" onClick={handleAddTask} aria-label="Add new task">
+                        <Plus className="size-4" />
+                      </Button>
+                  </div>
+                  {taskTree.map((task, index) => renderMobileTask(task, index, tasks, 0))}
+              </div>
+            ) : (
+              <TaskGrid
+                tasks={tasks}
+                onStatusChange={handleStatusChange}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                onAddTask={handleAddTask}
+                onMoveTask={handleMoveTask}
+                onSetTaskParent={handleSetTaskParent}
+                getTaskById={getTaskById}
+              />
+            )}
           </div>
         </main>
       </div>
