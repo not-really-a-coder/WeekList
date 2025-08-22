@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus, Calendar, ArrowRight } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { format, startOfWeek, addDays, getWeek, getYear, parseISO, setWeek, isSameDay } from 'date-fns';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
@@ -480,10 +481,28 @@ export default function Home() {
                   onMoveToWeek={handleMoveTaskToWeek}
                 />
                  <div className="mt-4 flex justify-end">
-                    <Button variant="link" onClick={handleMoveUnfinishedToNextWeek}>
-                        Move all unfinished tasks to next week
-                        <ArrowRight className="ml-2 size-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="link">
+                          Move all unfinished tasks to next week
+                          <ArrowRight className="ml-2 size-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will move all unfinished tasks from the current week to the next one.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                  </div>
               </div>
             )}
