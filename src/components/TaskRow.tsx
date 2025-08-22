@@ -136,16 +136,16 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   });
 
   const opacity = isDragging ? 0.4 : 1;
-  drag(drop(ref));
+  drop(ref); //This allows the main div to be a drop target.
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      if (displayTitle === 'New Task') {
+      if (task.title.substring(1) === 'New Task') {
         inputRef.current.select();
       }
     }
-  }, [isEditing, displayTitle]);
+  }, [isEditing, task.title]);
   
   useEffect(() => {
     setTitle(task.title);
@@ -176,9 +176,9 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
       <div ref={ref} className={cn('flex items-center w-full p-2', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow min-w-0">
-          <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
-            <GripVertical className="size-4" />
-          </Button>
+          <div ref={drag} className="cursor-move p-1 -m-1 mr-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <GripVertical className="size-4 text-muted-foreground" />
+          </div>
           <div className="w-6 shrink-0">
             {isImportant && !isEditing && (
                 <AlertCircle className="size-4 text-destructive" />
