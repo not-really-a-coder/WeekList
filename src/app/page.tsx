@@ -14,7 +14,7 @@ import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { format, startOfWeek, addDays, getWeek, getYear, parse, startOfISOWeek } from 'date-fns';
+import { format, startOfWeek, addDays, getWeek, getYear, parse } from 'date-fns';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
@@ -311,13 +311,19 @@ export default function Home() {
 
   const handleMoveTaskToWeek = useCallback((taskId: string, direction: 'next' | 'previous') => {
     setTasks(currentTasks => {
-      const taskIndex = currentTasks.findIndex(t => t.id === taskId);
-      if (taskIndex === -1) return currentTasks;
+      const taskToMove = currentTasks.find(t => t.id === taskId);
+      if (!taskToMove) return currentTasks;
 
-      const task = currentTasks[taskIndex];
-      const [year, weekNumber] = task.week.split('-').map(Number);
+      const childrenToMove = currentTasks.filter(t => t.parentId === taskId);
+      const taskIdsToMove = [taskId, ...childrenToMove.map(t => t.id)];
+
+      const [year, weekNumber] = taskToMove.week.split('-').map(Number);
       
-      const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2, '0')}-1`, "yyyy-'W'ww-i", new Date());
+      const taskDate = parse(
+        `${year}-W${String(weekNumber).padStart(2, '0')}-1`,
+        "yyyy-'W'II-i",
+        new Date()
+      );
       
       const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
       
@@ -325,9 +331,12 @@ export default function Home() {
       const newYear = getYear(newDate);
       const newWeekKey = `${newYear}-${newWeek}`;
 
-      const newTasks = [...currentTasks];
-      newTasks[taskIndex] = { ...task, week: newWeekKey };
-      return newTasks;
+      return currentTasks.map(task => {
+        if (taskIdsToMove.includes(task.id)) {
+          return { ...task, week: newWeekKey };
+        }
+        return task;
+      });
     });
   }, []);
 

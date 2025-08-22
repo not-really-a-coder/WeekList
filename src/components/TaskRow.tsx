@@ -232,13 +232,13 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
-                  <ArrowLeft className="mr-2 size-4" />
-                  <span>Move to previous week</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
                   <ArrowRight className="mr-2 size-4" />
                   <span>Move to next week</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
+                  <ArrowLeft className="mr-2 size-4" />
+                  <span>Move to previous week</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
