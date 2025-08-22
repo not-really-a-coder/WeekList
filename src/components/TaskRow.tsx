@@ -147,20 +147,37 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   const handleSave = () => {
     if (title.trim()) {
       const newTitleIsImportant = title.trim().startsWith('!');
-      const finalTitle = newTitleIsImportant
-        ? title.trim()
-        : isImportant
-        ? `! ${title.trim()}`
-        : title.trim();
+      let finalTitle = title.trim();
 
-      // If the user adds '!' manually, we want to respect that.
-      // If they remove it, we want to update the original task's ! status.
       if (newTitleIsImportant) {
-        onUpdate(task.id, title.trim());
-      } else {
-        const newTitle = isImportant ? `! ${title.trim()}` : title.trim();
-        onUpdate(task.id, newTitle);
+        finalTitle = title.trim();
+      } else if (isImportant) {
+        // Task was important, but user removed '!', so don't add it back
+        finalTitle = title.trim();
+      } else if (title.trim().startsWith('!')) {
+        finalTitle = title.trim();
       }
+
+      // If the original task was important, and the new title doesn't start with '!', it means it was removed.
+      // If the original was not important, and the new one starts with '!', it was added.
+      // Otherwise, the status is unchanged.
+      
+      const actuallyImportant = isImportant ? !newTitleIsImportant : newTitleIsImportant;
+      
+      let newTitleValue = title.trim();
+      if(newTitleValue.startsWith('!')) {
+        newTitleValue = newTitleValue.substring(1).trim();
+      }
+      
+      const finalTitleValue = (isImportant && !newTitleIsImportant)
+        ? newTitleValue 
+        : (!isImportant && newTitleIsImportant) 
+        ? `! ${newTitleValue}`
+        : isImportant 
+        ? `! ${newTitleValue}`
+        : newTitleValue;
+
+      onUpdate(task.id, finalTitleValue);
     } else {
       setTitle(initialTitle);
     }

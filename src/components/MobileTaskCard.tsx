@@ -113,19 +113,22 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
 
   const handleSave = () => {
     if (title.trim()) {
-      // Check if user is trying to add '!' manually, or if the task was already important
       const newTitleIsImportant = title.trim().startsWith('!');
-      let finalTitle = title.trim();
-
-      if (newTitleIsImportant) {
-        // User added '!', use the title as is
-        finalTitle = title.trim();
-      } else if (isImportant) {
-        // Task was important, user did not add '!', so keep it important
-        finalTitle = `! ${title.trim()}`;
+      
+      let newTitleValue = title.trim();
+      if(newTitleValue.startsWith('!')) {
+        newTitleValue = newTitleValue.substring(1).trim();
       }
       
-      onUpdateTask(task.id, finalTitle);
+      const finalTitleValue = (isImportant && !newTitleIsImportant)
+        ? newTitleValue 
+        : (!isImportant && newTitleIsImportant) 
+        ? `! ${newTitleValue}`
+        : isImportant 
+        ? `! ${newTitleValue}`
+        : newTitleValue;
+
+      onUpdateTask(task.id, finalTitleValue);
     } else {
       setTitle(initialTitle);
     }
@@ -172,7 +175,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
     <div ref={preview} className="relative">
        <div ref={drop(ref) as React.Ref<HTMLDivElement>} style={indentStyle}>
         <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '', isImportant ? 'border-destructive/50' : '')}>
-          <CardHeader className={cn("flex flex-row items-center justify-between p-4", 'bg-card-foreground/5')}>
+          <CardHeader className={cn("flex flex-row items-center justify-between p-4")}>
             <div className="flex items-center gap-2 flex-grow min-w-0">
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
