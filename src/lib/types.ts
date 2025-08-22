@@ -7,6 +7,7 @@ export interface Task {
   title: string;
   createdAt: string;
   parentId?: string | null;
+  isDone?: boolean;
   statuses: {
     monday: TaskStatus;
     tuesday: TaskStatus;

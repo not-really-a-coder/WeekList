@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { GripVertical, Save, Trash2, AlertCircle } from 'lucide-react';
+import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ interface MobileTaskCardProps {
   onStatusChange: (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => void;
   onUpdateTask: (taskId: string, newTitle: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onToggleDone: (taskId: string) => void;
   onMoveTask: (dragIndex: number, hoverIndex: number) => void;
   onSetTaskParent: (childId: string, parentId: string | null) => void;
   level: number;
@@ -40,7 +41,7 @@ interface DragItem {
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
+export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onToggleDone, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
 
@@ -113,7 +114,6 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   });
 
   const handleSave = () => {
-    // If the title is empty or just '!', delete the task
     if (title.trim() === '!' || title.trim() === '') {
         onDeleteTask(task.id);
     } else {
@@ -173,7 +173,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
-                <div className="w-5 shrink-0">
+                <div className="w-6 shrink-0">
                   {isImportant && !isEditing && (
                       <AlertCircle className="size-4 text-destructive" />
                   )}
@@ -189,8 +189,14 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                         className="flex-grow bg-background text-base"
                     />
                 ) : (
-                    <CardTitle className="text-base font-medium flex-grow cursor-pointer truncate" onClick={() => setIsEditing(true)}>
-                        {displayTitle}
+                    <CardTitle
+                      className={cn(
+                        "text-base font-medium flex-grow cursor-pointer truncate",
+                        task.isDone && "line-through text-muted-foreground"
+                      )}
+                      onClick={() => setIsEditing(true)}
+                    >
+                      {displayTitle}
                     </CardTitle>
                 )}
             </div>
@@ -200,6 +206,14 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                         <Save className="size-4" />
                     </Button>
                  )}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Mark as done"
+                  onClick={() => onToggleDone(task.id)}
+                >
+                  <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button size="icon" variant="ghost" aria-label="Delete task">
@@ -233,6 +247,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                         key={day}
                         status={task.statuses[day]}
                         onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
+                        disabled={task.isDone}
                         className={cn('bg-card')}
                     />
                 ))}

@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -28,6 +28,7 @@ interface TaskRowProps {
   level: number;
   onUpdate: (taskId: string, newTitle: string) => void;
   onDelete: (taskId: string) => void;
+  onToggleDone: (taskId: string) => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onSetParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
@@ -44,15 +45,16 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
-  const isImportant = task.title.startsWith('!');
-  const displayTitle = isImportant ? task.title.substring(1) : task.title;
-
-  const [isEditing, setIsEditing] = useState(displayTitle === 'New Task');
+export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById }: TaskRowProps) {
+  const [isEditing, setIsEditing] = useState(task.title === 'New Task');
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 24;
+  
+  const isImportant = task.title.startsWith('!');
+  const displayTitle = isImportant ? task.title.substring(1) : task.title;
+
 
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
@@ -141,7 +143,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      if (task.title.substring(1) === 'New Task') {
+      if (task.title === 'New Task' || task.title.substring(1) === 'New Task') {
         inputRef.current.select();
       }
     }
@@ -152,7 +154,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   }, [task.title]);
 
   const handleSave = () => {
-    // If the title is empty or just '!', delete the task
     if (title.trim() === '!' || title.trim() === '') {
         onDelete(task.id);
     } else {
@@ -201,7 +202,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
             </>
           ) : (
             <p
-              className="text-sm font-medium flex-grow cursor-pointer truncate"
+              className={cn(
+                "text-sm font-medium flex-grow cursor-pointer truncate",
+                task.isDone && "line-through text-muted-foreground"
+              )}
               onClick={() => setIsEditing(true)}
             >
               {displayTitle}
@@ -209,6 +213,15 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
           )}
         </div>
 
+        <Button
+          size="icon"
+          variant="ghost"
+          className="opacity-0 group-hover/row:opacity-100 transition-opacity"
+          aria-label="Mark as done"
+          onClick={() => onToggleDone(task.id)}
+        >
+          <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
+        </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button

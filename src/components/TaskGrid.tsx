@@ -15,6 +15,7 @@ interface TaskGridProps {
   onStatusChange: (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => void;
   onUpdateTask: (taskId: string, newTitle: string) => void;
   onDeleteTask: (taskId:string) => void;
+  onToggleDone: (taskId: string) => void;
   onAddTask: () => void;
   onMoveTask: (dragIndex: number, hoverIndex: number) => void;
   onSetTaskParent: (childId: string, parentId: string | null) => void;
@@ -30,6 +31,7 @@ export function TaskGrid({
   onStatusChange,
   onUpdateTask,
   onDeleteTask,
+  onToggleDone,
   onAddTask,
   onMoveTask,
   onSetTaskParent,
@@ -51,6 +53,7 @@ export function TaskGrid({
                 <StatusCell
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
+                  disabled={task.isDone}
                 />
               </div>
             ))}
@@ -60,6 +63,7 @@ export function TaskGrid({
                 index={taskIndex}
                 onUpdate={onUpdateTask}
                 onDelete={onDeleteTask}
+                onToggleDone={onToggleDone}
                 onMove={onMoveTask}
                 onSetParent={onSetTaskParent}
                 level={level}

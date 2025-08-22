@@ -18,6 +18,7 @@ import { format, startOfWeek, addDays } from 'date-fns';
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
     title: '!Plan summer vacation',
+    isDone: false,
     statuses: {
       monday: 'planned',
       tuesday: 'planned',
@@ -30,6 +31,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: 'Weekly grocery shopping',
+    isDone: false,
     statuses: {
       monday: 'default',
       tuesday: 'default',
@@ -42,6 +44,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: 'Finish Q2 report',
+    isDone: true,
     statuses: {
       monday: 'planned',
       tuesday: 'completed',
@@ -54,6 +57,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: 'Renew gym membership',
+    isDone: false,
     statuses: {
       monday: 'default',
       tuesday: 'default',
@@ -66,6 +70,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: '!Call the plumber',
+    isDone: false,
     statuses: {
       monday: 'cancelled',
       tuesday: 'default',
@@ -78,6 +83,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: 'Schedule dentist appointment',
+    isDone: false,
     statuses: {
       monday: 'default',
       tuesday: 'planned',
@@ -90,6 +96,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: 'Pay electricity bill',
+    isDone: false,
     statuses: {
       monday: 'default',
       tuesday: 'default',
@@ -102,6 +109,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
   {
     title: 'Pick up dry cleaning',
+    isDone: false,
     statuses: {
       monday: 'default',
       tuesday: 'default',
@@ -121,6 +129,7 @@ const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId'>[]): T
       id: crypto.randomUUID(),
       createdAt: new Date(Date.now() - index * 1000).toISOString(),
       parentId: null,
+      isDone: task.isDone ?? false,
     };
   });
 };
@@ -145,6 +154,9 @@ export default function Home() {
   }, [tasks]);
 
   const handleStatusChange = (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => {
+    const task = getTaskById(taskId);
+    if (task?.isDone) return;
+
     const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
     const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
     const newStatus = STATUS_CYCLE[nextIndex];
@@ -166,6 +178,7 @@ export default function Home() {
       title: 'New Task',
       createdAt: new Date().toISOString(),
       parentId: null,
+      isDone: false,
       statuses: {
         monday: 'default',
         tuesday: 'default',
@@ -190,6 +203,14 @@ export default function Home() {
   const handleDeleteTask = (taskId: string) => {
     setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId && task.parentId !== taskId));
   };
+  
+  const handleToggleDone = (taskId: string) => {
+    setTasks(currentTasks =>
+      currentTasks.map(task =>
+        task.id === taskId ? { ...task, isDone: !task.isDone } : task
+      )
+    );
+  }
 
   const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number) => {
     setTasks((prevTasks) => {
@@ -278,6 +299,7 @@ export default function Home() {
               onStatusChange={handleStatusChange}
               onUpdateTask={handleUpdateTask}
               onDeleteTask={handleDeleteTask}
+              onToggleDone={handleToggleDone}
               onMoveTask={handleMoveTask}
               onSetTaskParent={handleSetTaskParent}
               level={level}
@@ -320,6 +342,7 @@ export default function Home() {
                   onStatusChange={handleStatusChange}
                   onUpdateTask={handleUpdateTask}
                   onDeleteTask={handleDeleteTask}
+                  onToggleDone={handleToggleDone}
                   onAddTask={handleAddTask}
                   onMoveTask={handleMoveTask}
                   onSetTaskParent={handleSetTaskParent}
