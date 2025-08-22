@@ -139,6 +139,10 @@ export default function Home() {
     });
   };
 
+  const getTaskById = useCallback((taskId: string) => {
+    return tasks.find(t => t.id === taskId);
+  }, [tasks]);
+
   const handleStatusChange = (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => {
     const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
     const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
@@ -206,6 +210,7 @@ export default function Home() {
       if (parentId) {
         const parentTask = newTasks.find(t => t.id === parentId);
         if (parentTask?.parentId) {
+          toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
           return currentTasks;
         }
       }
@@ -239,7 +244,7 @@ export default function Home() {
 
       return newTasks;
     });
-  }, []);
+  }, [toast]);
 
   if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -259,6 +264,7 @@ export default function Home() {
               onAddTask={handleAddTask}
               onMoveTask={handleMoveTask}
               onSetTaskParent={handleSetTaskParent}
+              getTaskById={getTaskById}
             />
           </div>
         </main>

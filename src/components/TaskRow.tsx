@@ -28,6 +28,7 @@ interface TaskRowProps {
   onDelete: (taskId: string) => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onSetParent: (childId: string, parentId: string | null) => void;
+  getTaskById: (taskId: string) => Task | undefined;
 }
 
 interface DragItem {
@@ -41,7 +42,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetParent }: TaskRowProps) {
+export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.title === 'New Task');
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,14 +102,12 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
 
       // Logic for nesting by dragging right
       if (isIndenting && item.level === 0) {
-        // Find the task visually above the current hover target
-        const potentialParentIndex = hoverIndex -1;
-        // We can only indent if we are not the first item
-        if(potentialParentIndex >= 0) {
-            onSetParent(item.id, task.id);
-            item.level = 1; // Update dragged item's level optimistically
-            return; // Prevent other actions when indenting
-        }
+          const potentialParentTask = getTaskById(task.id);
+          if (potentialParentTask && !potentialParentTask.parentId) {
+              onSetParent(item.id, task.id);
+              item.level = 1; 
+              return; 
+          }
       }
 
       if (!isIndenting && !isOutdenting) {
