@@ -13,12 +13,13 @@ interface TaskGridProps {
   onUpdateTask: (taskId: string, newTitle: string) => void;
   onDeleteTask: (taskId:string) => void;
   onAddTask: () => void;
+  onMoveTask: (dragIndex: number, hoverIndex: number) => void;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-export function TaskGrid({ tasks, onStatusChange, onUpdateTask, onDeleteTask, onAddTask }: TaskGridProps) {
+export function TaskGrid({ tasks, onStatusChange, onUpdateTask, onDeleteTask, onAddTask, onMoveTask }: TaskGridProps) {
   return (
     <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
@@ -36,7 +37,7 @@ export function TaskGrid({ tasks, onStatusChange, onUpdateTask, onDeleteTask, on
 
       {/* Grid Content */}
       {tasks.length > 0 ? (
-        tasks.map(task => (
+        tasks.map((task, index) => (
           <React.Fragment key={task.id}>
             {weekdays.map((day) => (
               <div key={day}>
@@ -49,8 +50,10 @@ export function TaskGrid({ tasks, onStatusChange, onUpdateTask, onDeleteTask, on
             <div className="bg-card flex items-center col-start-8 group">
               <TaskRow
                 task={task}
+                index={index}
                 onUpdate={onUpdateTask}
                 onDelete={onDeleteTask}
+                onMove={onMoveTask}
               />
             </div>
           </React.Fragment>

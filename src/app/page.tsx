@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect, useCallback } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { handleSuggestTasks } from './actions';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { TaskGrid } from '@/components/TaskGrid';
 import { STATUS_CYCLE } from '@/lib/types';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt'>[] = [
   {
@@ -108,11 +110,11 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt'>[] = [
 ];
 
 const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt'>[]): Task[] => {
-  return tasks.map((task) => {
+  return tasks.map((task, index) => {
     return {
       ...task,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(Date.now() - index * 1000).toISOString(),
     };
   });
 };
@@ -125,11 +127,10 @@ export default function Home() {
 
   useEffect(() => {
     const initialTasks = addIdsAndDates(initialTasksData);
-    setTasks(initialTasks);
+    const sortedInitialTasks = [...initialTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setTasks(sortedInitialTasks);
     setIsClient(true);
   }, []);
-  
-  const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const runSuggestTasks = () => {
     startAiTransition(async () => {
@@ -183,25 +184,36 @@ export default function Home() {
     setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId));
   };
 
+  const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number) => {
+    setTasks((prevTasks) => {
+      const newTasks = [...prevTasks];
+      const [movedTask] = newTasks.splice(dragIndex, 1);
+      newTasks.splice(hoverIndex, 0, movedTask);
+      return newTasks;
+    });
+  }, []);
 
   if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Header onSuggestTasks={runSuggestTasks} isAiLoading={isAiLoading} />
-      <main className="flex-grow p-4 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <TaskGrid
-            tasks={sortedTasks}
-            onStatusChange={handleStatusChange}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onAddTask={handleAddTask}
-          />
-        </div>
-      </main>
-    </div>
+    <DndProvider backend={HTML5Backend}>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <Header onSuggestTasks={runSuggestTasks} isAiLoading={isAiLoading} />
+        <main className="flex-grow p-4 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            <TaskGrid
+              tasks={tasks}
+              onStatusChange={handleStatusChange}
+              onUpdateTask={handleUpdateTask}
+              onDeleteTask={handleDeleteTask}
+              onAddTask={handleAddTask}
+              onMoveTask={handleMoveTask}
+            />
+          </div>
+        </main>
+      </div>
+    </DndProvider>
   );
 }
