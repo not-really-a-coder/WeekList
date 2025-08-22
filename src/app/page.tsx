@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useTransition, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
-import { handleSuggestTasks } from './actions';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { TaskGrid } from '@/components/TaskGrid';
@@ -123,7 +122,6 @@ const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId'>[]): T
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [isAiLoading, startAiTransition] = useTransition();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -132,12 +130,6 @@ export default function Home() {
     setTasks(sortedInitialTasks);
     setIsClient(true);
   }, []);
-
-  const runSuggestTasks = () => {
-    startAiTransition(async () => {
-      // AI suggestion logic to be implemented
-    });
-  };
 
   const getTaskById = useCallback((taskId: string) => {
     return tasks.find(t => t.id === taskId);
@@ -169,6 +161,7 @@ export default function Home() {
         monday: 'default',
         tuesday: 'default',
         wednesday: 'default',
+
         thursday: 'default',
         friday: 'default',
         saturday: 'default',
@@ -201,29 +194,40 @@ export default function Home() {
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
     setTasks(currentTasks => {
-      let newTasks = [...currentTasks];
-      const childIndex = newTasks.findIndex(t => t.id === childId);
-      
-      if (childIndex === -1) return currentTasks;
+        let newTasks = [...currentTasks];
+        const childIndex = newTasks.findIndex(t => t.id === childId);
+        
+        if (childIndex === -1) return currentTasks;
 
-      // Prevent nesting if parent already has a parent
-      if (parentId) {
-        const parentTask = newTasks.find(t => t.id === parentId);
-        if (parentTask?.parentId) {
-          toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
-          return currentTasks;
+        const childTaskData = newTasks[childIndex];
+
+        // Prevent nesting if parent already has a parent
+        if (parentId) {
+            const parentTask = newTasks.find(t => t.id === parentId);
+            if (parentTask?.parentId) {
+                toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
+                return currentTasks;
+            }
         }
-      }
-      
-      const childTask = { ...newTasks[childIndex], parentId };
-      newTasks[childIndex] = childTask;
+        
+        const updatedChild = { ...childTaskData, parentId };
+        newTasks[childIndex] = updatedChild;
 
-      // When un-indenting, move to top level right after its old parent group
-      if (parentId === null) {
-        const oldParentId = currentTasks[childIndex].parentId;
-        if (oldParentId) {
+        // When indenting, move child to be right after the parent
+        if (parentId) {
+            const parentIndex = newTasks.findIndex(t => t.id === parentId);
+            if (childIndex !== parentIndex + 1) {
+                const [movedTask] = newTasks.splice(childIndex, 1);
+                // After splice, parent index might have shifted
+                const newParentIndex = newTasks.findIndex(t => t.id === parentId);
+                newTasks.splice(newParentIndex + 1, 0, movedTask);
+            }
+        } 
+        // When un-indenting, move to top level right after its old parent group
+        else if (childTaskData.parentId) {
             const [movedTask] = newTasks.splice(childIndex, 1);
             
+            const oldParentId = childTaskData.parentId;
             const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
             const siblings = newTasks.filter(t => t.parentId === oldParentId);
             const lastSiblingIndex = siblings.length > 0
@@ -232,17 +236,8 @@ export default function Home() {
 
             newTasks.splice(lastSiblingIndex + 1, 0, movedTask);
         }
-      } else {
-        // When indenting, move child to be right after the parent
-        const parentIndex = newTasks.findIndex(t => t.id === parentId);
-        if (childIndex !== parentIndex + 1) {
-            const [movedTask] = newTasks.splice(childIndex, 1);
-            const newParentIndex = newTasks.findIndex(t => t.id === parentId);
-            newTasks.splice(newParentIndex + 1, 0, movedTask);
-        }
-      }
 
-      return newTasks;
+        return newTasks;
     });
   }, [toast]);
 
@@ -253,7 +248,7 @@ export default function Home() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <Header onSuggestTasks={runSuggestTasks} isAiLoading={isAiLoading} />
+        <Header />
         <main className="flex-grow p-4 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <TaskGrid
