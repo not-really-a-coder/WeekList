@@ -197,6 +197,7 @@ export default function Home() {
         sunday: 'default',
       },
       week: `${currentYear}-${currentWeek}`,
+      isNew: true,
     };
     setTasks(currentTasks => [newTask, ...currentTasks]);
   };
@@ -204,7 +205,7 @@ export default function Home() {
   const handleUpdateTask = (taskId: string, newTitle: string) => {
     setTasks(currentTasks =>
       currentTasks.map(task =>
-        task.id === taskId ? { ...task, title: newTitle } : task
+        task.id === taskId ? { ...task, title: newTitle, isNew: false } : task
       )
     );
   };
@@ -366,7 +367,7 @@ export default function Home() {
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
   const hasActivity = (task: Task) => Object.values(task.statuses).some(s => s !== 'default');
-  const weeklyTasks = tasks.filter(t => t.week === currentWeekKey && (hasActivity(t) || t.title === 'New Task'));
+  const weeklyTasks = tasks.filter(t => t.week === currentWeekKey && (hasActivity(t) || t.isNew));
   
   const getTaskLevel = (taskId: string, tasks: Task[]): number => {
     let level = 0;
@@ -453,5 +454,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
