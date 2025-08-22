@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -46,7 +46,7 @@ const ItemTypes = {
 };
 
 export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById }: TaskRowProps) {
-  const [isEditing, setIsEditing] = useState(task.title === 'New Task');
+  const [isEditing, setIsEditing] = useState(task.isNew);
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -143,11 +143,11 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      if (task.title === 'New Task' || task.title.substring(1) === 'New Task') {
+      if (task.isNew) {
         inputRef.current.select();
       }
     }
-  }, [isEditing, task.title]);
+  }, [isEditing, task.isNew]);
   
   useEffect(() => {
     setTitle(task.title);
@@ -177,6 +177,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
       <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow min-w-0">
+          {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
           <div ref={drag} className="cursor-move p-1 -m-1 mr-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4 text-muted-foreground" />
           </div>
@@ -253,5 +254,3 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     </div>
   );
 }
-
-    

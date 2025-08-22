@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2, CornerDownRight } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
 
-  const [isEditing, setIsEditing] = useState(displayTitle === 'New Task');
+  const [isEditing, setIsEditing] = useState(task.isNew);
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -137,11 +137,11 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      if(displayTitle === 'New Task'){
+      if(task.isNew){
         inputRef.current.select();
       }
     }
-  }, [isEditing, displayTitle]);
+  }, [isEditing, task.isNew]);
 
   // Attach the drag source to the dragRef
   drag(dragRef);
@@ -173,6 +173,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
+                {level > 0 && <CornerDownRight className="size-4 mr-2 text-muted-foreground shrink-0" />}
                 <div className="w-6 shrink-0 h-full flex items-center">
                   {isImportant && !isEditing && (
                       <AlertCircle className="size-4 text-destructive" />
@@ -259,5 +260,3 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
     </div>
   );
 }
-
-    
