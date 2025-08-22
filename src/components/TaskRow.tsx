@@ -46,7 +46,7 @@ const ItemTypes = {
 
 export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
   const isImportant = task.title.startsWith('!');
-  const initialTitle = isImportant ? task.title.substring(1).trim() : task.title;
+  const initialTitle = isImportant ? task.title.substring(1) : task.title;
 
   const [isEditing, setIsEditing] = useState(initialTitle === 'New Task');
   const [title, setTitle] = useState(initialTitle);
@@ -152,8 +152,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   const handleSave = () => {
     if (title.trim()) {
       const newTitle = title.trim();
-      // Only add ! prefix if it's not already there for saving
-      const finalTitle = isImportant ? `! ${newTitle}` : newTitle;
+      const finalTitle = isImportant ? `!${newTitle}` : newTitle;
       onUpdate(task.id, finalTitle);
     } else {
       // if title is empty, revert to original
@@ -180,7 +179,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
           <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4" />
           </Button>
-           {isImportant && !isEditing && (
+           {isImportant && (
             <AlertCircle className="size-4 text-destructive mr-2 shrink-0" />
           )}
           {isEditing ? (

@@ -42,7 +42,7 @@ const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
   const isImportant = task.title.startsWith('!');
-  const initialTitle = isImportant ? task.title.substring(1).trim() : task.title;
+  const initialTitle = isImportant ? task.title.substring(1) : task.title;
 
   const [isEditing, setIsEditing] = useState(initialTitle === 'New Task');
   const [title, setTitle] = useState(initialTitle);
@@ -115,7 +115,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   const handleSave = () => {
     if (title.trim()) {
       const newTitle = title.trim();
-      const finalTitle = isImportant ? `! ${newTitle}` : newTitle;
+      const finalTitle = isImportant ? `!${newTitle}` : newTitle;
       onUpdateTask(task.id, finalTitle);
     } else {
       setTitle(initialTitle);
@@ -172,7 +172,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
-                {isImportant && !isEditing && (
+                {isImportant && (
                     <AlertCircle className="size-4 text-destructive shrink-0" />
                 )}
                 {isEditing ? (
