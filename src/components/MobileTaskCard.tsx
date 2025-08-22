@@ -172,7 +172,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
     <div ref={preview} className="relative">
        <div ref={drop(ref) as React.Ref<HTMLDivElement>} style={indentStyle}>
         <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '', isImportant ? 'border-destructive/50' : '')}>
-          <CardHeader className={cn("flex flex-row items-center justify-between p-4", isImportant ? 'bg-destructive/10' : 'bg-card-foreground/5')}>
+          <CardHeader className={cn("flex flex-row items-center justify-between p-4", 'bg-card-foreground/5')}>
             <div className="flex items-center gap-2 flex-grow min-w-0">
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
@@ -228,14 +228,14 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
           <CardContent className="p-0">
             <div className="grid grid-cols-7 border-t bg-border gap-px">
                 {dayHeaders.map((day) => (
-                    <div key={day} className={cn("p-2 text-center font-bold text-xs bg-card text-muted-foreground", isImportant && 'bg-destructive/10')}>{day}</div>
+                    <div key={day} className={cn("p-2 text-center font-bold text-xs bg-card text-muted-foreground")}>{day}</div>
                 ))}
                 {weekdays.map((day) => (
                     <StatusCell
                         key={day}
                         status={task.statuses[day]}
                         onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
-                        className={cn('bg-card', isImportant && 'bg-destructive/10')}
+                        className={cn('bg-card')}
                     />
                 ))}
             </div>
