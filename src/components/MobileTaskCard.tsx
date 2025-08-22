@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
 import { GripVertical, Save, Trash2 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
-import type { Identifier } from 'dnd-core';
+import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
 import { Input } from './ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
@@ -14,6 +14,7 @@ import { StatusCell } from './StatusCell';
 
 interface MobileTaskCardProps {
   task: Task;
+  tasks: Task[];
   index: number;
   onStatusChange: (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => void;
   onUpdateTask: (taskId: string, newTitle: string) => void;
@@ -38,7 +39,7 @@ interface DragItem {
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function MobileTaskCard({ task, index, onStatusChange, onUpdateTask, onDeleteTask, onMoveTask, level }: MobileTaskCardProps) {
+export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
   const [isEditing, setIsEditing] = useState(task.title === 'New Task');
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +53,7 @@ export function MobileTaskCard({ task, index, onStatusChange, onUpdateTask, onDe
       isDragging: monitor.isDragging(),
     }),
   });
-
+  
   const [, drop] = useDrop<DragItem>({
     accept: ItemTypes.TASK,
     hover(item: DragItem, monitor) {
@@ -68,6 +69,35 @@ export function MobileTaskCard({ task, index, onStatusChange, onUpdateTask, onDe
       const clientOffset = monitor.getClientOffset();
       if (!clientOffset) return;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+      
+      const initialClientOffset = monitor.getInitialClientOffset();
+      const currentClientOffset = monitor.getClientOffset();
+
+      if (!initialClientOffset || !currentClientOffset) return;
+
+      const deltaX = currentClientOffset.x - initialClientOffset.x;
+      const isIndenting = deltaX > INDENT_WIDTH * 2;
+      const isOutdenting = deltaX < -INDENT_WIDTH * 2;
+
+      // Logic for un-nesting by dragging left
+      if (isOutdenting && item.level > 0) {
+        onSetTaskParent(item.id, null);
+        item.level = 0; // Update dragged item's level optimistically
+        return; // Prevent other actions when outdenting
+      }
+
+      // Logic for nesting by dragging right
+      if (isIndenting && item.level === 0) {
+        const potentialParentIndex = hoverIndex - 1;
+        if (potentialParentIndex >= 0) {
+          const potentialParentTask = tasks[potentialParentIndex];
+           if (potentialParentTask && !potentialParentTask.parentId && potentialParentTask.id !== item.id) {
+              onSetTaskParent(item.id, potentialParentTask.id);
+              item.level = 1;
+              return;
+            }
+        }
+      }
 
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
@@ -93,15 +123,22 @@ export function MobileTaskCard({ task, index, onStatusChange, onUpdateTask, onDe
         setIsEditing(false);
     }
   };
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
   
-  const indentStyle = { marginLeft: `${level * INDENT_WIDTH}px`, width: `calc(100% - ${level * INDENT_WIDTH}px)` };
+  const indentStyle = { paddingLeft: `${level * INDENT_WIDTH}px` };
 
   return (
-    <div ref={preview} style={{ opacity: isDragging ? 0.5 : 1, ...indentStyle }} className="relative">
-      <div ref={drop(ref) as React.Ref<HTMLDivElement>}>
+    <div ref={preview} style={{ opacity: isDragging ? 0.5 : 1 }} className="relative">
+       <div ref={drop(ref) as React.Ref<HTMLDivElement>} style={indentStyle}>
         <Card className={cn('overflow-hidden', isDragging ? 'bg-muted' : '')}>
           <CardHeader className="flex flex-row items-center justify-between p-4 bg-card-foreground/5">
-            <div className="flex items-center gap-2 flex-grow">
+            <div className="flex items-center gap-2 flex-grow min-w-0">
                 <div ref={drag} className="cursor-move touch-none">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
@@ -116,12 +153,12 @@ export function MobileTaskCard({ task, index, onStatusChange, onUpdateTask, onDe
                         className="flex-grow bg-background text-base"
                     />
                 ) : (
-                    <CardTitle className="text-base font-medium flex-grow cursor-pointer" onClick={() => setIsEditing(true)}>
+                    <CardTitle className="text-base font-medium flex-grow cursor-pointer truncate" onClick={() => setIsEditing(true)}>
                         {task.title}
                     </CardTitle>
                 )}
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center flex-shrink-0">
                  {isEditing && (
                     <Button size="icon" variant="ghost" onClick={handleSave}>
                         <Save className="size-4" />

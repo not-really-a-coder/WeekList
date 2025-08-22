@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { TouchBackend } from 'react-dnd-touch-backend';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
@@ -128,6 +129,8 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
+
 
   useEffect(() => {
     const initialTasks = addIdsAndDates(initialTasksData);
@@ -213,6 +216,8 @@ export default function Home() {
                 toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
                 return currentTasks;
             }
+             // prevent nesting on itself
+            if(childId === parentId) return currentTasks;
         }
         
         const updatedChild = { ...childTaskData, parentId };
@@ -246,35 +251,49 @@ export default function Home() {
     });
   }, [toast]);
 
-  if (!isClient) {
+  if (!isClient || DndBackend === null) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  const taskTree = tasks.filter(task => !task.parentId);
+  const getTaskLevel = (taskId: string, tasks: Task[]): number => {
+    let level = 0;
+    let currentTask = tasks.find(t => t.id === taskId);
+    while (currentTask && currentTask.parentId) {
+        level++;
+        currentTask = tasks.find(t => t.id === currentTask!.parentId);
+    }
+    return level;
+  };
 
-  const renderMobileTask = (task: Task, index: number, allTasks: Task[], level = 0) => {
-    const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
-    const taskIndex = allTasks.findIndex(t => t.id === task.id);
-    return (
-      <React.Fragment key={task.id}>
-        <MobileTaskCard
-            task={task}
-            index={taskIndex}
-            onStatusChange={handleStatusChange}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onMoveTask={handleMoveTask}
-            onSetTaskParent={handleSetTaskParent}
-            level={level}
-            getTaskById={getTaskById}
-          />
-        {children.map(child => renderMobileTask(child, index, allTasks, level + 1))}
-      </React.Fragment>
-    )
+  const renderTaskTree = (tasksToRender: Task[], allTasks: Task[], level = 0) => {
+    return tasksToRender.map((task) => {
+      const children = allTasks.filter(child => child.parentId === task.id);
+      const taskIndex = allTasks.findIndex(t => t.id === task.id);
+      
+      return (
+        <React.Fragment key={task.id}>
+           <MobileTaskCard
+              task={task}
+              index={taskIndex}
+              onStatusChange={handleStatusChange}
+              onUpdateTask={handleUpdateTask}
+              onDeleteTask={handleDeleteTask}
+              onMoveTask={handleMoveTask}
+              onSetTaskParent={handleSetTaskParent}
+              level={level}
+              getTaskById={getTaskById}
+              tasks={tasks}
+            />
+          {children.length > 0 && renderTaskTree(children, allTasks, level + 1)}
+        </React.Fragment>
+      )
+    });
   }
 
+  const taskTree = tasks.filter(task => !task.parentId);
+
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow p-4 lg:p-8">
@@ -287,7 +306,7 @@ export default function Home() {
                         <Plus className="size-4" />
                       </Button>
                   </div>
-                  {taskTree.map((task, index) => renderMobileTask(task, index, tasks, 0))}
+                  {renderTaskTree(taskTree, tasks)}
               </div>
             ) : (
               <TaskGrid

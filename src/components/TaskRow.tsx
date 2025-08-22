@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 interface TaskRowProps {
   task: Task;
+  tasks: Task[];
   index: number;
   level: number;
   onUpdate: (taskId: string, newTitle: string) => void;
@@ -42,7 +43,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.title === 'New Task');
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +88,19 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
         return; // Prevent other actions when outdenting
       }
 
+      // Logic for nesting by dragging right
+      if (isIndenting && item.level === 0) {
+          const potentialParentIndex = hoverIndex - 1;
+          if(potentialParentIndex >= 0) {
+            const potentialParentTask = tasks[potentialParentIndex];
+            if (potentialParentTask && !potentialParentTask.parentId && potentialParentTask.id !== item.id) {
+                onSetParent(item.id, potentialParentTask.id);
+                item.level = 1; 
+                return; 
+            }
+          }
+      }
+
       // Prevent dropping on itself
       if (dragIndex === hoverIndex) {
         return;
@@ -98,16 +112,6 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
       }
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
         return;
-      }
-
-      // Logic for nesting by dragging right
-      if (isIndenting && item.level === 0) {
-          const potentialParentTask = getTaskById(task.id);
-          if (potentialParentTask && !potentialParentTask.parentId) {
-              onSetParent(item.id, task.id);
-              item.level = 1; 
-              return; 
-          }
       }
 
       if (!isIndenting && !isOutdenting) {

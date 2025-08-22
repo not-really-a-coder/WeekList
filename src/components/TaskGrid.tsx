@@ -6,8 +6,6 @@ import { StatusCell } from './StatusCell';
 import { TaskRow } from './TaskRow';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { MobileTaskCard } from './MobileTaskCard';
 
 interface TaskGridProps {
   tasks: Task[];
@@ -60,6 +58,7 @@ export function TaskGrid({
                 onSetParent={onSetTaskParent}
                 level={level}
                 getTaskById={getTaskById}
+                tasks={tasks}
               />
             </div>
         </div>
