@@ -15,7 +15,7 @@ const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export function TaskGrid({ tasks, onStatusChange }: TaskGridProps) {
   return (
-    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,4fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
+    <div className="grid grid-cols-[repeat(7,1fr)_14fr] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
         <div key={index} className="bg-card p-2 text-center font-bold font-headline text-muted-foreground">
