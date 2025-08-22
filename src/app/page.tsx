@@ -197,29 +197,46 @@ export default function Home() {
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
     setTasks(currentTasks => {
-      const newTasks = [...currentTasks];
+      let newTasks = [...currentTasks];
       const childIndex = newTasks.findIndex(t => t.id === childId);
       
       if (childIndex === -1) return currentTasks;
+
+      // Prevent nesting if parent already has a parent
+      if (parentId) {
+        const parentTask = newTasks.find(t => t.id === parentId);
+        if (parentTask?.parentId) {
+          return currentTasks;
+        }
+      }
       
       const childTask = { ...newTasks[childIndex], parentId };
       newTasks[childIndex] = childTask;
 
-      // When un-indenting, move to top level after its old parent
+      // When un-indenting, move to top level right after its old parent group
       if (parentId === null) {
         const oldParentId = currentTasks[childIndex].parentId;
-        const oldParent = oldParentId ? newTasks.find(t => t.id === oldParentId) : null;
-        
-        const [movedTask] = newTasks.splice(childIndex, 1);
+        if (oldParentId) {
+            const [movedTask] = newTasks.splice(childIndex, 1);
+            
+            const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
+            const siblings = newTasks.filter(t => t.parentId === oldParentId);
+            const lastSiblingIndex = siblings.length > 0
+                ? newTasks.findIndex(t => t.id === siblings[siblings.length - 1].id)
+                : oldParentIndex;
 
-        if (oldParent) {
-          const lastChildOfOldParentIndex = newTasks.map(t => t.id).lastIndexOf(newTasks.find(t => t.parentId === oldParentId)?.id || '');
-          const newIndex = lastChildOfOldParentIndex !== -1 ? lastChildOfOldParentIndex + 1 : newTasks.findIndex(t => t.id === oldParentId) + 1;
-           newTasks.splice(newIndex, 0, movedTask);
-        } else {
-           newTasks.push(movedTask);
+            newTasks.splice(lastSiblingIndex + 1, 0, movedTask);
+        }
+      } else {
+        // When indenting, move child to be right after the parent
+        const parentIndex = newTasks.findIndex(t => t.id === parentId);
+        if (childIndex !== parentIndex + 1) {
+            const [movedTask] = newTasks.splice(childIndex, 1);
+            const newParentIndex = newTasks.findIndex(t => t.id === parentId);
+            newTasks.splice(newParentIndex + 1, 0, movedTask);
         }
       }
+
       return newTasks;
     });
   }, []);

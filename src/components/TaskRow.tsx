@@ -28,7 +28,6 @@ interface TaskRowProps {
   onDelete: (taskId: string) => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onSetParent: (childId: string, parentId: string | null) => void;
-  isOver: boolean;
 }
 
 interface DragItem {
@@ -63,34 +62,43 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
       }
       const dragIndex = item.index;
       const hoverIndex = index;
-
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
       
       const initialClientOffset = monitor.getInitialClientOffset();
       const currentClientOffset = monitor.getClientOffset();
 
       if (!initialClientOffset || !currentClientOffset) return;
+      
+      const clientOffset = monitor.getClientOffset();
+      if (!clientOffset) return;
+
+      const hoverBoundingRect = ref.current?.getBoundingClientRect();
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
       const deltaX = currentClientOffset.x - initialClientOffset.x;
       const isIndenting = deltaX > INDENT_WIDTH;
       const isOutdenting = deltaX < -INDENT_WIDTH;
 
-      if (isIndenting && hoverIndex > 0 && level === 0 && !task.parentId) {
-        onSetParent(item.id, task.id);
-        item.level = level + 1;
-        monitor.getItem().index = hoverIndex;
-      } else if (isOutdenting) {
+      // Logic for un-nesting by dragging left
+      if (isOutdenting && item.level > 0) {
         onSetParent(item.id, null);
-        item.level = 0;
+        item.level = 0; // Update dragged item's level optimistically
+        return; // Prevent other actions when outdenting
       }
 
+      // Prevent dropping on itself
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      
+      // Logic for nesting by dragging right
+      if (isIndenting && level === 0 && !task.parentId && item.level === 0) {
+        onSetParent(item.id, task.id);
+        item.level = 1; // Update dragged item's level optimistically
+        return; // Prevent other actions when indenting
+      }
+
+      // Vertical reordering logic
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
       }
@@ -99,8 +107,8 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
       }
       if (!isIndenting && !isOutdenting) {
         onMove(dragIndex, hoverIndex);
+        item.index = hoverIndex;
       }
-      item.index = hoverIndex;
     },
   });
 
