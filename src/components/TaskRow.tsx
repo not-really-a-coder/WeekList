@@ -23,32 +23,37 @@ import { cn } from '@/lib/utils';
 interface TaskRowProps {
   task: Task;
   index: number;
+  level: number;
   onUpdate: (taskId: string, newTitle: string) => void;
   onDelete: (taskId: string) => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
+  onSetParent: (childId: string, parentId: string | null) => void;
 }
 
 interface DragItem {
   index: number;
   id: string;
   type: string;
+  level: number;
 }
 
 const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, index, onUpdate, onDelete, onMove }: TaskRowProps) {
+export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetParent }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.title === 'New Task');
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const INDENT_WIDTH = 24;
 
-  const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
+  const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
+        isOverCurrent: monitor.isOver({ shallow: true }),
       };
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
@@ -66,6 +71,25 @@ export function TaskRow({ task, index, onUpdate, onDelete, onMove }: TaskRowProp
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
       const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
+      
+      const initialClientOffset = monitor.getInitialClientOffset();
+      const currentClientOffset = monitor.getClientOffset();
+
+      if (!initialClientOffset || !currentClientOffset) return;
+
+      const deltaX = currentClientOffset.x - initialClientOffset.x;
+      const isIndenting = deltaX > INDENT_WIDTH;
+      const isOutdenting = deltaX < -INDENT_WIDTH;
+
+      if (isIndenting && hoverIndex > 0) {
+        // We need to find the task right above the current one.
+        onSetParent(item.id, task.id);
+        item.level = level + 1;
+        monitor.getItem().index = hoverIndex;
+      } else if (isOutdenting) {
+        onSetParent(item.id, null);
+        item.level = 0;
+      }
 
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
@@ -73,8 +97,9 @@ export function TaskRow({ task, index, onUpdate, onDelete, onMove }: TaskRowProp
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
         return;
       }
-
-      onMove(dragIndex, hoverIndex);
+      if (!isIndenting && !isOutdenting) {
+        onMove(dragIndex, hoverIndex);
+      }
       item.index = hoverIndex;
     },
   });
@@ -82,14 +107,14 @@ export function TaskRow({ task, index, onUpdate, onDelete, onMove }: TaskRowProp
   const [{ isDragging }, drag, preview] = useDrag({
     type: ItemTypes.TASK,
     item: () => {
-      return { id: task.id, index };
+      return { id: task.id, index, type: ItemTypes.TASK, level };
     },
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
-  const opacity = isDragging ? 0 : 1;
+  const opacity = isDragging ? 0.4 : 1;
   drag(drop(ref));
 
   useEffect(() => {
@@ -116,10 +141,12 @@ export function TaskRow({ task, index, onUpdate, onDelete, onMove }: TaskRowProp
       setIsEditing(false);
     }
   };
+  
+  const indentStyle = { paddingLeft: `${level * INDENT_WIDTH}px` };
 
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-      <div ref={ref} className={cn('flex items-center w-full p-2 group', isDragging ? 'bg-muted' : '')}>
+      <div ref={ref} className={cn('flex items-center w-full p-2 group', isDragging ? 'bg-muted' : '', isOverCurrent ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow">
           <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
             <GripVertical className="size-4" />

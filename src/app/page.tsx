@@ -115,6 +115,7 @@ const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt'>[]): Task[] => {
       ...task,
       id: crypto.randomUUID(),
       createdAt: new Date(Date.now() - index * 1000).toISOString(),
+      parentId: null,
     };
   });
 };
@@ -159,6 +160,7 @@ export default function Home() {
       id: crypto.randomUUID(),
       title: 'New Task',
       createdAt: new Date().toISOString(),
+      parentId: null,
       statuses: {
         monday: 'default',
         tuesday: 'default',
@@ -193,6 +195,37 @@ export default function Home() {
     });
   }, []);
 
+  const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
+    setTasks(currentTasks => {
+      const newTasks = [...currentTasks];
+      const childIndex = newTasks.findIndex(t => t.id === childId);
+      
+      if (childIndex === -1) return currentTasks;
+
+      const childTask = { ...newTasks[childIndex], parentId };
+      newTasks[childIndex] = childTask;
+
+      // When un-indenting, move to top level
+      if (parentId === null) {
+        const [movedTask] = newTasks.splice(childIndex, 1);
+        const parentIndex = newTasks.findIndex(t => t.id === childTask.parentId);
+        
+        let newIndex = newTasks.filter(t => !t.parentId).length;
+        if(parentIndex !== -1) {
+            const siblings = newTasks.filter(t => t.parentId === newTasks[parentIndex].parentId);
+            if (siblings.length > 0) {
+                const lastSiblingId = siblings[siblings.length - 1].id;
+                newIndex = newTasks.findIndex(t => t.id === lastSiblingId) + 1;
+            } else {
+                newIndex = parentIndex + 1;
+            }
+        }
+        newTasks.splice(newIndex, 0, movedTask);
+      }
+      return newTasks;
+    });
+  }, []);
+
   if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -210,6 +243,7 @@ export default function Home() {
               onDeleteTask={handleDeleteTask}
               onAddTask={handleAddTask}
               onMoveTask={handleMoveTask}
+              onSetTaskParent={handleSetTaskParent}
             />
           </div>
         </main>
