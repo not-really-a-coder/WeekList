@@ -100,9 +100,11 @@ export function TaskGrid({
         taskTree.map((task, index) => renderTask(task, index, tasks))
       ) : (
         <div className="col-span-8 bg-card text-center p-12 text-muted-foreground">
-          No tasks yet. Add one to get started!
+          No tasks for this week. Add one or move to a different week.
         </div>
       )}
     </div>
   );
 }
+
+    

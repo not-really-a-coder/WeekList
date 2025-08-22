@@ -180,7 +180,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
           <div ref={drag} className="cursor-move p-1 -m-1 mr-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4 text-muted-foreground" />
           </div>
-          <div className="w-6 shrink-0">
+          <div className="w-6 shrink-0 h-full flex items-center">
             {isImportant && !isEditing && (
                 <AlertCircle className="size-4 text-destructive" />
             )}
@@ -253,3 +253,5 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     </div>
   );
 }
+
+    

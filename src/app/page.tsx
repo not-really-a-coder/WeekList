@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -13,9 +14,9 @@ import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { format, startOfWeek, addDays } from 'date-fns';
+import { format, startOfWeek, addDays, getWeek, getYear } from 'date-fns';
 
-const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
+const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
     title: '!Plan summer vacation',
     isDone: false,
@@ -122,7 +123,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   },
 ];
 
-const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId'>[]): Task[] => {
+const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[], week: number, year: number): Task[] => {
   return tasks.map((task, index) => {
     return {
       ...task,
@@ -130,6 +131,7 @@ const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId'>[]): T
       createdAt: new Date(Date.now() - index * 1000).toISOString(),
       parentId: null,
       isDone: task.isDone ?? false,
+      week: `${year}-${week}`,
     };
   });
 };
@@ -144,7 +146,10 @@ export default function Home() {
 
 
   useEffect(() => {
-    const initialTasks = addIdsAndDates(initialTasksData);
+    const today = new Date();
+    const currentWeek = getWeek(today, { weekStartsOn: 1 });
+    const currentYear = getYear(today);
+    const initialTasks = addIdsAndDates(initialTasksData, currentWeek, currentYear);
     const sortedInitialTasks = [...initialTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     setTasks(sortedInitialTasks);
     setIsClient(true);
@@ -174,6 +179,8 @@ export default function Home() {
   };
   
   const handleAddTask = () => {
+    const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
+    const currentYear = getYear(currentDate);
     const newTask: Task = {
       id: crypto.randomUUID(),
       title: 'New Task',
@@ -189,6 +196,7 @@ export default function Home() {
         saturday: 'default',
         sunday: 'default',
       },
+      week: `${currentYear}-${currentWeek}`,
     };
     setTasks(currentTasks => [newTask, ...currentTasks]);
   };
@@ -207,19 +215,40 @@ export default function Home() {
   
   const handleToggleDone = (taskId: string) => {
     setTasks(currentTasks =>
-      currentTasks.map(task =>
-        task.id === taskId ? { ...task, isDone: !task.isDone } : task
-      )
+      currentTasks.map(task => {
+        if (task.id === taskId) {
+            const isNowDone = !task.isDone;
+            // if marking as done, clear any planned statuses
+            const newStatuses = { ...task.statuses };
+            if(isNowDone){
+                for(const day in newStatuses){
+                    if(newStatuses[day as keyof Task['statuses']] === 'planned'){
+                        newStatuses[day as keyof Task['statuses']] = 'default';
+                    }
+                }
+            }
+          return { ...task, isDone: isNowDone, statuses: newStatuses };
+        }
+        return task
+      })
     );
   }
 
-  const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number) => {
-    setTasks((prevTasks) => {
-      const newTasks = [...prevTasks];
-      const [movedTask] = newTasks.splice(dragIndex, 1);
-      newTasks.splice(hoverIndex, 0, movedTask);
-      return newTasks;
-    });
+  const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number, currentViewTasks: Task[]) => {
+      setTasks((prevTasks) => {
+        const newTasks = [...prevTasks];
+        
+        const dragItem = currentViewTasks[dragIndex];
+        const hoverItem = currentViewTasks[hoverIndex];
+
+        const dragItemGlobalIndex = newTasks.findIndex(t => t.id === dragItem.id);
+        const hoverItemGlobalIndex = newTasks.findIndex(t => t.id === hoverItem.id);
+
+        const [movedTask] = newTasks.splice(dragItemGlobalIndex, 1);
+        newTasks.splice(hoverItemGlobalIndex, 0, movedTask);
+        
+        return newTasks;
+      });
   }, []);
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
@@ -273,9 +302,71 @@ export default function Home() {
     });
   }, [toast]);
 
+  const carryOverTasks = (previousWeekTasks: Task[], newWeek: number, newYear: number) => {
+      const newWeekKey = `${newYear}-${newWeek}`;
+      const existingNewWeekTasks = tasks.filter(t => t.week === newWeekKey);
+      
+      const tasksToCarryOver = previousWeekTasks.filter(task => {
+          const isUnfinishedAndPlanned = !task.isDone && Object.values(task.statuses).includes('planned');
+          const isAlreadyCarriedOver = existingNewWeekTasks.some(existingTask => existingTask.title === task.title && !existingTask.parentId);
+          return isUnfinishedAndPlanned && !isAlreadyCarriedOver;
+      });
+
+      const newTasksForNewWeek = tasksToCarryOver.map(task => ({
+          ...task,
+          id: crypto.randomUUID(), // new id for the new week's instance
+          week: newWeekKey,
+          isDone: false,
+          statuses: {
+              monday: 'planned',
+              tuesday: 'default',
+              wednesday: 'default',
+              thursday: 'default',
+              friday: 'default',
+              saturday: 'default',
+              sunday: 'default',
+          }
+      }));
+
+      if(newTasksForNewWeek.length > 0) {
+          setTasks(current => [...current, ...newTasksForNewWeek]);
+      }
+  };
+  
+  const goToPreviousWeek = () => {
+    setCurrentDate(prevDate => addDays(prevDate, -7));
+  };
+
+  const goToNextWeek = () => {
+    const newDate = addDays(currentDate, 7);
+    
+    const prevWeek = getWeek(currentDate, { weekStartsOn: 1 });
+    const prevYear = getYear(currentDate);
+    const prevWeekKey = `${prevYear}-${prevWeek}`;
+    const previousWeekTasks = tasks.filter(t => t.week === prevWeekKey);
+
+    const newWeek = getWeek(newDate, { weekStartsOn: 1 });
+    const newYear = getYear(newDate);
+
+    carryOverTasks(previousWeekTasks, newWeek, newYear);
+
+    setCurrentDate(newDate);
+  };
+  
   if (!isClient || DndBackend === null) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
+  
+  const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM do, yyyy')}`;
+  const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
+
+  const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
+  const currentYear = getYear(currentDate);
+  const currentWeekKey = `${currentYear}-${currentWeek}`;
+
+  const hasActivity = (task: Task) => Object.values(task.statuses).some(s => s !== 'default');
+  const weeklyTasks = tasks.filter(t => t.week === currentWeekKey && (hasActivity(t) || t.title === 'New Task'));
   
   const getTaskLevel = (taskId: string, tasks: Task[]): number => {
     let level = 0;
@@ -286,7 +377,7 @@ export default function Home() {
     }
     return level;
   };
-
+  
   const renderTaskTree = (tasksToRender: Task[], allTasks: Task[], level = 0) => {
     return tasksToRender.map((task) => {
       const children = allTasks.filter(child => child.parentId === task.id);
@@ -301,7 +392,7 @@ export default function Home() {
               onUpdateTask={handleUpdateTask}
               onDeleteTask={handleDeleteTask}
               onToggleDone={handleToggleDone}
-              onMoveTask={handleMoveTask}
+              onMoveTask={(dragIndex, hoverIndex) => handleMoveTask(dragIndex, hoverIndex, allTasks)}
               onSetTaskParent={handleSetTaskParent}
               level={level}
               getTaskById={getTaskById}
@@ -313,19 +404,7 @@ export default function Home() {
     });
   }
 
-  const taskTree = tasks.filter(task => !task.parentId);
-
-  const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM do')}`;
-  const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
-  
-  const goToPreviousWeek = () => {
-    setCurrentDate(prevDate => addDays(prevDate, -7));
-  };
-
-  const goToNextWeek = () => {
-    setCurrentDate(prevDate => addDays(prevDate, 7));
-  };
+  const taskTree = weeklyTasks.filter(task => !task.parentId);
 
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
@@ -341,7 +420,7 @@ export default function Home() {
                         <Plus className="size-4" />
                       </Button>
                   </div>
-                  {renderTaskTree(taskTree, tasks)}
+                  {renderTaskTree(taskTree, weeklyTasks)}
               </div>
             ) : (
               <div>
@@ -355,13 +434,13 @@ export default function Home() {
                     </Button>
                 </div>
                 <TaskGrid
-                  tasks={tasks}
+                  tasks={weeklyTasks}
                   onStatusChange={handleStatusChange}
                   onUpdateTask={handleUpdateTask}
                   onDeleteTask={handleDeleteTask}
                   onToggleDone={handleToggleDone}
                   onAddTask={handleAddTask}
-                  onMoveTask={handleMoveTask}
+                  onMoveTask={(dragIndex, hoverIndex) => handleMoveTask(dragIndex, hoverIndex, weeklyTasks)}
                   onSetTaskParent={handleSetTaskParent}
                   getTaskById={getTaskById}
                   weekDates={weekDates}
@@ -374,3 +453,5 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    

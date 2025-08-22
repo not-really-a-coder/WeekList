@@ -173,7 +173,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
-                <div className="w-6 shrink-0">
+                <div className="w-6 shrink-0 h-full flex items-center">
                   {isImportant && !isEditing && (
                       <AlertCircle className="size-4 text-destructive" />
                   )}
@@ -211,6 +211,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                   variant="ghost"
                   aria-label="Mark as done"
                   onClick={() => onToggleDone(task.id)}
+                  className={cn("transition-opacity", task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
                 >
                   <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
                 </Button>
@@ -258,3 +259,5 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
     </div>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 export type TaskStatus = 'default' | 'planned' | 'completed' | 'rescheduled' | 'cancelled';
 
 export const STATUS_CYCLE: TaskStatus[] = ['default', 'planned', 'completed', 'rescheduled', 'cancelled'];
@@ -8,6 +9,7 @@ export interface Task {
   createdAt: string;
   parentId?: string | null;
   isDone?: boolean;
+  week: string; // e.g. "2024-34"
   statuses: {
     monday: TaskStatus;
     tuesday: TaskStatus;
@@ -18,3 +20,5 @@ export interface Task {
     sunday: TaskStatus;
   };
 }
+
+    
