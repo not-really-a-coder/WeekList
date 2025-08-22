@@ -303,55 +303,12 @@ export default function Home() {
     });
   }, [toast]);
 
-  const carryOverTasks = (previousWeekTasks: Task[], newWeek: number, newYear: number) => {
-      const newWeekKey = `${newYear}-${newWeek}`;
-      const existingNewWeekTasks = tasks.filter(t => t.week === newWeekKey);
-      
-      const tasksToCarryOver = previousWeekTasks.filter(task => {
-          const isUnfinishedAndPlanned = !task.isDone && Object.values(task.statuses).includes('planned');
-          const isAlreadyCarriedOver = existingNewWeekTasks.some(existingTask => existingTask.title === task.title && !existingTask.parentId);
-          return isUnfinishedAndPlanned && !isAlreadyCarriedOver;
-      });
-
-      const newTasksForNewWeek = tasksToCarryOver.map(task => ({
-          ...task,
-          id: crypto.randomUUID(), // new id for the new week's instance
-          week: newWeekKey,
-          isDone: false,
-          statuses: {
-              monday: 'planned',
-              tuesday: 'default',
-              wednesday: 'default',
-              thursday: 'default',
-              friday: 'default',
-              saturday: 'default',
-              sunday: 'default',
-          }
-      }));
-
-      if(newTasksForNewWeek.length > 0) {
-          setTasks(current => [...current, ...newTasksForNewWeek]);
-      }
-  };
-  
   const goToPreviousWeek = () => {
     setCurrentDate(prevDate => addDays(prevDate, -7));
   };
 
   const goToNextWeek = () => {
-    const newDate = addDays(currentDate, 7);
-    
-    const prevWeek = getWeek(currentDate, { weekStartsOn: 1 });
-    const prevYear = getYear(currentDate);
-    const prevWeekKey = `${prevYear}-${prevWeek}`;
-    const previousWeekTasks = tasks.filter(t => t.week === prevWeekKey);
-
-    const newWeek = getWeek(newDate, { weekStartsOn: 1 });
-    const newYear = getYear(newDate);
-
-    carryOverTasks(previousWeekTasks, newWeek, newYear);
-
-    setCurrentDate(newDate);
+    setCurrentDate(newDate => addDays(newDate, 7));
   };
   
   if (!isClient || DndBackend === null) {
@@ -367,7 +324,7 @@ export default function Home() {
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
   const hasActivity = (task: Task) => Object.values(task.statuses).some(s => s !== 'default');
-  const weeklyTasks = tasks.filter(t => t.week === currentWeekKey && (hasActivity(t) || t.isNew));
+  const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
   
   const getTaskLevel = (taskId: string, tasks: Task[]): number => {
     let level = 0;
