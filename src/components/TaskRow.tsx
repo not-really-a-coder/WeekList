@@ -28,6 +28,7 @@ interface TaskRowProps {
   onDelete: (taskId: string) => void;
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onSetParent: (childId: string, parentId: string | null) => void;
+  isOver: boolean;
 }
 
 interface DragItem {
@@ -81,8 +82,7 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
       const isIndenting = deltaX > INDENT_WIDTH;
       const isOutdenting = deltaX < -INDENT_WIDTH;
 
-      if (isIndenting && hoverIndex > 0) {
-        // We need to find the task right above the current one.
+      if (isIndenting && hoverIndex > 0 && level === 0 && !task.parentId) {
         onSetParent(item.id, task.id);
         item.level = level + 1;
         monitor.getItem().index = hoverIndex;
@@ -146,7 +146,7 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
 
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-      <div ref={ref} className={cn('flex items-center w-full p-2 group', isDragging ? 'bg-muted' : '', isOverCurrent ? 'bg-accent/20' : '')} style={indentStyle}>
+      <div ref={ref} className={cn('flex items-center w-full p-2 group', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')} style={indentStyle}>
         <div className="flex items-center flex-grow">
           <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
             <GripVertical className="size-4" />
@@ -192,7 +192,7 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the
-                task "{task.title}".
+                task "{task.title}" and all its sub-tasks.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

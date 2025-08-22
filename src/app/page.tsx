@@ -10,7 +10,7 @@ import { STATUS_CYCLE } from '@/lib/types';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-const initialTasksData: Omit<Task, 'id' | 'createdAt'>[] = [
+const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId'>[] = [
   {
     title: 'Plan summer vacation',
     statuses: {
@@ -109,7 +109,7 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt'>[] = [
   },
 ];
 
-const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt'>[]): Task[] => {
+const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId'>[]): Task[] => {
   return tasks.map((task, index) => {
     return {
       ...task,
@@ -183,7 +183,7 @@ export default function Home() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId));
+    setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId && task.parentId !== taskId));
   };
 
   const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -201,26 +201,24 @@ export default function Home() {
       const childIndex = newTasks.findIndex(t => t.id === childId);
       
       if (childIndex === -1) return currentTasks;
-
+      
       const childTask = { ...newTasks[childIndex], parentId };
       newTasks[childIndex] = childTask;
 
-      // When un-indenting, move to top level
+      // When un-indenting, move to top level after its old parent
       if (parentId === null) {
-        const [movedTask] = newTasks.splice(childIndex, 1);
-        const parentIndex = newTasks.findIndex(t => t.id === childTask.parentId);
+        const oldParentId = currentTasks[childIndex].parentId;
+        const oldParent = oldParentId ? newTasks.find(t => t.id === oldParentId) : null;
         
-        let newIndex = newTasks.filter(t => !t.parentId).length;
-        if(parentIndex !== -1) {
-            const siblings = newTasks.filter(t => t.parentId === newTasks[parentIndex].parentId);
-            if (siblings.length > 0) {
-                const lastSiblingId = siblings[siblings.length - 1].id;
-                newIndex = newTasks.findIndex(t => t.id === lastSiblingId) + 1;
-            } else {
-                newIndex = parentIndex + 1;
-            }
+        const [movedTask] = newTasks.splice(childIndex, 1);
+
+        if (oldParent) {
+          const lastChildOfOldParentIndex = newTasks.map(t => t.id).lastIndexOf(newTasks.find(t => t.parentId === oldParentId)?.id || '');
+          const newIndex = lastChildOfOldParentIndex !== -1 ? lastChildOfOldParentIndex + 1 : newTasks.findIndex(t => t.id === oldParentId) + 1;
+           newTasks.splice(newIndex, 0, movedTask);
+        } else {
+           newTasks.push(movedTask);
         }
-        newTasks.splice(newIndex, 0, movedTask);
       }
       return newTasks;
     });
