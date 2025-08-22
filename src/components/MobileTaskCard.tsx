@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -113,22 +114,9 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
 
   const handleSave = () => {
     if (title.trim()) {
-      const newTitleIsImportant = title.trim().startsWith('!');
-      
-      let newTitleValue = title.trim();
-      if(newTitleValue.startsWith('!')) {
-        newTitleValue = newTitleValue.substring(1).trim();
-      }
-      
-      const finalTitleValue = (isImportant && !newTitleIsImportant)
-        ? newTitleValue 
-        : (!isImportant && newTitleIsImportant) 
-        ? `! ${newTitleValue}`
-        : isImportant 
-        ? `! ${newTitleValue}`
-        : newTitleValue;
-
-      onUpdateTask(task.id, finalTitleValue);
+      const newTitle = title.trim();
+      const finalTitle = isImportant ? `! ${newTitle}` : newTitle;
+      onUpdateTask(task.id, finalTitle);
     } else {
       setTitle(initialTitle);
     }
@@ -142,6 +130,10 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
         setIsEditing(false);
     }
   };
+  
+  useEffect(() => {
+    setTitle(initialTitle);
+  }, [initialTitle]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {

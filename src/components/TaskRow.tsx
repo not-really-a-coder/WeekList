@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -143,42 +144,19 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
       inputRef.current.select();
     }
   }, [isEditing]);
+  
+  useEffect(() => {
+    setTitle(initialTitle);
+  }, [initialTitle]);
 
   const handleSave = () => {
     if (title.trim()) {
-      const newTitleIsImportant = title.trim().startsWith('!');
-      let finalTitle = title.trim();
-
-      if (newTitleIsImportant) {
-        finalTitle = title.trim();
-      } else if (isImportant) {
-        // Task was important, but user removed '!', so don't add it back
-        finalTitle = title.trim();
-      } else if (title.trim().startsWith('!')) {
-        finalTitle = title.trim();
-      }
-
-      // If the original task was important, and the new title doesn't start with '!', it means it was removed.
-      // If the original was not important, and the new one starts with '!', it was added.
-      // Otherwise, the status is unchanged.
-      
-      const actuallyImportant = isImportant ? !newTitleIsImportant : newTitleIsImportant;
-      
-      let newTitleValue = title.trim();
-      if(newTitleValue.startsWith('!')) {
-        newTitleValue = newTitleValue.substring(1).trim();
-      }
-      
-      const finalTitleValue = (isImportant && !newTitleIsImportant)
-        ? newTitleValue 
-        : (!isImportant && newTitleIsImportant) 
-        ? `! ${newTitleValue}`
-        : isImportant 
-        ? `! ${newTitleValue}`
-        : newTitleValue;
-
-      onUpdate(task.id, finalTitleValue);
+      const newTitle = title.trim();
+      // Only add ! prefix if it's not already there for saving
+      const finalTitle = isImportant ? `! ${newTitle}` : newTitle;
+      onUpdate(task.id, finalTitle);
     } else {
+      // if title is empty, revert to original
       setTitle(initialTitle);
     }
     setIsEditing(false);
