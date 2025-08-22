@@ -91,13 +91,6 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
         return;
       }
       
-      // Logic for nesting by dragging right
-      if (isIndenting && level === 0 && !task.parentId && item.level === 0) {
-        onSetParent(item.id, task.id);
-        item.level = 1; // Update dragged item's level optimistically
-        return; // Prevent other actions when indenting
-      }
-
       // Vertical reordering logic
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
@@ -105,6 +98,19 @@ export function TaskRow({ task, index, level, onUpdate, onDelete, onMove, onSetP
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
         return;
       }
+
+      // Logic for nesting by dragging right
+      if (isIndenting && item.level === 0) {
+        // Find the task visually above the current hover target
+        const potentialParentIndex = hoverIndex -1;
+        // We can only indent if we are not the first item
+        if(potentialParentIndex >= 0) {
+            onSetParent(item.id, task.id);
+            item.level = 1; // Update dragged item's level optimistically
+            return; // Prevent other actions when indenting
+        }
+      }
+
       if (!isIndenting && !isOutdenting) {
         onMove(dragIndex, hoverIndex);
         item.index = hoverIndex;
