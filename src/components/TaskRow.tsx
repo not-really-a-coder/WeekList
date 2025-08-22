@@ -152,6 +152,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   }, [task.title]);
 
   const handleSave = () => {
+    // If the title is empty or just '!', delete the task
     if (title.trim() === '!' || title.trim() === '') {
         onDelete(task.id);
     } else {
@@ -178,9 +179,11 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
           <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4" />
           </Button>
-           {isImportant && !isEditing && (
-            <AlertCircle className="size-4 text-destructive mr-2 shrink-0" />
-          )}
+          <div className="w-6 shrink-0">
+            {isImportant && !isEditing && (
+                <AlertCircle className="size-4 text-destructive" />
+            )}
+           </div>
           {isEditing ? (
             <>
               <Input

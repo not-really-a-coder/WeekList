@@ -113,6 +113,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
   });
 
   const handleSave = () => {
+    // If the title is empty or just '!', delete the task
     if (title.trim() === '!' || title.trim() === '') {
         onDeleteTask(task.id);
     } else {
@@ -172,9 +173,11 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                 <div ref={dragRef} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
-                {isImportant && !isEditing && (
-                    <AlertCircle className="size-4 text-destructive shrink-0" />
-                )}
+                <div className="w-5 shrink-0">
+                  {isImportant && !isEditing && (
+                      <AlertCircle className="size-4 text-destructive" />
+                  )}
+                </div>
                 {isEditing ? (
                      <Input
                         ref={inputRef}
