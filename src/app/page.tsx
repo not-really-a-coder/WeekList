@@ -11,7 +11,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { format, startOfWeek, addDays } from 'date-fns';
 
@@ -140,6 +140,7 @@ export default function Home() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
+  const [currentDate, setCurrentDate] = useState(new Date());
 
 
   useEffect(() => {
@@ -314,9 +315,17 @@ export default function Home() {
 
   const taskTree = tasks.filter(task => !task.parentId);
 
-  const startOfWeekDate = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM, do')}`;
+  const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM do')}`;
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
+  
+  const goToPreviousWeek = () => {
+    setCurrentDate(prevDate => addDays(prevDate, -7));
+  };
+
+  const goToNextWeek = () => {
+    setCurrentDate(prevDate => addDays(prevDate, 7));
+  };
 
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
@@ -336,7 +345,15 @@ export default function Home() {
               </div>
             ) : (
               <div>
-                <h2 className="text-xl font-bold font-headline mb-4">{weekDisplay}</h2>
+                <div className="flex items-center gap-4 mb-4">
+                    <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <h2 className="text-xl font-bold font-headline text-center flex-grow">{weekDisplay}</h2>
+                    <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
                 <TaskGrid
                   tasks={tasks}
                   onStatusChange={handleStatusChange}
