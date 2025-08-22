@@ -46,10 +46,10 @@ const ItemTypes = {
 
 export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove, onSetParent, getTaskById }: TaskRowProps) {
   const isImportant = task.title.startsWith('!');
-  const initialTitle = isImportant ? task.title.substring(1) : task.title;
+  const displayTitle = isImportant ? task.title.substring(1) : task.title;
 
-  const [isEditing, setIsEditing] = useState(initialTitle === 'New Task');
-  const [title, setTitle] = useState(initialTitle);
+  const [isEditing, setIsEditing] = useState(displayTitle === 'New Task');
+  const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 24;
@@ -141,22 +141,21 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      inputRef.current.select();
+      if (displayTitle === 'New Task') {
+        inputRef.current.select();
+      }
     }
-  }, [isEditing]);
+  }, [isEditing, displayTitle]);
   
   useEffect(() => {
-    setTitle(initialTitle);
-  }, [initialTitle]);
+    setTitle(task.title);
+  }, [task.title]);
 
   const handleSave = () => {
-    if (title.trim()) {
-      const newTitle = title.trim();
-      const finalTitle = isImportant ? `!${newTitle}` : newTitle;
-      onUpdate(task.id, finalTitle);
+    if (title.trim() === '!' || title.trim() === '') {
+        onDelete(task.id);
     } else {
-      // if title is empty, revert to original
-      setTitle(initialTitle);
+        onUpdate(task.id, title.trim());
     }
     setIsEditing(false);
   };
@@ -165,7 +164,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
     if (e.key === 'Enter') {
       handleSave();
     } else if (e.key === 'Escape') {
-      setTitle(initialTitle);
+      setTitle(task.title);
       setIsEditing(false);
     }
   };
@@ -179,7 +178,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
           <Button ref={drag} variant="ghost" size="icon" className="cursor-move mr-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <GripVertical className="size-4" />
           </Button>
-           {isImportant && (
+           {isImportant && !isEditing && (
             <AlertCircle className="size-4 text-destructive mr-2 shrink-0" />
           )}
           {isEditing ? (
@@ -202,7 +201,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
               className="text-sm font-medium flex-grow cursor-pointer truncate"
               onClick={() => setIsEditing(true)}
             >
-              {title}
+              {displayTitle}
             </p>
           )}
         </div>
@@ -223,7 +222,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onMove,
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the
-                task "{title}" and all its sub-tasks.
+                task "{displayTitle}" and all its sub-tasks.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
