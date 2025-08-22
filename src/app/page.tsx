@@ -14,7 +14,7 @@ import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { format, startOfWeek, addDays, getWeek, getYear } from 'date-fns';
+import { format, startOfWeek, addDays, getWeek, getYear, parse } from 'date-fns';
 
 const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
   {
@@ -303,6 +303,28 @@ export default function Home() {
     });
   }, [toast]);
 
+  const handleMoveTaskToWeek = useCallback((taskId: string, direction: 'next' | 'previous') => {
+    setTasks(currentTasks => {
+      const taskIndex = currentTasks.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) return currentTasks;
+
+      const task = currentTasks[taskIndex];
+      const [year, weekNumber] = task.week.split('-').map(Number);
+      
+      // We parse the date for the Monday of that week.
+      const taskDate = parse(`${year}-W${weekNumber.toString().padStart(2,'0')}-1`, 'Y-Www-i', new Date());
+      const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
+      
+      const newWeek = getWeek(newDate, { weekStartsOn: 1 });
+      const newYear = getYear(newDate);
+      const newWeekKey = `${newYear}-${newWeek}`;
+
+      const newTasks = [...currentTasks];
+      newTasks[taskIndex] = { ...task, week: newWeekKey };
+      return newTasks;
+    });
+  }, []);
+
   const goToPreviousWeek = () => {
     setCurrentDate(prevDate => addDays(prevDate, -7));
   };
@@ -323,7 +345,6 @@ export default function Home() {
   const currentYear = getYear(currentDate);
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
-  const hasActivity = (task: Task) => Object.values(task.statuses).some(s => s !== 'default');
   const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
   
   const getTaskLevel = (taskId: string, tasks: Task[]): number => {
@@ -355,6 +376,7 @@ export default function Home() {
               level={level}
               getTaskById={getTaskById}
               tasks={tasks}
+              onMoveToWeek={handleMoveTaskToWeek}
             />
           {children.length > 0 && renderTaskTree(children, allTasks, level + 1)}
         </React.Fragment>
@@ -402,6 +424,7 @@ export default function Home() {
                   onSetTaskParent={handleSetTaskParent}
                   getTaskById={getTaskById}
                   weekDates={weekDates}
+                  onMoveToWeek={handleMoveTaskToWeek}
                 />
               </div>
             )}

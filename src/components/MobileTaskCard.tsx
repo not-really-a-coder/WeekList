@@ -5,13 +5,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal } from 'lucide-react';
+import { GripVertical, Save, Trash2, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { cn } from '@/lib/utils';
 import { Input } from './ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StatusCell } from './StatusCell';
 
 interface MobileTaskCardProps {
@@ -26,6 +26,7 @@ interface MobileTaskCardProps {
   onSetTaskParent: (childId: string, parentId: string | null) => void;
   level: number;
   getTaskById: (taskId: string) => Task | undefined;
+  onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
 }
 
 const ItemTypes = {
@@ -42,7 +43,7 @@ interface DragItem {
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onToggleDone, onMoveTask, onSetTaskParent, level, getTaskById }: MobileTaskCardProps) {
+export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTask, onDeleteTask, onToggleDone, onMoveTask, onSetTaskParent, level, getTaskById, onMoveToWeek }: MobileTaskCardProps) {
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
   const isParent = tasks.some(t => t.parentId === task.id);
@@ -208,6 +209,15 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
+                          <ArrowLeft className="mr-2 size-4" />
+                          <span>Move to previous week</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
+                          <ArrowRight className="mr-2 size-4" />
+                          <span>Move to next week</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                       <AlertDialogTrigger asChild>
                         <DropdownMenuItem className="text-destructive focus:text-destructive">
                           <Trash2 className="mr-2 size-4" />

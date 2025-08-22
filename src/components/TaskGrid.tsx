@@ -21,6 +21,7 @@ interface TaskGridProps {
   onSetTaskParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
   weekDates: Date[];
+  onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -37,6 +38,7 @@ export function TaskGrid({
   onSetTaskParent,
   getTaskById,
   weekDates,
+  onMoveToWeek,
 }: TaskGridProps) {
   const taskTree = tasks.filter(task => !task.parentId);
 
@@ -71,6 +73,7 @@ export function TaskGrid({
                 level={level}
                 getTaskById={getTaskById}
                 tasks={tasks}
+                onMoveToWeek={onMoveToWeek}
               />
             </div>
         </div>

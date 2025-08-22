@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -23,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,7 @@ interface TaskRowProps {
   onMove: (dragIndex: number, hoverIndex: number) => void;
   onSetParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
+  onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
 }
 
 interface DragItem {
@@ -51,7 +53,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -230,6 +232,15 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
+                  <ArrowLeft className="mr-2 size-4" />
+                  <span>Move to previous week</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
+                  <ArrowRight className="mr-2 size-4" />
+                  <span>Move to next week</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem className="text-destructive focus:text-destructive">
                     <Trash2 className="mr-2 size-4" />
