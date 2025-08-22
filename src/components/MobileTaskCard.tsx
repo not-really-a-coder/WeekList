@@ -139,7 +139,7 @@ export function MobileTaskCard({ task, tasks, index, onStatusChange, onUpdateTas
         <Card className={cn('overflow-hidden', isDragging ? 'bg-primary/20 ring-2 ring-primary' : '')}>
           <CardHeader className="flex flex-row items-center justify-between p-4 bg-card-foreground/5">
             <div className="flex items-center gap-2 flex-grow min-w-0">
-                <div ref={drag} className="cursor-move touch-none">
+                <div ref={drag} className="cursor-move touch-none p-2 -m-2">
                     <GripVertical className="size-5 text-muted-foreground" />
                 </div>
                 {isEditing ? (
