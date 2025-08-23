@@ -61,10 +61,24 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 24;
-  
+  const longPressTimeout = useRef<NodeJS.Timeout>();
+
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
   const isParent = tasks.some(t => t.parentId === task.id);
+
+  const handlePressStart = () => {
+    longPressTimeout.current = setTimeout(() => {
+        setIsEditing(true);
+    }, 500); 
+  };
+
+  const handlePressEnd = () => {
+    if (longPressTimeout.current) {
+        clearTimeout(longPressTimeout.current);
+    }
+  };
+
 
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
@@ -197,7 +211,15 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 </Button>
               </>
             ) : (
-              <div className="flex items-center flex-grow min-w-0 gap-2">
+              <div
+                className="flex items-center flex-grow min-w-0 gap-2 select-none"
+                onMouseDown={handlePressStart}
+                onMouseUp={handlePressEnd}
+                onTouchStart={handlePressStart}
+                onTouchEnd={handlePressEnd}
+                onMouseMove={handlePressEnd}
+                onTouchMove={handlePressEnd}
+              >
                 {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
                 <p
                   className={cn(
@@ -205,7 +227,12 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                     task.isDone && "line-through",
                     isParent && "font-bold"
                   )}
-                  onClick={() => setIsEditing(true)}
+                  onClick={(e) => {
+                    const isDesktop = window.innerWidth >= 768;
+                    if(isDesktop){
+                      setIsEditing(true);
+                    }
+                  }}
                 >
                   {displayTitle}
                 </p>
