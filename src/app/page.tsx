@@ -438,7 +438,7 @@ export default function Home() {
                       <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-2 text-center flex-grow justify-center">
-                    <h2 className="text-sm md:text-xl font-bold font-headline">{weekDisplay}</h2>
+                    <h2 className="text-xs md:text-xl font-bold font-headline">{weekDisplay}</h2>
                     {!isCurrentWeek && (
                       <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
                         <Calendar className="h-4 w-4" />
@@ -464,15 +464,15 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
               />
                 <div className="mt-4 flex flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <div className="w-1/2">
+                  <div className="w-1/2 md:w-auto">
                     <Legend />
                   </div>
-                  <div className="w-1/2 flex-grow text-right">
+                  <div className="flex-grow text-right flex justify-end">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="text-right max-w-xs">
+                        <Button variant="link" className="text-right max-w-xs whitespace-normal h-auto p-0 leading-tight">
                           Move all unfinished tasks to next week
-                          <ArrowRight className="ml-2 size-4" />
+                          <ArrowRight className="ml-2 size-4 flex-shrink-0" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
