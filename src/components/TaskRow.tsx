@@ -289,7 +289,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 <Button
                   size="icon"
                   variant="ghost"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isMobile) {
+                      onSelectTask(task.id);
+                    }
+                  }}
                   className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
                   aria-label="More options"
                 >
