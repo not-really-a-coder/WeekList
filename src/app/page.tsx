@@ -435,7 +435,7 @@ export default function Home() {
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
   return (
-    <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile, enableTouchEvents: !isMobile }}>
+    <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow py-4 lg:p-8 px-0 sm:px-4">
@@ -480,7 +480,7 @@ export default function Home() {
                   <div className="flex-grow text-right flex justify-end">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="text-right max-w-xs whitespace-normal h-auto p-0 leading-tight flex-shrink-0">
+                        <Button variant="link" className="text-right max-w-xs h-auto p-0 leading-tight whitespace-normal">
                           Move all unfinished tasks to next week
                           <ArrowRight className="ml-2 size-4 flex-shrink-0" />
                         </Button>
