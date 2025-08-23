@@ -476,16 +476,16 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={setSelectedTaskId}
               />
-                <div className="mt-4 flex flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <div className="min-w-[150px] md:w-auto">
+                <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:justify-between sm:items-start gap-4 p-4 sm:p-0">
+                  <div className="w-full sm:w-auto">
                     <Legend />
                   </div>
-                  <div className="flex-grow text-right flex justify-end">
+                  <div className="flex-grow text-left sm:text-right flex justify-start sm:justify-end">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="text-right max-w-xs h-auto p-0 leading-tight whitespace-normal flex-shrink-0">
+                        <Button variant="link" className="text-left sm:text-right max-w-xs h-auto p-0 leading-tight whitespace-normal">
                           Move all unfinished tasks to next week
-                          <ArrowRight className="ml-2 size-4 " />
+                          <ArrowRight className="ml-2 size-4 inline-block" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
