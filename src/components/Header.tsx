@@ -6,7 +6,7 @@ import { ThemeToggle } from './ThemeToggle';
 export function Header() {
   return (
     <header className="border-b">
-      <div className="flex items-center justify-between mx-auto max-w-7xl px-4 sm:px-0 py-4 w-full gap-4">
+      <div className="flex items-center justify-between mx-auto max-w-7xl px-4 py-4 w-full gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
           <Logo className="size-8" />
           <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
