@@ -61,24 +61,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 24;
-  const longPressTimeout = useRef<NodeJS.Timeout>();
-
+  
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
   const isParent = tasks.some(t => t.parentId === task.id);
-
-  const handlePressStart = () => {
-    longPressTimeout.current = setTimeout(() => {
-        setIsEditing(true);
-    }, 500); 
-  };
-
-  const handlePressEnd = () => {
-    if (longPressTimeout.current) {
-        clearTimeout(longPressTimeout.current);
-    }
-  };
-
 
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
@@ -187,10 +173,32 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     }
   };
   
+  const longPressTimeout = useRef<NodeJS.Timeout>();
+  
+  const handleTitleClick = (e: React.MouseEvent<HTMLParagraphElement>) => {
+    const isDesktop = window.innerWidth >= 768;
+    if (isDesktop) {
+        setIsEditing(true);
+    }
+  };
+
+  const handleTitleTouchStart = () => {
+    longPressTimeout.current = setTimeout(() => {
+      setIsEditing(true);
+    }, 500);
+  };
+
+  const handleTitleTouchEnd = () => {
+    if(longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
+  };
+
+
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
         <div ref={ref} className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-          <div className="hidden md:flex cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none">
+          <div className="hidden md:flex p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none cursor-move">
               <GripVertical className="size-4 text-muted-foreground" />
           </div>
           <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -212,13 +220,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
               </>
             ) : (
               <div
-                className="flex items-center flex-grow min-w-0 gap-2 select-none touch-none"
-                onMouseDown={handlePressStart}
-                onMouseUp={handlePressEnd}
-                onTouchStart={handlePressStart}
-                onTouchEnd={handlePressEnd}
-                onMouseMove={handlePressEnd}
-                onTouchMove={handlePressEnd}
+                className="flex items-center flex-grow min-w-0 gap-2 select-none md:touch-auto touch-none"
               >
                 {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
                 <p
@@ -227,12 +229,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                     task.isDone && "line-through",
                     isParent && "font-bold"
                   )}
-                  onClick={(e) => {
-                    const isDesktop = window.innerWidth >= 768;
-                    if(isDesktop){
-                      setIsEditing(true);
-                    }
-                  }}
+                  onClick={handleTitleClick}
+                  onTouchStart={handleTitleTouchStart}
+                  onTouchEnd={handleTitleTouchEnd}
+                  onTouchMove={handleTitleTouchEnd}
                 >
                   {displayTitle}
                 </p>
@@ -307,5 +307,3 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     </div>
   );
 }
-
-    
