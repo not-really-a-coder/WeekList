@@ -89,14 +89,14 @@ export function TaskGrid({
     <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-sm md:text-base">
+        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-lg md:text-sm">
           <span className="hidden md:inline">{dayHeadersMobile[index]}</span>
           <span className="md:hidden">{day}</span>
-          <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
+          <span className="text-sm font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
       <div className="bg-muted p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
-        <span className="text-sm md:text-base">Task</span>
+        <span className="text-lg md:text-sm">Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
         </Button>
