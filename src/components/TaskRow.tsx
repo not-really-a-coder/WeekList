@@ -69,7 +69,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   const isParent = tasks.some(t => t.parentId === task.id);
   
   const isMobile = useIsMobile();
-  const [canDrag, setCanDrag] = useState(!isMobile);
   
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
@@ -200,7 +199,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 ref={drag}
                 className='flex items-center flex-grow min-w-0 gap-2'
             >
-                <div className="hidden p-1 -m-1 transition-opacity md:flex touch-none group-hover/row:opacity-100">
+                <div className="hidden p-1 -m-1 transition-opacity opacity-0 md:flex touch-none group-hover/row:opacity-100">
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
                 <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -255,7 +254,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  className="opacity-100 md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                   aria-label="More options"
                 >
                   <MoreHorizontal className="size-4" />
