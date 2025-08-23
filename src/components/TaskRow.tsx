@@ -239,6 +239,16 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
               </div>
             )}
           </div>
+
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            onClick={() => onToggleDone(task.id)} 
+            className={cn('hidden md:flex transition-opacity', task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
+          >
+            <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
+          </Button>
+
           <AlertDialog>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -256,7 +266,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                     Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
+                <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
                    <CheckCircle2 className={cn("mr-2 size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
                    <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
