@@ -154,7 +154,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   });
 
   const opacity = isDragging ? 0.4 : 1;
-  drop(ref); //This allows the main div to be a drop target.
+  drag(drop(ref));
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -190,7 +190,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
         <div ref={ref} className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-          <div ref={drag} className="cursor-move p-1 -m-1 opacity-100 md:opacity-0 group-hover/row:md:opacity-100 transition-opacity touch-none">
+          <div className="hidden md:flex cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none">
               <GripVertical className="size-4 text-muted-foreground" />
           </div>
           <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -212,7 +212,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
               </>
             ) : (
               <div
-                className="flex items-center flex-grow min-w-0 gap-2 select-none"
+                className="flex items-center flex-grow min-w-0 gap-2 select-none touch-none"
                 onMouseDown={handlePressStart}
                 onMouseUp={handlePressEnd}
                 onTouchStart={handlePressStart}
@@ -255,7 +255,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="opacity-100 md:opacity-0 group-hover/row:md:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  className="opacity-100 data-[state=open]:opacity-100 transition-opacity"
                   aria-label="More options"
                 >
                   <MoreHorizontal className="size-4" />
@@ -307,3 +307,5 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     </div>
   );
 }
+
+    
