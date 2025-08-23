@@ -474,7 +474,7 @@ export default function Home() {
                 onSelectTask={handleSelectTask}
               />
                 <div className="mt-4 flex flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <div className="w-auto md:w-auto">
+                  <div className="min-w-[150px] md:w-auto">
                     <Legend />
                   </div>
                   <div className="flex-grow text-right flex justify-end">
