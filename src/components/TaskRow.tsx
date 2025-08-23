@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -43,6 +43,7 @@ interface TaskRowProps {
   onSetParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
+  onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
 }
 
 interface DragItem {
@@ -56,7 +57,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,10 +70,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   
   const isMobile = useIsMobile();
   const [canDrag, setCanDrag] = useState(!isMobile);
-  const longPressTimeout = useRef<NodeJS.Timeout>();
-
+  
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
+    canDrop: () => !isMobile,
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
@@ -80,7 +81,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
       };
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
-      if (!ref.current) {
+      if (!ref.current || isMobile) {
         return;
       }
       const dragIndex = item.index;
@@ -136,15 +137,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     item: () => {
       return { id: task.id, index, type: ItemTypes.TASK, level };
     },
-    canDrag: () => canDrag,
+    canDrag: !isMobile,
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
-    end: () => {
-      if (isMobile) {
-        setCanDrag(false);
-      }
-    }
   });
 
   const opacity = isDragging ? 0.4 : 1;
@@ -164,47 +160,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     setTitle(task.title);
   }, [task.title]);
   
-  useEffect(() => {
-    if (!isMobile || !ref.current) {
-        return;
-    }
-    const node = ref.current;
-
-    const handlePressStart = () => {
-      longPressTimeout.current = setTimeout(() => {
-        setCanDrag(true);
-      }, 500); 
-    };
-
-    const handlePressEnd = () => {
-      if (longPressTimeout.current) {
-        clearTimeout(longPressTimeout.current);
-      }
-    };
-    
-    node.addEventListener('touchstart', handlePressStart);
-    node.addEventListener('touchend', handlePressEnd);
-    node.addEventListener('touchmove', handlePressEnd); 
-    
-    return () => {
-      node.removeEventListener('touchstart', handlePressStart);
-      node.removeEventListener('touchend', handlePressEnd);
-      node.removeEventListener('touchmove', handlePressEnd);
-    };
-
-  }, [isMobile, ref]);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    const node = ref.current;
-    const preventDefault = (e: Event) => e.preventDefault();
-    node.addEventListener('contextmenu', preventDefault);
-    return () => {
-      node.removeEventListener('contextmenu', preventDefault);
-    }
-  }, [ref]);
-
-
   const handleSave = () => {
     if (title.trim() === '!' || title.trim() === '') {
         onDelete(task.id);
@@ -227,10 +182,16 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   };
   
   const handleTitleClick = () => {
-    if (!canDrag) {
-        setIsEditing(true);
-    }
+    setIsEditing(true);
   };
+  
+  const siblings = tasks.filter(t => t.parentId === task.parentId);
+  const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
+  const isFirstSibling = mySiblingIndex === 0;
+  const isLastSibling = mySiblingIndex === siblings.length - 1;
+
+  const potentialParent = tasks[index - 1];
+  const canIndent = !task.parentId && potentialParent && !potentialParent.parentId;
 
   return (
     <div ref={ref} style={{ opacity }} data-handler-id={handlerId} className="w-full">
@@ -309,6 +270,29 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                    <CheckCircle2 className={cn("mr-2 size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
                    <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
+                
+                {/* Mobile-only move options */}
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstSibling} className="md:hidden">
+                    <ArrowUp className="mr-2 size-4" />
+                    <span>Move Up</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={isLastSibling} className="md:hidden">
+                    <ArrowDown className="mr-2 size-4" />
+                    <span>Move Down</span>
+                </DropdownMenuItem>
+                {task.parentId ? (
+                    <DropdownMenuItem onClick={() => onSetParent(task.id, null)} className="md:hidden">
+                        <Outdent className="mr-2 size-4" />
+                        <span>Indent Left</span>
+                    </DropdownMenuItem>
+                ) : (
+                    <DropdownMenuItem onClick={() => onSetParent(task.id, potentialParent.id)} disabled={!canIndent} className="md:hidden">
+                        <Indent className="mr-2 size-4" />
+                        <span>Indent Right</span>
+                    </DropdownMenuItem>
+                )}
+
+
                 <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
                   <ArrowRight className="mr-2 size-4" />
                   <span>Move to next week</span>

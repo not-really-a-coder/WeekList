@@ -257,6 +257,38 @@ export default function Home() {
       });
   }, []);
 
+  const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
+    setTasks(currentTasks => {
+        const taskIndex = currentTasks.findIndex(t => t.id === taskId);
+        if (taskIndex === -1) return currentTasks;
+
+        const task = currentTasks[taskIndex];
+        const siblings = currentTasks.filter(t => t.parentId === task.parentId);
+        const siblingIndex = siblings.findIndex(t => t.id === taskId);
+        
+        if (direction === 'up' && siblingIndex > 0) {
+            const newTasks = [...currentTasks];
+            const previousSibling = siblings[siblingIndex - 1];
+            const previousSiblingIndex = newTasks.findIndex(t => t.id === previousSibling.id);
+
+            const [movedTask] = newTasks.splice(taskIndex, 1);
+            newTasks.splice(previousSiblingIndex, 0, movedTask);
+            return newTasks;
+
+        } else if (direction === 'down' && siblingIndex < siblings.length - 1) {
+            const newTasks = [...currentTasks];
+            const nextSibling = siblings[siblingIndex + 1];
+            const nextSiblingIndex = newTasks.findIndex(t => t.id === nextSibling.id);
+
+            const [movedTask] = newTasks.splice(taskIndex, 1);
+            newTasks.splice(nextSiblingIndex, 0, movedTask);
+            return newTasks;
+        }
+
+        return currentTasks;
+    });
+}, []);
+
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
     setTasks(currentTasks => {
         let newTasks = [...currentTasks];
@@ -395,7 +427,7 @@ export default function Home() {
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
   return (
-    <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
+    <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile, enableTouchEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow py-4 lg:p-8 px-0 sm:px-4">
@@ -429,6 +461,7 @@ export default function Home() {
                 getTaskById={getTaskById}
                 weekDates={weekDates}
                 onMoveToWeek={handleMoveTaskToWeek}
+                onMoveTaskUpDown={handleMoveTaskUpDown}
               />
                 <div className="mt-4 flex flex-col md:flex-row justify-between items-start gap-4 p-4 sm:p-0">
                   <Legend />
