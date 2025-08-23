@@ -438,7 +438,7 @@ export default function Home() {
                       <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-2 text-center flex-grow justify-center">
-                    <h2 className="text-xl font-bold font-headline">{weekDisplay}</h2>
+                    <h2 className="text-lg md:text-xl font-bold font-headline">{weekDisplay}</h2>
                     {!isCurrentWeek && (
                       <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
                         <Calendar className="h-4 w-4" />
