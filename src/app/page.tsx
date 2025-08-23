@@ -11,9 +11,9 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek } from 'date-fns';
+import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
 
@@ -433,18 +433,32 @@ export default function Home() {
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
   const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
+  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM do, yyyy')}`;
+  const today = new Date();
+  const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <Header 
-            currentDate={currentDate}
-            goToPreviousWeek={goToPreviousWeek}
-            goToNextWeek={goToNextWeek}
-            goToToday={goToToday}
-        />
+        <Header />
         <main className="flex-grow py-4 lg:p-8 px-0 sm:px-4">
           <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-2 justify-center flex-grow mb-4 md:mb-8">
+              <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
+                  <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-2 text-center justify-center">
+                  <h2 className="text-sm md:text-xl font-bold font-headline whitespace-nowrap">{weekDisplay}</h2>
+                  {!isCurrentWeek && (
+                  <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
+                      <Calendar className="h-4 w-4" />
+                  </Button>
+                  )}
+              </div>
+              <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
+                  <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
             <div>
               <TaskGrid
                 tasks={weeklyTasks}
@@ -498,5 +512,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
