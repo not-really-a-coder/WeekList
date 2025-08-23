@@ -137,6 +137,17 @@ const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'wee
   });
 };
 
+const formatWeekDisplay = (date: Date) => {
+  const formattedDate = format(date, 'MMMM do, yyyy');
+  const match = formattedDate.match(/(\d+)(st|nd|rd|th)/);
+  if (match) {
+    const [fullMatch, day, suffix] = match;
+    const withSuperscript = formattedDate.replace(fullMatch, `${day}<sup>${suffix}</sup>`);
+    return `Week of ${withSuperscript}`;
+  }
+  return `Week of ${formattedDate}`;
+};
+
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isClient, setIsClient] = useState(false);
@@ -433,7 +444,9 @@ export default function Home() {
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
   const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
-  const weekDisplay = `Week of ${format(startOfWeekDate, 'MMMM do, yyyy')}`;
+  
+  const weekDisplayHTML = formatWeekDisplay(startOfWeekDate);
+
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
@@ -448,7 +461,10 @@ export default function Home() {
                   <ChevronLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center gap-2 text-center justify-center">
-                  <h2 className="text-sm md:text-xl font-bold font-headline whitespace-nowrap">{weekDisplay}</h2>
+                  <h2 
+                    className="text-sm md:text-xl font-bold font-headline whitespace-nowrap"
+                    dangerouslySetInnerHTML={{ __html: weekDisplayHTML }}
+                   />
                   {!isCurrentWeek && (
                   <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
                       <Calendar className="h-4 w-4" />
