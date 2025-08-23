@@ -101,7 +101,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
       const deltaX = currentClientOffset.x - initialClientOffset.x;
       const isIndenting = deltaX > INDENT_WIDTH;
 
-      // Logic for nesting by dragging right
       if (isIndenting && item.level === 0) {
           const potentialParentIndex = hoverIndex - 1;
           if(potentialParentIndex >= 0) {
@@ -114,12 +113,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
           }
       }
 
-      // Prevent dropping on itself
       if (dragIndex === hoverIndex) {
         return;
       }
       
-      // Vertical reordering logic
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
       }
@@ -151,7 +148,8 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   });
 
   const opacity = isDragging ? 0.4 : 1;
-  drop(preview);
+  drop(preview(ref));
+  drag(ref);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -165,6 +163,36 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   useEffect(() => {
     setTitle(task.title);
   }, [task.title]);
+  
+  useEffect(() => {
+    if (!isMobile || !ref.current) {
+        return;
+    }
+    const node = ref.current;
+
+    const handlePressStart = () => {
+      longPressTimeout.current = setTimeout(() => {
+        setCanDrag(true);
+      }, 500); 
+    };
+
+    const handlePressEnd = () => {
+      if (longPressTimeout.current) {
+        clearTimeout(longPressTimeout.current);
+      }
+    };
+    
+    node.addEventListener('touchstart', handlePressStart);
+    node.addEventListener('touchend', handlePressEnd);
+    node.addEventListener('touchmove', handlePressEnd); 
+    
+    return () => {
+      node.removeEventListener('touchstart', handlePressStart);
+      node.removeEventListener('touchend', handlePressEnd);
+      node.removeEventListener('touchmove', handlePressEnd);
+    };
+
+  }, [isMobile, ref]);
 
   const handleSave = () => {
     if (title.trim() === '!' || title.trim() === '') {
@@ -181,44 +209,25 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     } else if (e.key === 'Escape') {
       setTitle(task.title);
       setIsEditing(false);
-    }
-  };
-
-  const handleInteractionStart = () => {
-    if (!isMobile) return;
-    longPressTimeout.current = setTimeout(() => {
-        setCanDrag(true);
-    }, 300); // 300ms for long press
-  };
-
-  const handleInteractionEnd = () => {
-      if(longPressTimeout.current) {
-          clearTimeout(longPressTimeout.current);
+      if(task.isNew){
+        onDelete(task.id);
       }
+    }
   };
   
   const handleTitleClick = () => {
-      if (isMobile) {
-          if (!isEditing) {
-              setIsEditing(true);
-          }
-      } else {
+      if (!canDrag) {
           setIsEditing(true);
       }
   };
 
   return (
-    <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-        <div ref={ref} className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
+    <div ref={ref} style={{ opacity }} data-handler-id={handlerId} className="w-full">
+        <div className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
             <div 
-                ref={drag}
                 className='flex items-center flex-grow min-w-0 gap-2'
-                onTouchStart={handleInteractionStart}
-                onTouchEnd={handleInteractionEnd}
-                onMouseDown={handleInteractionStart}
-                onMouseUp={handleInteractionEnd}
             >
-                <div className="hidden md:flex p-1 -m-1 transition-opacity touch-none group-hover/row:opacity-100">
+                <div className="hidden p-1 -m-1 transition-opacity md:flex touch-none group-hover/row:opacity-100">
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
                 <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -325,5 +334,3 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     </div>
   );
 }
-
-    
