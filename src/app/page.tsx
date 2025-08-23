@@ -431,7 +431,7 @@ export default function Home() {
                 onMoveToWeek={handleMoveTaskToWeek}
               />
                 <div className="mt-4 flex flex-col md:flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <Legend />
+                  
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="link" className="md:self-auto self-end">
@@ -454,6 +454,7 @@ export default function Home() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                  <Legend />
                 </div>
             </div>
           </div>

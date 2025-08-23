@@ -176,7 +176,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
         <div ref={ref} className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-          <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none">
+          <div ref={drag} className="cursor-move p-1 -m-1 opacity-100 md:opacity-0 group-hover/row:md:opacity-100 transition-opacity touch-none">
               <GripVertical className="size-4 text-muted-foreground" />
           </div>
           <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -212,22 +212,13 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
               </div>
             )}
           </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            className={cn("transition-opacity", task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
-            aria-label="Mark as done"
-            onClick={() => onToggleDone(task.id)}
-          >
-            <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
-          </Button>
           <AlertDialog>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  className="opacity-100 md:opacity-0 group-hover/row:md:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                   aria-label="More options"
                 >
                   <MoreHorizontal className="size-4" />
@@ -238,6 +229,10 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                     Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
+                   <CheckCircle2 className={cn("mr-2 size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                   <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
                   <ArrowRight className="mr-2 size-4" />
                   <span>Move to next week</span>
