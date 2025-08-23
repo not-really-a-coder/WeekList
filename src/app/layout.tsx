@@ -17,8 +17,8 @@ const fontPtSans = PT_Sans({
 
 
 export const metadata: Metadata = {
-  title: 'FlowDo',
-  description: 'Manage your tasks with focus and flow.',
+  title: 'WeekList',
+  description: 'Manage your tasks week by week.',
 };
 
 export default function RootLayout({
