@@ -484,9 +484,9 @@ export default function Home() {
                   <div className="flex-grow text-right flex justify-end">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="text-right max-w-xs h-auto p-0 leading-tight whitespace-normal">
+                        <Button variant="link" className="text-right max-w-xs h-auto p-0 leading-tight whitespace-normal flex-shrink-0">
                           Move all unfinished tasks to next week
-                          <ArrowRight className="ml-2 size-4 flex-shrink-0" />
+                          <ArrowRight className="ml-2 size-4 " />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -513,5 +513,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
