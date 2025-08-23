@@ -492,8 +492,8 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={setSelectedTaskId}
               />
-                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-4 sm:px-0">
-                  <div className="flex-shrink-0">
+                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-4 sm:px-2">
+                  <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>
                   <div className="flex justify-end text-right sm:justify-end sm:text-right">
