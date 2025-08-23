@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 
 interface TaskGridProps {
   tasks: Task[];
+  selectedTaskId: string | null;
   onStatusChange: (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => void;
   onUpdateTask: (taskId: string, newTitle: string) => void;
   onDeleteTask: (taskId:string) => void;
@@ -23,6 +24,7 @@ interface TaskGridProps {
   weekDates: Date[];
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
+  onSelectTask: (taskId: string) => void;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -30,6 +32,7 @@ const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export function TaskGrid({
   tasks,
+  selectedTaskId,
   onStatusChange,
   onUpdateTask,
   onDeleteTask,
@@ -41,6 +44,7 @@ export function TaskGrid({
   weekDates,
   onMoveToWeek,
   onMoveTaskUpDown,
+  onSelectTask,
 }: TaskGridProps) {
   const taskTree = tasks.filter(task => !task.parentId);
 
@@ -48,12 +52,13 @@ export function TaskGrid({
     const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
     const taskIndex = allTasks.findIndex(t => t.id === task.id);
     const isImportant = task.title.startsWith('!');
+    const isSelected = selectedTaskId === task.id;
 
     return (
       <React.Fragment key={task.id}>
         <div className="contents group/row">
             {weekdays.map((day) => (
-              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center")}>
+              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", isSelected ? 'bg-accent/20' : '')}>
                 <StatusCell
                   task={task}
                   status={task.statuses[day]}
@@ -63,7 +68,7 @@ export function TaskGrid({
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors")}>
+            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isSelected ? 'bg-accent/20' : '')}>
               <TaskRow
                 task={task}
                 index={taskIndex}
@@ -77,6 +82,8 @@ export function TaskGrid({
                 tasks={tasks}
                 onMoveToWeek={onMoveToWeek}
                 onMoveTaskUpDown={onMoveTaskUpDown}
+                onSelectTask={onSelectTask}
+                isSelected={isSelected}
               />
             </div>
         </div>

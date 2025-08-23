@@ -36,6 +36,7 @@ interface TaskRowProps {
   tasks: Task[];
   index: number;
   level: number;
+  isSelected: boolean;
   onUpdate: (taskId: string, newTitle: string) => void;
   onDelete: (taskId: string) => void;
   onToggleDone: (taskId: string) => void;
@@ -44,6 +45,7 @@ interface TaskRowProps {
   getTaskById: (taskId: string) => Task | undefined;
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
+  onSelectTask: (taskId: string) => void;
 }
 
 interface DragItem {
@@ -57,7 +59,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,7 +71,8 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   const isParent = tasks.some(t => t.parentId === task.id);
   
   const isMobile = useIsMobile();
-  
+  const longPressTimer = useRef<NodeJS.Timeout>();
+
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
     canDrop: () => !isMobile,
@@ -181,11 +184,30 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   };
   
   const handleTitleClick = () => {
-    if (!task.isDone) {
+    if (!task.isDone && !isMobile) {
       setIsEditing(true);
     }
   };
   
+  const handleTouchStart = () => {
+    longPressTimer.current = setTimeout(() => {
+      if (!task.isDone) {
+        setIsEditing(true);
+      }
+    }, 500); // 500ms for long press
+  };
+
+  const handleTouchEnd = () => {
+    clearTimeout(longPressTimer.current);
+  };
+  
+  const handleRowClick = () => {
+    if (isMobile) {
+      onSelectTask(task.id);
+    }
+  };
+
+
   const siblings = tasks.filter(t => t.parentId === task.parentId);
   const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
   const isFirstSibling = mySiblingIndex === 0;
@@ -195,13 +217,24 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   const canIndent = !task.parentId && potentialParent && !potentialParent.parentId;
 
   return (
-    <div ref={ref} style={{ opacity }} data-handler-id={handlerId} className="w-full">
+    <div 
+      ref={ref} 
+      style={{ opacity }} 
+      data-handler-id={handlerId} 
+      className="w-full"
+      onClick={handleRowClick}
+      onTouchStart={isMobile ? handleTouchStart : undefined}
+      onTouchEnd={isMobile ? handleTouchEnd : undefined}
+      onTouchMove={isMobile ? handleTouchEnd : undefined}
+    >
         <div className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-            <div 
-                ref={drag}
+            <div
                 className='flex items-center flex-grow min-w-0 gap-2'
             >
-                <div className="hidden p-1 -m-1 transition-opacity opacity-0 cursor-grab md:flex touch-none group-hover/row:opacity-100">
+                <div 
+                  ref={drag}
+                  className='hidden p-1 -m-1 transition-opacity opacity-0 cursor-grab md:flex touch-none group-hover/row:opacity-100'
+                >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
                 <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -244,7 +277,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
           <Button 
             size="icon" 
             variant="ghost" 
-            onClick={() => onToggleDone(task.id)} 
+            onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
             className={cn('hidden md:flex transition-opacity', task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
           >
             <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
@@ -256,13 +289,14 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 <Button
                   size="icon"
                   variant="ghost"
+                  onClick={(e) => e.stopPropagation()}
                   className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
                   aria-label="More options"
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuLabel className="font-normal text-muted-foreground">
                     Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                 </DropdownMenuLabel>

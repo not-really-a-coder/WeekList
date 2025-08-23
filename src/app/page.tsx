@@ -144,6 +144,7 @@ export default function Home() {
   const isMobile = useIsMobile();
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -209,10 +210,12 @@ export default function Home() {
         task.id === taskId ? { ...task, title: newTitle, isNew: false } : task
       )
     );
+    setSelectedTaskId(null);
   };
 
   const handleDeleteTask = (taskId: string) => {
     setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId && task.parentId !== taskId));
+    setSelectedTaskId(null);
   };
   
   const handleToggleDone = (taskId: string) => {
@@ -234,6 +237,7 @@ export default function Home() {
         return task
       })
     );
+    setSelectedTaskId(null);
   }
 
   const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number, currentViewTasks: Task[]) => {
@@ -397,6 +401,10 @@ export default function Home() {
     toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
   }, [tasks, currentDate, toast]);
 
+  const handleSelectTask = (taskId: string) => {
+    setSelectedTaskId(currentId => (currentId === taskId ? null : taskId));
+  };
+
   const goToPreviousWeek = () => {
     setCurrentDate(prevDate => addDays(prevDate, -7));
   };
@@ -451,6 +459,7 @@ export default function Home() {
               </div>
               <TaskGrid
                 tasks={weeklyTasks}
+                selectedTaskId={selectedTaskId}
                 onStatusChange={handleStatusChange}
                 onUpdateTask={handleUpdateTask}
                 onDeleteTask={handleDeleteTask}
@@ -462,15 +471,16 @@ export default function Home() {
                 weekDates={weekDates}
                 onMoveToWeek={handleMoveTaskToWeek}
                 onMoveTaskUpDown={handleMoveTaskUpDown}
+                onSelectTask={handleSelectTask}
               />
                 <div className="mt-4 flex flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <div className="w-1/2 md:w-auto">
+                  <div className="w-auto md:w-auto">
                     <Legend />
                   </div>
                   <div className="flex-grow text-right flex justify-end">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="text-right max-w-xs whitespace-normal h-auto p-0 leading-tight">
+                        <Button variant="link" className="text-right max-w-xs whitespace-normal h-auto p-0 leading-tight flex-shrink-0">
                           Move all unfinished tasks to next week
                           <ArrowRight className="ml-2 size-4 flex-shrink-0" />
                         </Button>
@@ -499,7 +509,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
-
-    
