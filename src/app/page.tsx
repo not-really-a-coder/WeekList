@@ -417,7 +417,7 @@ export default function Home() {
   }, [tasks, currentDate, toast]);
 
   const handleSelectTask = (taskId: string) => {
-    setSelectedTaskId(taskId);
+    setSelectedTaskId(currentId => (currentId === taskId ? null : taskId));
   };
 
   const goToPreviousWeek = () => {
@@ -462,7 +462,7 @@ export default function Home() {
               </Button>
               <div className="flex items-center gap-2 text-center justify-center">
                   <h2 
-                    className="text-sm md:text-xl font-bold font-headline whitespace-nowrap"
+                    className="text-base md:text-xl font-bold font-headline whitespace-nowrap"
                     dangerouslySetInnerHTML={{ __html: weekDisplayHTML }}
                    />
                   {!isCurrentWeek && (
