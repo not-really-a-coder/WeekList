@@ -406,7 +406,7 @@ export default function Home() {
   }, [tasks, currentDate, toast]);
 
   const handleSelectTask = (taskId: string) => {
-    setSelectedTaskId(currentId => (currentId === taskId ? null : taskId));
+    setSelectedTaskId(taskId);
   };
 
   const goToPreviousWeek = () => {
@@ -476,14 +476,14 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={setSelectedTaskId}
               />
-                <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:justify-between sm:items-start gap-4 p-4 sm:p-0">
-                  <div className="w-full sm:w-auto">
+                <div className="mt-4 flex flex-row items-start justify-between gap-4 p-4 sm:p-0">
+                  <div className="flex-shrink-0">
                     <Legend />
                   </div>
-                  <div className="flex-grow text-left sm:text-right flex justify-start sm:justify-end">
+                  <div className="flex justify-end text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="text-left sm:text-right max-w-xs h-auto p-0 leading-tight whitespace-normal">
+                        <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
                           Move all unfinished tasks to next week
                           <ArrowRight className="ml-2 size-4 inline-block" />
                         </Button>
