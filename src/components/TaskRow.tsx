@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier, XYCoord } from 'dnd-core';
 import { Button } from '@/components/ui/button';
@@ -149,7 +149,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
 
   const opacity = isDragging ? 0.4 : 1;
   drop(preview(ref));
-  drag(ref);
+  
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -194,6 +194,17 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
 
   }, [isMobile, ref]);
 
+  useEffect(() => {
+    if (!ref.current) return;
+    const node = ref.current;
+    const preventDefault = (e: Event) => e.preventDefault();
+    node.addEventListener('contextmenu', preventDefault);
+    return () => {
+      node.removeEventListener('contextmenu', preventDefault);
+    }
+  }, [ref]);
+
+
   const handleSave = () => {
     if (title.trim() === '!' || title.trim() === '') {
         onDelete(task.id);
@@ -216,15 +227,16 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   };
   
   const handleTitleClick = () => {
-      if (!canDrag) {
-          setIsEditing(true);
-      }
+    if (!canDrag) {
+        setIsEditing(true);
+    }
   };
 
   return (
     <div ref={ref} style={{ opacity }} data-handler-id={handlerId} className="w-full">
         <div className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
             <div 
+                ref={drag}
                 className='flex items-center flex-grow min-w-0 gap-2'
             >
                 <div className="hidden p-1 -m-1 transition-opacity md:flex touch-none group-hover/row:opacity-100">
