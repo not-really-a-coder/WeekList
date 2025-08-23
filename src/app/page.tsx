@@ -438,7 +438,7 @@ export default function Home() {
                       <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-2 text-center flex-grow justify-center">
-                    <h2 className="text-lg md:text-xl font-bold font-headline">{weekDisplay}</h2>
+                    <h2 className="text-base md:text-xl font-bold font-headline">{weekDisplay}</h2>
                     {!isCurrentWeek && (
                       <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
                         <Calendar className="h-4 w-4" />
@@ -464,29 +464,33 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
               />
                 <div className="mt-4 flex flex-col sm:flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <Legend />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="link" className="text-right">
-                        Move all unfinished tasks to next week
-                        <ArrowRight className="ml-2 size-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will move all unfinished tasks from the current week to the next one.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
-                          Continue
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex-grow-0">
+                    <Legend />
+                  </div>
+                  <div className="flex-grow sm:text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="link" className="text-right max-w-xs">
+                          Move all unfinished tasks to next week
+                          <ArrowRight className="ml-2 size-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will move all unfinished tasks from the current week to the next one.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
             </div>
           </div>
@@ -495,3 +499,5 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    
