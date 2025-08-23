@@ -26,7 +26,6 @@ interface TaskGridProps {
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-const dayHeadersMobile = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function TaskGrid({
   tasks,
@@ -89,9 +88,8 @@ export function TaskGrid({
     <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-lg md:text-sm">
-          <span className="hidden md:inline">{dayHeadersMobile[index]}</span>
-          <span className="md:hidden">{day}</span>
+        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-lg md:text-base">
+          <span className="text-base md:text-sm">{day}</span>
           <span className="text-sm font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
