@@ -181,7 +181,9 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   };
   
   const handleTitleClick = () => {
-    setIsEditing(true);
+    if (!task.isDone) {
+      setIsEditing(true);
+    }
   };
   
   const siblings = tasks.filter(t => t.parentId === task.parentId);
@@ -227,7 +229,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                       {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
                       <p
                         className={cn(
-                          "text-base md:text-sm font-medium flex-grow line-clamp-2",
+                          "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",
                           task.isDone && "line-through",
                           isParent && "font-bold"
                         )}

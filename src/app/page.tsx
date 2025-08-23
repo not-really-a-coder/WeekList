@@ -463,11 +463,11 @@ export default function Home() {
                 onMoveToWeek={handleMoveTaskToWeek}
                 onMoveTaskUpDown={handleMoveTaskUpDown}
               />
-                <div className="mt-4 flex flex-col md:flex-row justify-between items-start gap-4 p-4 sm:p-0">
+                <div className="mt-4 flex flex-col sm:flex-row justify-between items-start gap-4 p-4 sm:p-0">
                   <Legend />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="link" className="md:self-auto self-end">
+                      <Button variant="link" className="text-right">
                         Move all unfinished tasks to next week
                         <ArrowRight className="ml-2 size-4" />
                       </Button>
