@@ -201,7 +201,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 ref={drag}
                 className='flex items-center flex-grow min-w-0 gap-2'
             >
-                <div className="hidden p-1 -m-1 transition-opacity opacity-0 md:flex touch-none group-hover/row:opacity-100">
+                <div className="hidden p-1 -m-1 transition-opacity opacity-0 cursor-grab md:flex touch-none group-hover/row:opacity-100">
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
                 <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -256,7 +256,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="opacity-100 md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
                   aria-label="More options"
                 >
                   <MoreHorizontal className="size-4" />
@@ -272,7 +272,6 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                    <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
                 
-                {/* Mobile-only move options */}
                 <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstSibling} className="md:hidden">
                     <ArrowUp className="mr-2 size-4" />
                     <span>Move Up</span>
