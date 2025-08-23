@@ -10,7 +10,6 @@ import { STATUS_CYCLE } from '@/lib/types';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { MobileTaskCard } from '@/components/MobileTaskCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus, Calendar, ArrowRight } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -395,119 +394,68 @@ export default function Home() {
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
-  const getTaskLevel = (taskId: string, tasks: Task[]): number => {
-    let level = 0;
-    let currentTask = tasks.find(t => t.id === taskId);
-    while (currentTask && currentTask.parentId) {
-        level++;
-        currentTask = tasks.find(t => t.id === currentTask!.parentId);
-    }
-    return level;
-  };
-  
-  const renderTaskTree = (tasksToRender: Task[], allTasks: Task[], level = 0) => {
-    return tasksToRender.map((task) => {
-      const children = allTasks.filter(child => child.parentId === task.id);
-      const taskIndex = allTasks.findIndex(t => t.id === task.id);
-      
-      return (
-        <React.Fragment key={task.id}>
-           <MobileTaskCard
-              task={task}
-              index={taskIndex}
-              onStatusChange={handleStatusChange}
-              onUpdateTask={handleUpdateTask}
-              onDeleteTask={handleDeleteTask}
-              onToggleDone={handleToggleDone}
-              onMoveTask={(dragIndex, hoverIndex) => handleMoveTask(dragIndex, hoverIndex, allTasks)}
-              onSetTaskParent={handleSetTaskParent}
-              level={level}
-              getTaskById={getTaskById}
-              tasks={tasks}
-              onMoveToWeek={handleMoveTaskToWeek}
-            />
-          {children.length > 0 && renderTaskTree(children, allTasks, level + 1)}
-        </React.Fragment>
-      )
-    });
-  }
-
-  const taskTree = weeklyTasks.filter(task => !task.parentId);
-
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow p-4 lg:p-8">
           <div className="max-w-7xl mx-auto">
-            {isMobile ? (
-              <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold font-headline">Tasks</h2>
-                     <Button size="icon" variant="default" onClick={handleAddTask} aria-label="Add new task">
-                        <Plus className="size-4" />
+            <div>
+              <div className="flex items-center gap-4 mb-4">
+                  <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
+                      <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-2 text-center flex-grow justify-center">
+                    <h2 className="text-xl font-bold font-headline">{weekDisplay}</h2>
+                    {!isCurrentWeek && (
+                      <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
+                        <Calendar className="h-4 w-4" />
                       </Button>
+                    )}
                   </div>
-                  {renderTaskTree(taskTree, weeklyTasks)}
+                  <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
+                      <ChevronRight className="h-4 w-4" />
+                  </Button>
               </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-4 mb-4">
-                    <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex items-center gap-2 text-center flex-grow justify-center">
-                      <h2 className="text-xl font-bold font-headline">{weekDisplay}</h2>
-                      {!isCurrentWeek && (
-                        <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
-                          <Calendar className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
+              <TaskGrid
+                tasks={weeklyTasks}
+                onStatusChange={handleStatusChange}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                onToggleDone={handleToggleDone}
+                onAddTask={handleAddTask}
+                onMoveTask={(dragIndex, hoverIndex) => handleMoveTask(dragIndex, hoverIndex, weeklyTasks)}
+                onSetTaskParent={handleSetTaskParent}
+                getTaskById={getTaskById}
+                weekDates={weekDates}
+                onMoveToWeek={handleMoveTaskToWeek}
+              />
+                <div className="mt-4 flex flex-col md:flex-row justify-between items-start gap-4">
+                  <Legend />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="link" className="md:self-auto self-end">
+                        Move all unfinished tasks to next week
+                        <ArrowRight className="ml-2 size-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will move all unfinished tasks from the current week to the next one.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
-                <TaskGrid
-                  tasks={weeklyTasks}
-                  onStatusChange={handleStatusChange}
-                  onUpdateTask={handleUpdateTask}
-                  onDeleteTask={handleDeleteTask}
-                  onToggleDone={handleToggleDone}
-                  onAddTask={handleAddTask}
-                  onMoveTask={(dragIndex, hoverIndex) => handleMoveTask(dragIndex, hoverIndex, weeklyTasks)}
-                  onSetTaskParent={handleSetTaskParent}
-                  getTaskById={getTaskById}
-                  weekDates={weekDates}
-                  onMoveToWeek={handleMoveTaskToWeek}
-                />
-                 <div className="mt-4 flex justify-between items-start">
-                    <Legend />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="link">
-                          Move all unfinished tasks to next week
-                          <ArrowRight className="ml-2 size-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will move all unfinished tasks from the current week to the next one.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
-                            Continue
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                 </div>
-              </div>
-            )}
+            </div>
           </div>
         </main>
       </div>

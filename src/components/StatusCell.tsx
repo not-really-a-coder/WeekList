@@ -61,7 +61,7 @@ export function StatusCell({ status, onStatusChange, className, disabled = false
       ref={drop}
       onClick={() => !disabled && onStatusChange(status)}
       className={cn(
-        'h-12 flex items-center justify-center transition-colors',
+        'h-full w-full flex items-center justify-center transition-colors',
         !disabled && 'cursor-pointer',
         disabled && 'opacity-40',
         className

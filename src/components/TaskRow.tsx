@@ -175,8 +175,8 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
-        <div ref={ref} className={cn('flex items-center w-full p-2 h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-          <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        <div ref={ref} className={cn('flex items-center w-full p-2 h-14 md:h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
+          <div ref={drag} className="cursor-move p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none">
               <GripVertical className="size-4 text-muted-foreground" />
           </div>
           <div className="flex items-center flex-grow min-w-0 gap-2">
@@ -201,7 +201,7 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
                 {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
                 <p
                   className={cn(
-                    "text-sm font-medium flex-grow cursor-pointer truncate",
+                    "text-base md:text-sm font-medium flex-grow cursor-pointer truncate",
                     task.isDone && "line-through",
                     isParent && "font-bold"
                   )}

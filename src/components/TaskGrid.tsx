@@ -26,6 +26,7 @@ interface TaskGridProps {
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const dayHeadersMobile = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function TaskGrid({
   tasks,
@@ -51,7 +52,7 @@ export function TaskGrid({
       <React.Fragment key={task.id}>
         <div className="contents group/row">
             {weekdays.map((day) => (
-              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors")}>
+              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center")}>
                 <StatusCell
                   task={task}
                   status={task.statuses[day]}
@@ -85,16 +86,17 @@ export function TaskGrid({
 
 
   return (
-    <div className="hidden md:grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
+    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center">
-          <span>{day}</span>
+        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-xs md:text-sm">
+          <span className="hidden md:inline">{dayHeadersMobile[index]}</span>
+          <span className="md:hidden">{day}</span>
           <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
       <div className="bg-muted p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
-        <span>Task</span>
+        <span className="text-sm md:text-base">Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
         </Button>
@@ -111,5 +113,3 @@ export function TaskGrid({
     </div>
   );
 }
-
-    
