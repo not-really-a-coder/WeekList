@@ -398,10 +398,10 @@ export default function Home() {
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: true }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
-        <main className="flex-grow p-4 lg:p-8">
+        <main className="flex-grow py-4 lg:p-8 px-0 sm:px-4">
           <div className="max-w-7xl mx-auto">
             <div>
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mb-4 px-4 sm:px-0">
                   <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                       <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -430,7 +430,7 @@ export default function Home() {
                 weekDates={weekDates}
                 onMoveToWeek={handleMoveTaskToWeek}
               />
-                <div className="mt-4 flex flex-col md:flex-row justify-between items-start gap-4">
+                <div className="mt-4 flex flex-col md:flex-row justify-between items-start gap-4 p-4 sm:p-0">
                   <Legend />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
