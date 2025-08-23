@@ -76,6 +76,9 @@
 }
 
 @layer base {
+  html {
+    @apply text-[20px];
+  }
   * {
     @apply border-border;
   }

@@ -89,7 +89,7 @@ export function TaskGrid({
     <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,14fr)] gap-px bg-border border rounded-lg overflow-hidden shadow-lg">
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-xs md:text-sm">
+        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-sm md:text-base">
           <span className="hidden md:inline">{dayHeadersMobile[index]}</span>
           <span className="md:hidden">{day}</span>
           <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
