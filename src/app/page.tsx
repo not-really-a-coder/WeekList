@@ -454,9 +454,9 @@ export default function Home() {
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
-        <main className="flex-grow py-4 lg:p-8 px-0 sm:px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-4 md:mb-8 px-4 sm:px-0">
+        <main className="flex-grow py-4 lg:p-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-0">
+            <div className="flex items-center justify-between mb-4 md:mb-8">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
               </Button>
