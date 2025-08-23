@@ -24,7 +24,7 @@ interface TaskGridProps {
   weekDates: Date[];
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
-  onSelectTask: (taskId: string) => void;
+  onSelectTask: (taskId: string | null) => void;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -82,7 +82,7 @@ export function TaskGrid({
                 tasks={tasks}
                 onMoveToWeek={onMoveToWeek}
                 onMoveTaskUpDown={onMoveTaskUpDown}
-                onSelectTask={onSelectTask}
+                onSelectTask={() => onSelectTask(task.id)}
                 isSelected={isSelected}
               />
             </div>
@@ -121,3 +121,5 @@ export function TaskGrid({
     </div>
   );
 }
+
+    

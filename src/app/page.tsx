@@ -475,7 +475,7 @@ export default function Home() {
                 weekDates={weekDates}
                 onMoveToWeek={handleMoveTaskToWeek}
                 onMoveTaskUpDown={handleMoveTaskUpDown}
-                onSelectTask={handleSelectTask}
+                onSelectTask={setSelectedTaskId}
               />
                 <div className="mt-4 flex flex-row justify-between items-start gap-4 p-4 sm:p-0">
                   <div className="min-w-[150px] md:w-auto">
@@ -513,3 +513,5 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    

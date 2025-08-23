@@ -45,7 +45,7 @@ interface TaskRowProps {
   getTaskById: (taskId: string) => Task | undefined;
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
-  onSelectTask: (taskId: string) => void;
+  onSelectTask: () => void;
 }
 
 interface DragItem {
@@ -203,7 +203,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const handleRowClick = () => {
     if (isMobile) {
-      onSelectTask(task.id);
+      onSelectTask();
     }
   };
 
@@ -292,7 +292,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                   onClick={(e) => {
                     e.stopPropagation();
                     if (isMobile) {
-                      onSelectTask(task.id);
+                      onSelectTask();
                     }
                   }}
                   className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
@@ -369,3 +369,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
+    
