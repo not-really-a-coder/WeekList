@@ -1,5 +1,6 @@
 import React from 'react';
 import Logo from './Logo';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
   return (
@@ -8,6 +9,7 @@ export function Header() {
         <Logo className="size-8" />
         <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
       </div>
+      <ThemeToggle />
     </header>
   );
 }
