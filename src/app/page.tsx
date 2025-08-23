@@ -438,7 +438,7 @@ export default function Home() {
                       <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-2 text-center flex-grow justify-center">
-                    <h2 className="text-base md:text-xl font-bold font-headline">{weekDisplay}</h2>
+                    <h2 className="text-sm md:text-xl font-bold font-headline">{weekDisplay}</h2>
                     {!isCurrentWeek && (
                       <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
                         <Calendar className="h-4 w-4" />
@@ -463,11 +463,11 @@ export default function Home() {
                 onMoveToWeek={handleMoveTaskToWeek}
                 onMoveTaskUpDown={handleMoveTaskUpDown}
               />
-                <div className="mt-4 flex flex-col sm:flex-row justify-between items-start gap-4 p-4 sm:p-0">
-                  <div className="flex-grow-0">
+                <div className="mt-4 flex flex-row justify-between items-start gap-4 p-4 sm:p-0">
+                  <div className="w-1/2">
                     <Legend />
                   </div>
-                  <div className="flex-grow sm:text-right">
+                  <div className="w-1/2 flex-grow text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="link" className="text-right max-w-xs">
@@ -499,5 +499,7 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    
 
     
