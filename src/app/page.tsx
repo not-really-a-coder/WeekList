@@ -164,6 +164,10 @@ export default function Home() {
   const handleStatusChange = (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => {
     const task = getTaskById(taskId);
     if (task?.isDone) return;
+    
+    if (isMobile) {
+      setSelectedTaskId(taskId);
+    }
 
     const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
     const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
@@ -509,3 +513,5 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    
