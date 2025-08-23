@@ -417,7 +417,7 @@ export default function Home() {
   }, [tasks, currentDate, toast]);
 
   const handleSelectTask = (taskId: string) => {
-    setSelectedTaskId(currentId => (currentId === taskId ? null : taskId));
+    setSelectedTaskId(taskId);
   };
 
   const goToPreviousWeek = () => {
@@ -455,7 +455,7 @@ export default function Home() {
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow py-4 lg:p-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-0">
+          <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between mb-4 md:mb-8">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
@@ -492,11 +492,11 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={setSelectedTaskId}
               />
-                <div className="mt-4 flex flex-row items-start justify-between gap-4 p-4 sm:p-0">
+                <div className="mt-4 flex flex-row items-start justify-between gap-4">
                   <div className="flex-shrink-0">
                     <Legend />
                   </div>
-                  <div className="flex justify-end text-right">
+                  <div className="flex justify-end text-right sm:justify-end sm:text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
