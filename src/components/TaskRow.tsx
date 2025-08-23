@@ -137,10 +137,15 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
+    end: () => {
+      if(longPressTimeout.current){
+        clearTimeout(longPressTimeout.current);
+      }
+    }
   });
 
   const opacity = isDragging ? 0.4 : 1;
-  drag(drop(ref));
+  drop(ref);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -175,22 +180,22 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   
   const longPressTimeout = useRef<NodeJS.Timeout>();
   
-  const handleTitleClick = (e: React.MouseEvent<HTMLParagraphElement>) => {
-    const isDesktop = window.innerWidth >= 768;
-    if (isDesktop) {
-        setIsEditing(true);
-    }
-  };
-
-  const handleTitleTouchStart = () => {
+  const handleTitleInteractionStart = () => {
     longPressTimeout.current = setTimeout(() => {
       setIsEditing(true);
     }, 500);
   };
 
-  const handleTitleTouchEnd = () => {
+  const handleTitleInteractionEnd = () => {
     if(longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
+    }
+  };
+
+  const handleTitleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const isDesktop = window.innerWidth >= 768;
+    if (isDesktop) {
+        setIsEditing(true);
     }
   };
 
@@ -198,46 +203,49 @@ export function TaskRow({ task, tasks, index, level, onUpdate, onDelete, onToggl
   return (
     <div ref={preview} style={{ opacity }} data-handler-id={handlerId} className="w-full">
         <div ref={ref} className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
-          <div className="hidden md:flex p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none cursor-move">
-              <GripVertical className="size-4 text-muted-foreground" />
-          </div>
-          <div className="flex items-center flex-grow min-w-0 gap-2">
-            {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
-            {isEditing ? (
-              <>
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onBlur={handleSave}
-                  className="flex-grow mr-2 bg-background"
-                />
-                <Button size="icon" variant="ghost" onClick={handleSave}>
-                  <Save className="size-4" />
-                </Button>
-              </>
-            ) : (
-              <div
-                className="flex items-center flex-grow min-w-0 gap-2 select-none md:touch-auto touch-none"
-              >
-                {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
-                <p
-                  className={cn(
-                    "text-base md:text-sm font-medium flex-grow cursor-pointer line-clamp-2",
-                    task.isDone && "line-through",
-                    isParent && "font-bold"
-                  )}
+          <div ref={drag} className='flex items-center flex-grow min-w-0 gap-2 cursor-move'>
+            <div className="hidden md:flex p-1 -m-1 opacity-0 group-hover/row:opacity-100 transition-opacity touch-none">
+                <GripVertical className="size-4 text-muted-foreground" />
+            </div>
+            <div className="flex items-center flex-grow min-w-0 gap-2">
+              {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+              {isEditing ? (
+                <>
+                  <Input
+                    ref={inputRef}
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleSave}
+                    className="flex-grow mr-2 bg-background"
+                  />
+                  <Button size="icon" variant="ghost" onClick={handleSave}>
+                    <Save className="size-4" />
+                  </Button>
+                </>
+              ) : (
+                <div
+                  className="flex items-center flex-grow min-w-0 gap-2 select-none md:touch-auto touch-none"
                   onClick={handleTitleClick}
-                  onTouchStart={handleTitleTouchStart}
-                  onTouchEnd={handleTitleTouchEnd}
-                  onTouchMove={handleTitleTouchEnd}
+                  onMouseDown={handleTitleInteractionStart}
+                  onMouseUp={handleTitleInteractionEnd}
+                  onTouchStart={handleTitleInteractionStart}
+                  onTouchEnd={handleTitleInteractionEnd}
                 >
-                  {displayTitle}
-                </p>
-              </div>
-            )}
+                  {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
+                  <p
+                    className={cn(
+                      "text-base md:text-sm font-medium flex-grow line-clamp-2",
+                      task.isDone && "line-through",
+                      isParent && "font-bold"
+                    )}
+                  >
+                    {displayTitle}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           <Button 
