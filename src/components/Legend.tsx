@@ -5,9 +5,9 @@ import { Dot } from './Dot';
 const legendItems = [
   { icon: <Dot className="size-3 text-muted-foreground/50" />, label: 'Planned' },
   { icon: <ArrowRight className="size-4 text-blue-500" />, label: 'Rescheduled' },
-  { icon: <AlertCircle className="size-4 text-destructive" />, label: 'Important' },
-  { icon: <X className="size-4 text-red-500" />, label: 'Cancelled' },
   { icon: <Check className="size-4 text-green-500" />, label: 'Completed' },
+  { icon: <X className="size-4 text-red-500" />, label: 'Cancelled' },
+  { icon: <AlertCircle className="size-4 text-destructive" />, label: 'Important' },
   { icon: <CheckCircle2 className="size-4 text-green-500" />, label: 'Closed' },
 ];
 

@@ -1,7 +1,7 @@
 
 export type TaskStatus = 'default' | 'planned' | 'completed' | 'rescheduled' | 'cancelled';
 
-export const STATUS_CYCLE: TaskStatus[] = ['default', 'planned', 'completed', 'rescheduled', 'cancelled'];
+export const STATUS_CYCLE: TaskStatus[] = ['default', 'planned', 'rescheduled', 'completed', 'cancelled'];
 
 export interface Task {
   id: string;
