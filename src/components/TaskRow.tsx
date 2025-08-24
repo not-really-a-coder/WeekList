@@ -45,7 +45,7 @@ interface TaskRowProps {
   getTaskById: (taskId: string) => Task | undefined;
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
-  onSelectTask: () => void;
+  onSelectTask: (taskId: string | null) => void;
 }
 
 interface DragItem {
@@ -75,7 +75,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
   const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
     accept: ItemTypes.TASK,
-    canDrop: () => !isMobile,
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
@@ -83,7 +82,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       };
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
-      if (!ref.current || isMobile) {
+      if (!ref.current) {
         return;
       }
       const dragIndex = item.index;
@@ -104,18 +103,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const deltaX = currentClientOffset.x - initialClientOffset.x;
       const isIndenting = deltaX > INDENT_WIDTH;
 
-      if (isIndenting && item.level === 0) {
-          const potentialParentIndex = hoverIndex - 1;
-          if(potentialParentIndex >= 0) {
-            const potentialParentTask = tasks[potentialParentIndex];
-            if (potentialParentTask && !potentialParentTask.parentId && potentialParentTask.id !== item.id) {
-                onSetParent(item.id, potentialParentTask.id);
-                item.level = 1; 
-                return; 
-            }
-          }
-      }
-
       if (dragIndex === hoverIndex) {
         return;
       }
@@ -127,10 +114,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         return;
       }
 
-      if (!isIndenting) {
-        onMove(dragIndex, hoverIndex);
-        item.index = hoverIndex;
-      }
+      onMove(dragIndex, hoverIndex);
+      item.index = hoverIndex;
     },
   });
 
@@ -139,7 +124,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     item: () => {
       return { id: task.id, index, type: ItemTypes.TASK, level };
     },
-    canDrag: !isMobile,
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -183,13 +167,17 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     }
   };
   
-  const handleTitleClick = () => {
+  const handleTitleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!task.isDone && !isMobile) {
       setIsEditing(true);
+      onSelectTask(task.id);
     }
   };
   
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    onSelectTask(task.id);
     longPressTimer.current = setTimeout(() => {
       if (!task.isDone) {
         setIsEditing(true);
@@ -201,9 +189,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     clearTimeout(longPressTimer.current);
   };
   
-  const handleRowClick = () => {
+  const handleRowClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isMobile) {
-      onSelectTask();
+      onSelectTask(task.id);
     }
   };
 
@@ -213,32 +202,36 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const isFirstSibling = mySiblingIndex === 0;
   const isLastSibling = mySiblingIndex === siblings.length - 1;
 
-  const potentialParent = tasks[index - 1];
-  const canIndent = !task.parentId && potentialParent && !potentialParent.parentId;
+  const canIndent = index > 0 && !task.parentId && !tasks[index-1].parentId;
+  const canUnindent = !!task.parentId;
+
 
   return (
     <div 
       ref={ref} 
       style={{ opacity }} 
       data-handler-id={handlerId} 
-      className="w-full"
+      className={cn("w-full", isSelected ? 'bg-accent/20' : '')}
       onClick={handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
       onTouchEnd={isMobile ? handleTouchEnd : undefined}
       onTouchMove={isMobile ? handleTouchEnd : undefined}
     >
-        <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
+        <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '')}>
             <div
                 className='flex items-center flex-grow min-w-0 gap-2'
             >
                 <div 
                   ref={drag}
-                  className='hidden p-1 -m-1 transition-opacity opacity-0 cursor-grab md:flex touch-none group-hover/row:opacity-100'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectTask(task.id)
+                  }}
+                  className='flex p-1 -m-1 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none'
                 >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
-                <div className="flex items-center flex-grow min-w-0 gap-2">
-                  {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+                <div className="flex items-center flex-grow min-w-0 gap-2" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
                   {isEditing ? (
                     <>
                       <Input
@@ -291,9 +284,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                   variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (isMobile) {
-                      onSelectTask();
-                    }
+                    onSelectTask(task.id)
                   }}
                   className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
                   aria-label="More options"
@@ -311,25 +302,19 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                    <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstSibling} className="md:hidden">
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstSibling}>
                     <ArrowUp className="mr-2 size-4" />
                     <span>Move Up</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={isLastSibling} className="md:hidden">
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={isLastSibling}>
                     <ArrowDown className="mr-2 size-4" />
                     <span>Move Down</span>
                 </DropdownMenuItem>
-                {task.parentId ? (
-                    <DropdownMenuItem onClick={() => onSetParent(task.id, null)} className="md:hidden">
-                        <Outdent className="mr-2 size-4" />
-                        <span>Indent Left</span>
-                    </DropdownMenuItem>
-                ) : (
-                    <DropdownMenuItem onClick={() => onSetParent(task.id, potentialParent.id)} disabled={!canIndent} className="md:hidden">
-                        <Indent className="mr-2 size-4" />
-                        <span>Indent Right</span>
-                    </DropdownMenuItem>
-                )}
+                
+                <DropdownMenuItem onClick={() => onSetParent(task.id, canUnindent ? null : tasks[index-1].id)} disabled={!canIndent && !canUnindent}>
+                    {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
+                    <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
+                </DropdownMenuItem>
 
 
                 <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
@@ -369,5 +354,3 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
-
-    

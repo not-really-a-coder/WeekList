@@ -168,6 +168,113 @@ export default function Home() {
     setIsClient(true);
   }, []);
 
+  const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
+      setTasks(currentTasks => {
+        const taskIndex = currentTasks.findIndex(t => t.id === taskId);
+        if (taskIndex === -1) return currentTasks;
+
+        const newTasks = [...currentTasks];
+        const targetIndex = direction === 'up' ? taskIndex - 1 : taskIndex + 1;
+
+        if (targetIndex < 0 || targetIndex >= newTasks.length) {
+            return currentTasks; 
+        }
+        
+        const taskToMove = newTasks[taskIndex];
+        const taskToSwapWith = newTasks[targetIndex];
+        
+        // simple swap
+        newTasks[taskIndex] = taskToSwapWith;
+        newTasks[targetIndex] = taskToMove;
+
+        return newTasks;
+      });
+  }, []);
+
+
+  const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
+    setTasks(currentTasks => {
+      const newTasks = [...currentTasks];
+      const childIndex = newTasks.findIndex(t => t.id === childId);
+      if (childIndex === -1) return currentTasks;
+
+      const childTask = newTasks[childIndex];
+
+      // Prevent nesting more than one level
+      if (parentId) {
+        const parentTask = newTasks.find(t => t.id === parentId);
+        if (parentTask?.parentId) {
+          toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
+          return currentTasks;
+        }
+      }
+
+      // Update parentId
+      newTasks[childIndex] = { ...childTask, parentId: parentId };
+
+      // Reorder: move the child to be right after the parent
+      if (parentId) {
+        const parentIndex = newTasks.findIndex(t => t.id === parentId);
+        if (parentIndex > -1) {
+          const [movedChild] = newTasks.splice(childIndex, 1);
+          const newParentIndex = newTasks.findIndex(t => t.id === parentId); // Re-find parent index after splice
+          newTasks.splice(newParentIndex + 1, 0, movedChild);
+        }
+      }
+
+      return newTasks;
+    });
+  }, [toast]);
+
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isMobile || !selectedTaskId) return;
+
+      // Prevent hotkeys from firing when an input is focused
+      if(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement){
+          return;
+      }
+      
+      const selectedTask = tasks.find(t => t.id === selectedTaskId);
+      if(!selectedTask) return;
+      
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          handleMoveTaskUpDown(selectedTaskId, 'up');
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          handleMoveTaskUpDown(selectedTaskId, 'down');
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (!selectedTask.parentId) {
+            const selectedTaskIndex = tasks.findIndex(t => t.id === selectedTaskId);
+            if (selectedTaskIndex > 0) {
+              const potentialParent = tasks[selectedTaskIndex - 1];
+              if (!potentialParent.parentId) {
+                handleSetTaskParent(selectedTaskId, potentialParent.id);
+              }
+            }
+          }
+          break;
+        case 'ArrowLeft':
+            e.preventDefault();
+            if (selectedTask.parentId) {
+              handleSetTaskParent(selectedTaskId, null);
+            }
+            break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent]);
+
+
   const getTaskById = useCallback((taskId: string) => {
     return tasks.find(t => t.id === taskId);
   }, [tasks]);
@@ -217,6 +324,7 @@ export default function Home() {
       isNew: true,
     };
     setTasks(currentTasks => [newTask, ...currentTasks]);
+    setSelectedTaskId(newTask.id);
   };
 
   const handleUpdateTask = (taskId: string, newTitle: string) => {
@@ -225,7 +333,6 @@ export default function Home() {
         task.id === taskId ? { ...task, title: newTitle, isNew: false } : task
       )
     );
-    setSelectedTaskId(null);
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -252,7 +359,6 @@ export default function Home() {
         return task
       })
     );
-    setSelectedTaskId(null);
   }
 
   const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number, currentViewTasks: Task[]) => {
@@ -275,91 +381,6 @@ export default function Home() {
         return newTasks;
       });
   }, []);
-
-  const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
-    setTasks(currentTasks => {
-        const taskIndex = currentTasks.findIndex(t => t.id === taskId);
-        if (taskIndex === -1) return currentTasks;
-
-        const task = currentTasks[taskIndex];
-        const siblings = currentTasks.filter(t => t.parentId === task.parentId);
-        const siblingIndex = siblings.findIndex(t => t.id === taskId);
-        
-        if (direction === 'up' && siblingIndex > 0) {
-            const newTasks = [...currentTasks];
-            const previousSibling = siblings[siblingIndex - 1];
-            const previousSiblingIndex = newTasks.findIndex(t => t.id === previousSibling.id);
-
-            const [movedTask] = newTasks.splice(taskIndex, 1);
-            newTasks.splice(previousSiblingIndex, 0, movedTask);
-            return newTasks;
-
-        } else if (direction === 'down' && siblingIndex < siblings.length - 1) {
-            const newTasks = [...currentTasks];
-            const nextSibling = siblings[siblingIndex + 1];
-            const nextSiblingIndex = newTasks.findIndex(t => t.id === nextSibling.id);
-
-            const [movedTask] = newTasks.splice(taskIndex, 1);
-            newTasks.splice(nextSiblingIndex, 0, movedTask);
-            return newTasks;
-        }
-
-        return currentTasks;
-    });
-}, []);
-
-  const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
-    setTasks(currentTasks => {
-        let newTasks = [...currentTasks];
-        const childIndex = newTasks.findIndex(t => t.id === childId);
-        
-        if (childIndex === -1) return currentTasks;
-
-        const childTaskData = newTasks[childIndex];
-
-        // Prevent nesting if parent already has a parent
-        if (parentId) {
-            const parentTask = newTasks.find(t => t.id === parentId);
-            if (parentTask?.parentId) {
-                toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
-                return currentTasks;
-            }
-             // prevent nesting on itself
-            if(childId === parentId) return currentTasks;
-        }
-        
-        const updatedChild = { ...childTaskData, parentId };
-        newTasks[childIndex] = updatedChild;
-
-        // When indenting, move child to be right after the parent
-        if (parentId) {
-            let parentIndex = newTasks.findIndex(t => t.id === parentId);
-            if(parentIndex > -1){
-                const childToMove = newTasks.splice(childIndex, 1)[0];
-                parentIndex = newTasks.findIndex(t => t.id === parentId);
-                newTasks.splice(parentIndex + 1, 0, childToMove);
-            }
-
-        } 
-        // When un-indenting, move to top level right after its old parent group
-        else if (childTaskData.parentId) {
-            const oldParentId = childTaskData.parentId;
-            const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
-
-            if(oldParentIndex > -1){
-                const childToMove = newTasks.splice(childIndex, 1)[0];
-                const siblings = newTasks.filter(t => t.parentId === oldParentId);
-                const lastSiblingIndex = siblings.length > 0
-                    ? newTasks.findIndex(t => t.id === siblings[siblings.length - 1].id)
-                    : newTasks.findIndex(t => t.id === oldParentId);
-                
-                newTasks.splice(lastSiblingIndex + 1, 0, childToMove);
-            }
-        }
-
-        return newTasks;
-    });
-  }, [toast]);
 
   const handleMoveTaskToWeek = useCallback((taskId: string, direction: 'next' | 'previous') => {
     setTasks(currentTasks => {
@@ -416,8 +437,12 @@ export default function Home() {
     toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
   }, [tasks, currentDate, toast]);
 
-  const handleSelectTask = (taskId: string) => {
-    setSelectedTaskId(taskId);
+  const handleSelectTask = (taskId: string | null) => {
+    if (taskId === selectedTaskId) {
+      setSelectedTaskId(null); // unselect if clicked again
+    } else {
+      setSelectedTaskId(taskId);
+    }
   };
 
   const goToPreviousWeek = () => {
@@ -452,9 +477,9 @@ export default function Home() {
   
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
         <Header />
-        <main className="flex-grow py-4">
+        <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="mx-auto px-0 sm:px-2">
             <div className="flex items-center justify-between mb-4 md:mb-4 px-2 sm:px-0">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
@@ -490,7 +515,7 @@ export default function Home() {
                 weekDates={weekDates}
                 onMoveToWeek={handleMoveTaskToWeek}
                 onMoveTaskUpDown={handleMoveTaskUpDown}
-                onSelectTask={setSelectedTaskId}
+                onSelectTask={handleSelectTask}
               />
                 <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">

@@ -46,12 +46,18 @@ export function TaskGrid({
   onMoveTaskUpDown,
   onSelectTask,
 }: TaskGridProps) {
-  const taskTree = tasks.filter(task => !task.parentId);
+
+  const taskTree = tasks.reduce((acc, task, index) => {
+    if (!task.parentId) {
+      acc.push(task);
+    }
+    return acc;
+  }, [] as Task[]);
+
 
   const renderTask = (task: Task, index: number, allTasks: Task[], level = 0) => {
     const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
-    const taskIndex = allTasks.findIndex(t => t.id === task.id);
-    const isImportant = task.title.startsWith('!');
+    const taskIndexInAllTasks = allTasks.findIndex(t => t.id === task.id);
     const isSelected = selectedTaskId === task.id;
 
     return (
@@ -71,7 +77,7 @@ export function TaskGrid({
             <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isSelected ? 'bg-accent/20' : '')}>
               <TaskRow
                 task={task}
-                index={taskIndex}
+                index={taskIndexInAllTasks}
                 onUpdate={onUpdateTask}
                 onDelete={onDeleteTask}
                 onToggleDone={onToggleDone}
@@ -82,20 +88,19 @@ export function TaskGrid({
                 tasks={tasks}
                 onMoveToWeek={onMoveToWeek}
                 onMoveTaskUpDown={onMoveTaskUpDown}
-                onSelectTask={() => onSelectTask(task.id)}
+                onSelectTask={onSelectTask}
                 isSelected={isSelected}
               />
             </div>
         </div>
-
-        {children.map(child => renderTask(child, index, allTasks, level + 1))}
+        {children.map((child, childIndex) => renderTask(child, childIndex, allTasks, level + 1))}
       </React.Fragment>
     );
   };
 
 
   return (
-    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)] gap-px bg-border border md:rounded-lg overflow-hidden shadow-lg">
+    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)] gap-px bg-border border md:rounded-lg overflow-hidden shadow-lg" onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.map((day, index) => (
         <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base">
@@ -121,5 +126,3 @@ export function TaskGrid({
     </div>
   );
 }
-
-    
