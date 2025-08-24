@@ -64,7 +64,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const INDENT_WIDTH = 20;
+  const INDENT_WIDTH = 10;
   
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
