@@ -227,7 +227,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       onTouchEnd={isMobile ? handleTouchEnd : undefined}
       onTouchMove={isMobile ? handleTouchEnd : undefined}
     >
-        <div className={cn('flex items-center w-full p-2 min-h-16 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
+        <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '', isOverCurrent && level === 0 && !task.parentId ? 'bg-accent/20' : '')}>
             <div
                 className='flex items-center flex-grow min-w-0 gap-2'
             >
