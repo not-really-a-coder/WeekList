@@ -64,7 +64,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const INDENT_WIDTH = 10;
+  const INDENT_WIDTH = 8;
   
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
@@ -113,17 +113,17 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       
       const deltaX = currentClientOffset.x - initialClientOffset.x;
-      const isIndenting = deltaX > INDENT_WIDTH;
-      const isUnindenting = deltaX < -INDENT_WIDTH;
+      const isIndenting = deltaX > INDENT_WIDTH * 4;
+      const isUnindenting = deltaX < -INDENT_WIDTH * 4;
       
       const dragItem = tasks.find(t => t.id === item.id);
       if(!dragItem) return;
 
       const hoverItemCanBeParent = !task.parentId;
+      const dragItemCanBeChild = !dragItem.parentId;
       
-      if (isIndenting && hoverItemCanBeParent && dragItem.id !== task.id) {
+      if (isIndenting && hoverItemCanBeParent && dragItemCanBeChild && dragItem.id !== task.id) {
           onSetParent(dragItem.id, task.id);
-          // early return to prevent reordering flicker
           return;
       }
       
