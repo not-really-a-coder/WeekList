@@ -455,8 +455,8 @@ export default function Home() {
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow py-4">
-          <div className="mx-auto px-2">
-            <div className="flex items-center justify-between mb-4 md:mb-8">
+          <div className="mx-auto px-0 sm:px-2">
+            <div className="flex items-center justify-between mb-4 md:mb-8 px-2 sm:px-0">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -492,7 +492,7 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={setSelectedTaskId}
               />
-                <div className="mt-4 flex flex-row items-start justify-between gap-4">
+                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>
