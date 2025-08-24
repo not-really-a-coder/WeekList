@@ -455,7 +455,7 @@ export default function Home() {
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow py-4">
-          <div className="mx-auto px-1">
+          <div className="mx-auto px-2">
             <div className="flex items-center justify-between mb-4 md:mb-8">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
