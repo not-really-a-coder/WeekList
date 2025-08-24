@@ -73,12 +73,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const isMobile = useIsMobile();
   const longPressTimer = useRef<NodeJS.Timeout>();
 
-  const [{ handlerId, isOverCurrent }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null; isOverCurrent: boolean }>({
+  const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
     accept: ItemTypes.TASK,
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
-        isOverCurrent: monitor.isOver({ shallow: true }),
       };
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
@@ -91,6 +90,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const initialClientOffset = monitor.getInitialClientOffset();
       const currentClientOffset = monitor.getClientOffset();
 
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      
       if (!initialClientOffset || !currentClientOffset) return;
       
       const clientOffset = monitor.getClientOffset();
@@ -99,14 +102,26 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
+      
       const deltaX = currentClientOffset.x - initialClientOffset.x;
       const isIndenting = deltaX > INDENT_WIDTH;
+      const isUnindenting = deltaX < -INDENT_WIDTH;
 
-      if (dragIndex === hoverIndex) {
-        return;
+      if (isIndenting && canIndent) {
+        const potentialParent = tasks[index-1];
+        if(potentialParent && !potentialParent.parentId && potentialParent.id !== item.id) {
+          onSetParent(item.id, potentialParent.id);
+          // early return to prevent reordering flicker
+          return;
+        }
       }
       
+      if (isUnindenting && canUnindent) {
+          onSetParent(item.id, null);
+          return;
+      }
+
+
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
       }
@@ -193,6 +208,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     e.stopPropagation();
     if (isMobile) {
       onSelectTask(task.id);
+    } else {
+      onSelectTask(task.id);
     }
   };
 
@@ -201,8 +218,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
   const isFirstSibling = mySiblingIndex === 0;
   const isLastSibling = mySiblingIndex === siblings.length - 1;
-
-  const canIndent = index > 0 && !task.parentId && !tasks[index-1].parentId;
+  
+  const canIndent = index > 0 && !task.parentId && tasks[index-1] && !tasks[index-1].parentId;
   const canUnindent = !!task.parentId;
 
 
@@ -232,6 +249,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
                 <div className="flex items-center flex-grow min-w-0 gap-2" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
+                  {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
                   {isEditing ? (
                     <>
                       <Input
@@ -311,7 +329,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <span>Move Down</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem onClick={() => onSetParent(task.id, canUnindent ? null : tasks[index-1].id)} disabled={!canIndent && !canUnindent}>
+                <DropdownMenuItem onClick={() => onSetParent(task.id, canUnindent ? null : (tasks[index-1] ? tasks[index-1].id : null))} disabled={!canIndent && !canUnindent}>
                     {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
                     <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
                 </DropdownMenuItem>
