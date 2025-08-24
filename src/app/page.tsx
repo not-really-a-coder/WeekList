@@ -455,8 +455,8 @@ export default function Home() {
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <Header />
         <main className="flex-grow py-4">
-          <div className="mx-auto px-0 sm:px-2">
-            <div className="flex items-center justify-between mb-4 md:mb-8 px-4 sm:px-0">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex items-center justify-between mb-4 md:mb-8">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -475,7 +475,7 @@ export default function Home() {
                   <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="px-0 sm:px-2">
+            <div className="px-0">
               <TaskGrid
                 tasks={weeklyTasks}
                 selectedTaskId={selectedTaskId}
