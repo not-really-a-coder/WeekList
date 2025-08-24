@@ -64,7 +64,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const [title, setTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const INDENT_WIDTH = 24;
+  const INDENT_WIDTH = 20;
   
   const isImportant = task.title.startsWith('!');
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
@@ -72,6 +72,15 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const isMobile = useIsMobile();
   const longPressTimer = useRef<NodeJS.Timeout>();
+  
+  const siblings = tasks.filter(t => t.parentId === task.parentId);
+  const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
+  const isFirstSibling = mySiblingIndex === 0;
+  const isLastSibling = mySiblingIndex === siblings.length - 1;
+  
+  const canIndent = index > 0 && !task.parentId && tasks[index-1] && !tasks[index-1].parentId;
+  const canUnindent = !!task.parentId;
+
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
     accept: ItemTypes.TASK,
@@ -106,18 +115,20 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const deltaX = currentClientOffset.x - initialClientOffset.x;
       const isIndenting = deltaX > INDENT_WIDTH;
       const isUnindenting = deltaX < -INDENT_WIDTH;
+      
+      const dragItem = tasks.find(t => t.id === item.id);
+      if(!dragItem) return;
 
-      if (isIndenting && canIndent) {
-        const potentialParent = tasks[index-1];
-        if(potentialParent && !potentialParent.parentId && potentialParent.id !== item.id) {
-          onSetParent(item.id, potentialParent.id);
+      const hoverItemCanBeParent = !task.parentId;
+      
+      if (isIndenting && hoverItemCanBeParent && dragItem.id !== task.id) {
+          onSetParent(dragItem.id, task.id);
           // early return to prevent reordering flicker
           return;
-        }
       }
       
-      if (isUnindenting && canUnindent) {
-          onSetParent(item.id, null);
+      if (isUnindenting && dragItem.parentId) {
+          onSetParent(dragItem.id, null);
           return;
       }
 
@@ -201,7 +212,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   };
 
   const handleTouchEnd = () => {
-    clearTimeout(longPressTimer.current);
+    if(longPressTimer.current) clearTimeout(longPressTimer.current);
   };
   
   const handleRowClick = (e: React.MouseEvent) => {
@@ -212,15 +223,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       onSelectTask(task.id);
     }
   };
-
-
-  const siblings = tasks.filter(t => t.parentId === task.parentId);
-  const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
-  const isFirstSibling = mySiblingIndex === 0;
-  const isLastSibling = mySiblingIndex === siblings.length - 1;
-  
-  const canIndent = index > 0 && !task.parentId && tasks[index-1] && !tasks[index-1].parentId;
-  const canUnindent = !!task.parentId;
 
 
   return (
