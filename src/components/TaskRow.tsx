@@ -98,31 +98,22 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       if (!ref.current) {
         return false;
       }
-      const dragItem = tasks.find(t => t.id === item.id);
-      if (!dragItem || dragItem.id === task.id) return false;
-
-      const hasChildren = tasks.some(t => t.parentId === dragItem.id);
-      const targetIsChild = !!task.parentId;
-
-      const clientOffset = monitor.getClientOffset();
-      const initialClientOffset = monitor.getInitialClientOffset();
-      if (!clientOffset || !initialClientOffset) return false;
-      
-      const deltaX = clientOffset.x - initialClientOffset.x;
-      const isIndenting = deltaX > INDENT_WIDTH * 4;
-
-      if (isIndenting && !targetIsChild && !hasChildren) return true;
-      
-      return true;
+      return item.id !== task.id;
     },
-    drop(item, monitor) {
+    drop(item: DragItem, monitor: DropTargetMonitor) {
+        if (!ref.current) {
+            return;
+        }
+
         const dragId = item.id;
         const hoverId = task.id;
+        const dragIndex = item.index;
+        const hoverIndex = index;
 
         if (dragId === hoverId) {
             return;
         }
-
+        
         const clientOffset = monitor.getClientOffset();
         const initialClientOffset = monitor.getInitialClientOffset();
         if (!clientOffset || !initialClientOffset) {
@@ -131,34 +122,24 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
         const deltaX = clientOffset.x - initialClientOffset.x;
         const isIndenting = deltaX > INDENT_WIDTH * 4;
-        const isUnindenting = deltaX < -INDENT_WIDTH * 4;
-
+        
         const dragItem = getTaskById(dragId);
         const hoverItem = getTaskById(hoverId);
-
         if (!dragItem || !hoverItem) return;
 
         // Handle Indenting
         if (isIndenting) {
-            // Find the task visually above the hover target
-            const hoverIndex = tasks.findIndex(t => t.id === hoverId);
-            const potentialParent = tasks[hoverIndex];
-            
-            // Check if indenting is valid
-            if (potentialParent && potentialParent.id !== dragId && !potentialParent.parentId) {
-                const isDragItemParent = tasks.some(t => t.parentId === dragId);
-                if (!isDragItemParent) {
-                    onSetParent(dragId, potentialParent.id);
-                    return; // Stop further processing
-                }
+            const hasChildren = tasks.some(t => t.parentId === dragId);
+            // The hover item (the drop target) cannot be a child itself.
+            if (!hoverItem.parentId && !hasChildren) {
+                onSetParent(dragId, hoverId);
+                return;
             }
         }
         
-        // Handle Un-indenting
-        if (isUnindenting && dragItem.parentId) {
-            onSetParent(dragId, null);
-            return; // Stop further processing
-        }
+        // If not indenting, perform regular move
+        onMove(dragIndex, hoverIndex);
+        item.index = hoverIndex;
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!ref.current) {
@@ -173,6 +154,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       
       const clientOffset = monitor.getClientOffset();
       if (!clientOffset) return;
+      
+      const deltaX = clientOffset.x - (monitor.getInitialClientOffset()?.x || 0);
+      if (Math.abs(deltaX) > INDENT_WIDTH * 2) {
+          // If user is clearly dragging horizontally, don't reorder vertically
+          return;
+      }
 
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
