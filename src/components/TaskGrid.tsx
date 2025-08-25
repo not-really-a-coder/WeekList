@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -19,6 +18,7 @@ interface TaskGridProps {
   onDeleteTask: (taskId:string) => void;
   onToggleDone: (taskId: string) => void;
   onAddTask: () => void;
+  onAddSubTasks: (parentId: string, subTasks: string[]) => void;
   onMoveTask: (dragIndex: number, hoverIndex: number) => void;
   onSetTaskParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
@@ -40,6 +40,7 @@ export function TaskGrid({
   onDeleteTask,
   onToggleDone,
   onAddTask,
+  onAddSubTasks,
   onMoveTask,
   onSetTaskParent,
   getTaskById,
@@ -93,6 +94,7 @@ export function TaskGrid({
                 onMoveTaskUpDown={onMoveTaskUpDown}
                 onSelectTask={onSelectTask}
                 isSelected={isSelected}
+                onAddSubTasks={onAddSubTasks}
               />
             </div>
         </div>

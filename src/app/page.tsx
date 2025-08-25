@@ -259,6 +259,41 @@ export default function Home() {
     updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
     setSelectedTaskId(newTask.id);
   };
+  
+  const handleAddSubTasks = useCallback(async (parentId: string, subTaskTitles: string[]) => {
+      const parentTask = tasks.find(t => t.id === parentId);
+      if (!parentTask) return;
+
+      const newSubTasks: Task[] = [];
+      const existingIds = tasks.map(t => t.id);
+
+      for (const title of subTaskTitles) {
+          const newId = await generateTaskId(existingIds.concat(newSubTasks.map(t => t.id)));
+          const newTask: Task = {
+              id: newId,
+              title: `[ ] ${title}`,
+              createdAt: new Date().toISOString(),
+              parentId: parentId,
+              week: parentTask.week,
+              statuses: {
+                  monday: 'default', tuesday: 'default', wednesday: 'default',
+                  thursday: 'default', friday: 'default', saturday: 'default',
+                  sunday: 'default',
+              },
+          };
+          newSubTasks.push(newTask);
+      }
+
+      updateAndSaveTasks(currentTasks => {
+          const parentIndex = currentTasks.findIndex(t => t.id === parentId);
+          if (parentIndex === -1) return currentTasks;
+
+          const newTasks = [...currentTasks];
+          newTasks.splice(parentIndex + 1, 0, ...newSubTasks);
+          return newTasks;
+      });
+  }, [tasks, updateAndSaveTasks]);
+
 
   const handleUpdateTask = (taskId: string, newTitle: string) => {
     updateAndSaveTasks(currentTasks =>
@@ -467,6 +502,7 @@ export default function Home() {
                 onDeleteTask={handleDeleteTask}
                 onToggleDone={handleToggleDone}
                 onAddTask={handleAddTask}
+                onAddSubTasks={handleAddSubTasks}
                 onMoveTask={handleMoveTask}
                 onSetTaskParent={handleSetTaskParent}
                 getTaskById={getTaskById}
@@ -514,5 +550,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
