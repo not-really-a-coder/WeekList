@@ -26,6 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -71,7 +72,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
   const isParent = tasks.some(t => t.parentId === task.id);
   
-  const { toast } = useToast();
   const isMobile = useIsMobile();
   const longPressTimer = useRef<NodeJS.Timeout>();
   
@@ -80,11 +80,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const canUnindent = !!task.parentId;
   
-  // A task can be indented if it's not the first in its sibling group
-  // and the task above it is a potential parent (not a child itself, or the task being dragged)
-  const isFirstInSiblingGroup = mySiblingIndex === 0;
   const taskAbove = index > 0 ? tasks[index - 1] : null;
-  const canIndent = !isFirstInSiblingGroup && taskAbove && !taskAbove.parentId;
+  const canIndent = !isParent && index > 0 && taskAbove && !taskAbove.parentId;
 
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
@@ -95,10 +92,14 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       };
     },
     canDrop(item, monitor) {
-      if (!ref.current) {
-        return false;
+      if (!ref.current) return false;
+      
+      const dragItem = getTaskById(item.id);
+      const hoverItem = getTaskById(task.id);
+      if (!dragItem || !hoverItem || dragItem.id === hoverItem.id) {
+          return false;
       }
-      return item.id !== task.id;
+      return true;
     },
     drop(item: DragItem, monitor: DropTargetMonitor) {
         if (!ref.current) {
@@ -107,8 +108,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
         const dragId = item.id;
         const hoverId = task.id;
-        const dragIndex = item.index;
-        const hoverIndex = index;
 
         if (dragId === hoverId) {
             return;
@@ -125,19 +124,27 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         
         const dragItem = getTaskById(dragId);
         const hoverItem = getTaskById(hoverId);
-        if (!dragItem || !hoverItem) return;
 
+        if (!dragItem || !hoverItem) return;
+        
         // Handle Indenting
-        if (isIndenting) {
-            const hasChildren = tasks.some(t => t.parentId === dragId);
-            // The hover item (the drop target) cannot be a child itself.
-            if (!hoverItem.parentId && !hasChildren) {
-                onSetParent(dragId, hoverId);
-                return;
-            }
+        const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
+        const canHoverItemBeParent = !hoverItem.parentId;
+        if (isIndenting && canDragItemBeChild && canHoverItemBeParent) {
+            onSetParent(dragId, hoverId);
+            return;
         }
         
-        // If not indenting, perform regular move
+        // Handle Un-indenting
+        const isUnindenting = deltaX < -(INDENT_WIDTH * 4);
+        if (isUnindenting && dragItem.parentId) {
+            onSetParent(dragId, null);
+            return;
+        }
+
+        // If not indenting/unindenting, perform regular move
+        const dragIndex = tasks.findIndex(t => t.id === dragId);
+        const hoverIndex = tasks.findIndex(t => t.id === hoverId);
         onMove(dragIndex, hoverIndex);
         item.index = hoverIndex;
     },
@@ -145,7 +152,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       if (!ref.current) {
         return;
       }
-      const dragIndex = item.index;
+      const dragIndex = tasks.findIndex(t => t.id === item.id);
       const hoverIndex = index;
       
       if (dragIndex === hoverIndex) {
@@ -157,7 +164,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       
       const deltaX = clientOffset.x - (monitor.getInitialClientOffset()?.x || 0);
       if (Math.abs(deltaX) > INDENT_WIDTH * 2) {
-          // If user is clearly dragging horizontally, don't reorder vertically
           return;
       }
 
@@ -354,21 +360,30 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                    <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstInSiblingGroup && !canUnindent}>
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
                     <ArrowUp className="mr-2 size-4" />
                     <span>Move Up</span>
+                    <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={mySiblingIndex === siblings.length - 1 && !canUnindent}>
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={index === tasks.length - 1}>
                     <ArrowDown className="mr-2 size-4" />
                     <span>Move Down</span>
+                    <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem 
-                  onClick={() => onSetParent(task.id, canUnindent ? null : (tasks[index-1] ? tasks[index-1].id : null))} 
+                  onClick={() => {
+                    if (canUnindent) {
+                      onSetParent(task.id, null);
+                    } else if (canIndent && taskAbove) {
+                      onSetParent(task.id, taskAbove.id);
+                    }
+                  }} 
                   disabled={!canIndent && !canUnindent}
                 >
                     {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
                     <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
+                    <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
                 </DropdownMenuItem>
 
 
@@ -409,3 +424,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
+    
