@@ -15,9 +15,23 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, saveTasks, uploadTasks } from './actions';
-import { generateTaskId } from '@/services/task-service';
+import { getTasks, saveTasks } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
+
+const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const ID_LENGTH = 4;
+
+async function generateTaskId(existingIds: string[]): Promise<string> {
+  let newId: string;
+  do {
+    newId = '';
+    for (let i = 0; i < ID_LENGTH; i++) {
+      newId += ID_CHARSET.charAt(Math.floor(Math.random() * ID_CHARSET.length));
+    }
+  } while (existingIds.includes(newId));
+  return newId;
+}
+
 
 const formatWeekDisplay = (date: Date) => {
   const formattedDate = format(date, 'MMMM d, yyyy');
@@ -44,7 +58,7 @@ export default function Home() {
       toast({
         variant: 'destructive',
         title: 'Error loading tasks',
-        description: error instanceof Error ? error.message : 'Could not load tasks from file.',
+        description: error instanceof Error ? error.message : 'Could not load tasks.',
       });
     } finally {
       setIsLoading(false);
@@ -401,32 +415,6 @@ export default function Home() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsLoading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const newTasks = await uploadTasks(formData);
-        setTasks(newTasks);
-        toast({ title: 'Success', description: 'Your tasks have been uploaded.' });
-    } catch (error) {
-        toast({
-            variant: 'destructive',
-            title: 'Upload failed',
-            description: error instanceof Error ? error.message : 'Could not upload file.',
-        });
-    } finally {
-        setIsLoading(false);
-        // Reset file input
-        e.target.value = '';
-    }
-  };
-
-
   const goToPreviousWeek = () => {
     setCurrentDate(prevDate => addDays(prevDate, -7));
   };
@@ -460,7 +448,7 @@ export default function Home() {
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
-        <Header onFileUpload={handleFileUpload} isSaving={isPending} />
+        <Header isSaving={isPending} />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="mx-auto px-0 sm:px-2">
              {isLoading ? (
