@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent } from 'lucide-react';
+import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2 } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -31,6 +31,8 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { handleBreakDownTask } from '@/app/actions';
+
 
 interface TaskRowProps {
   task: Task;
@@ -41,12 +43,13 @@ interface TaskRowProps {
   onUpdate: (taskId: string, newTitle: string) => void;
   onDelete: (taskId: string) => void;
   onToggleDone: (taskId: string) => void;
-  onMove: (dragIndex: number, hoverIndex: number) => void;
+  onMove: (dragId: string, hoverId: string) => void;
   onSetParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
   onSelectTask: (taskId: string | null) => void;
+  onAddSubTasks: (parentId: string, subTasks: string[]) => void;
 }
 
 interface DragItem {
@@ -60,9 +63,11 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
-  const [title, setTitle] = useState(task.title);
+  const [editableTitle, setEditableTitle] = useState(task.title.substring(task.title.indexOf(']') + 2));
+  const [isBreakingDown, setIsBreakingDown] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 8;
@@ -94,6 +99,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     },
     canDrop(item, monitor) {
       if (!ref.current) return false;
+      // Allow dropping as long as it's not on itself.
+      // The detailed logic for indent/unindent/reorder is in the drop handler.
       return item.id !== task.id;
     },
     drop(item: DragItem, monitor: DropTargetMonitor) {
@@ -118,31 +125,31 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
         const canHoverItemBeParent = !hoverItem.parentId;
+        
+        // Indent Action
         if (isIndenting && canDragItemBeChild && canHoverItemBeParent) {
             onSetParent(dragId, hoverId);
-            return;
+            return; // Prevent reordering if indenting
         }
         
         const isUnindenting = deltaX < -(INDENT_WIDTH * 4);
+        
+        // Un-indent Action
         if (isUnindenting && dragItem.parentId) {
             onSetParent(dragId, null);
-            return;
+            return; // Prevent reordering if un-indenting
         }
 
-        const dragIndex = tasks.findIndex(t => t.id === dragId);
-        const hoverIndex = tasks.findIndex(t => t.id === hoverId);
-        if (dragIndex !== -1 && hoverIndex !== -1) {
-          onMove(dragIndex, hoverIndex);
-          item.index = hoverIndex;
-        }
+        // Default: Reorder Action
+        onMove(dragId, hoverId);
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!ref.current) return;
 
-      const dragIndex = tasks.findIndex(t => t.id === item.id);
-      const hoverIndex = index;
+      const dragId = item.id;
+      const hoverId = task.id;
       
-      if (dragIndex === -1 || dragIndex === hoverIndex) return;
+      if (dragId === hoverId) return;
       
       const clientOffset = monitor.getClientOffset();
       if (!clientOffset) return;
@@ -154,11 +161,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       
+      const dragIndex = tasks.findIndex(t => t.id === dragId);
+      const hoverIndex = tasks.findIndex(t => t.id === hoverId);
+      
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
-      onMove(dragIndex, hoverIndex);
-      item.index = hoverIndex;
+      onMove(dragId, hoverId);
     },
   });
 
@@ -175,10 +184,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const opacity = isDragging ? 0.4 : 1;
   drop(preview(ref));
   
-
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
+      // For new tasks, select the text so user can start typing immediately
       if (task.isNew) {
         inputRef.current.select();
       }
@@ -186,15 +195,18 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   }, [isEditing, task.isNew]);
   
   useEffect(() => {
-    setTitle(task.title);
+    // When the original task title changes from outside, update the editable title
+    setEditableTitle(task.title.substring(task.title.indexOf(']') + 2));
   }, [task.title]);
-  
+
   const handleSave = () => {
-    const currentTaskText = title.substring(title.indexOf(']') + 2).trim();
-    if (currentTaskText === '!' || currentTaskText === '') {
+    const trimmedTitle = editableTitle.trim();
+    if (trimmedTitle === '' || trimmedTitle === '!') {
         onDelete(task.id);
     } else {
-        onUpdate(task.id, title.trim());
+        const titlePrefix = task.title.substring(0, task.title.indexOf(']') + 1);
+        const newTitle = `${titlePrefix} ${trimmedTitle}`;
+        onUpdate(task.id, newTitle);
     }
     setIsEditing(false);
   };
@@ -203,8 +215,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (e.key === 'Enter') {
       handleSave();
     } else if (e.key === 'Escape') {
-      setTitle(task.title);
+      // Revert to original title on escape
+      setEditableTitle(task.title.substring(task.title.indexOf(']') + 2));
       setIsEditing(false);
+      // If it was a new task, delete it on escape
       if(task.isNew){
         onDelete(task.id);
       }
@@ -236,6 +250,19 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const handleRowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelectTask(task.id);
+  };
+
+  const handleBreakdownClick = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsBreakingDown(true);
+      try {
+          const subTasks = await handleBreakDownTask(taskText);
+          onAddSubTasks(task.id, subTasks);
+      } catch (error) {
+          console.error("Failed to break down task", error);
+      } finally {
+          setIsBreakingDown(false);
+      }
   };
 
 
@@ -271,8 +298,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                       <Input
                         ref={inputRef}
                         type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        value={editableTitle}
+                        onChange={(e) => setEditableTitle(e.target.value)}
                         onKeyDown={handleKeyDown}
                         onBlur={handleSave}
                         className="flex-grow mr-2 bg-background"
@@ -300,6 +327,17 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                   )}
                 </div>
             </div>
+            
+          <Button 
+              size="icon" 
+              variant="ghost" 
+              onClick={handleBreakdownClick}
+              disabled={isBreakingDown || isDone}
+              className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-0' : 'opacity-0 group-hover/row:opacity-100')}
+              aria-label="Break down task with AI"
+          >
+              <Wand2 className={cn("size-4 text-muted-foreground", isBreakingDown && "animate-pulse")} />
+          </Button>
 
           <Button 
             size="icon" 
@@ -331,6 +369,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone} className="md:hidden">
+                   <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
+                   <span>Break down task</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
                    <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
                    <span>{isDone ? 'Mark as not done' : 'Mark as done'}</span>

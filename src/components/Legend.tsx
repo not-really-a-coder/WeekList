@@ -3,12 +3,12 @@ import { Check, X, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Dot } from './Dot';
 
 const legendItems = [
-  { icon: <Dot className="size-3 text-muted-foreground/50" />, label: 'Planned (o)' },
-  { icon: <ArrowRight className="size-4 text-blue-500" />, label: 'Rescheduled (>)' },
-  { icon: <Check className="size-4 text-green-500" />, label: 'Completed (v)' },
-  { icon: <X className="size-4 text-red-500" />, label: 'Cancelled (x)' },
-  { icon: <AlertCircle className="size-4 text-destructive" />, label: 'Important (!)' },
-  { icon: <CheckCircle2 className="size-4 text-green-500" />, label: 'Closed ([v])' },
+  { icon: <Dot className="size-3 text-muted-foreground/50" />, label: 'Planned' },
+  { icon: <ArrowRight className="size-4 text-blue-500" />, label: 'Rescheduled' },
+  { icon: <Check className="size-4 text-green-500" />, label: 'Completed' },
+  { icon: <X className="size-4 text-red-500" />, label: 'Cancelled' },
+  { icon: <AlertCircle className="size-4 text-destructive" />, label: 'Important' },
+  { icon: <CheckCircle2 className="size-4 text-green-500" />, label: 'Closed' },
 ];
 
 export function Legend() {
