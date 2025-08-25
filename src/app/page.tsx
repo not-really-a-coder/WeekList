@@ -231,48 +231,58 @@ export default function Home() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isMobile || !selectedTaskId) return;
 
-      // Prevent hotkeys from firing when an input is focused
-      if(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement){
-          return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
       }
-      
+
       const selectedTask = tasks.find(t => t.id === selectedTaskId);
-      if(!selectedTask) return;
+      if (!selectedTask) return;
       
-      switch (e.key) {
-        case 'ArrowUp':
-          e.preventDefault();
-          handleMoveTaskUpDown(selectedTaskId, 'up');
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          handleMoveTaskUpDown(selectedTaskId, 'down');
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (!selectedTask.parentId) {
-            const selectedTaskIndex = tasks.findIndex(t => t.id === selectedTaskId);
-            if (selectedTaskIndex > 0) {
-              const potentialParent = tasks[selectedTaskIndex - 1];
-              if (!potentialParent.parentId) {
-                handleSetTaskParent(selectedTaskId, potentialParent.id);
-              }
+      const weeklyTasks = tasks.filter(t => t.week === `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`);
+      const selectedTaskIndex = weeklyTasks.findIndex(t => t.id === selectedTaskId);
+
+      // New Hotkey Logic
+      if (e.key === 'ArrowUp' && !e.ctrlKey) {
+        e.preventDefault();
+        if (selectedTaskIndex > 0) {
+          setSelectedTaskId(weeklyTasks[selectedTaskIndex - 1].id);
+        }
+      } else if (e.key === 'ArrowDown' && !e.ctrlKey) {
+        e.preventDefault();
+        if (selectedTaskIndex < weeklyTasks.length - 1) {
+          setSelectedTaskId(weeklyTasks[selectedTaskIndex + 1].id);
+        }
+      } else if (e.key === 'ArrowUp' && e.ctrlKey) {
+        e.preventDefault();
+        handleMoveTaskUpDown(selectedTaskId, 'up');
+      } else if (e.key === 'ArrowDown' && e.ctrlKey) {
+        e.preventDefault();
+        handleMoveTaskUpDown(selectedTaskId, 'down');
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        if (selectedTask.parentId) {
+          handleSetTaskParent(selectedTaskId, null);
+        } else {
+          if (selectedTaskIndex > 0) {
+            const potentialParent = weeklyTasks[selectedTaskIndex - 1];
+            if (!potentialParent.parentId) {
+              handleSetTaskParent(selectedTaskId, potentialParent.id);
             }
           }
-          break;
-        case 'ArrowLeft':
-            e.preventDefault();
-            if (selectedTask.parentId) {
-              handleSetTaskParent(selectedTaskId, null);
-            }
-            break;
+        }
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (selectedTask.parentId) {
+          handleSetTaskParent(selectedTaskId, null);
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent]);
+  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent, currentDate]);
 
 
   const getTaskById = useCallback((taskId: string) => {
