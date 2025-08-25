@@ -30,6 +30,7 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskRowProps {
   task: Task;
@@ -70,18 +71,20 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const displayTitle = isImportant ? task.title.substring(1) : task.title;
   const isParent = tasks.some(t => t.parentId === task.id);
   
+  const { toast } = useToast();
   const isMobile = useIsMobile();
   const longPressTimer = useRef<NodeJS.Timeout>();
   
   const siblings = tasks.filter(t => t.parentId === task.parentId);
   const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
-  const isFirstSibling = mySiblingIndex === 0;
-  const isLastSibling = mySiblingIndex === siblings.length - 1;
   
   const canUnindent = !!task.parentId;
   
-  const potentialParent = tasks[index-1];
-  const canIndent = !isParent && index > 0 && potentialParent && !potentialParent.parentId;
+  // A task can be indented if it's not the first in its sibling group
+  // and the task above it is a potential parent (not a child itself, or the task being dragged)
+  const isFirstInSiblingGroup = mySiblingIndex === 0;
+  const taskAbove = index > 0 ? tasks[index - 1] : null;
+  const canIndent = !isFirstInSiblingGroup && taskAbove && !taskAbove.parentId;
 
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
@@ -113,33 +116,49 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       return true;
     },
     drop(item, monitor) {
-      if (!ref.current) {
-        return;
-      }
-      const dragItem = tasks.find(t => t.id === item.id);
-      if (!dragItem) return;
+        const dragId = item.id;
+        const hoverId = task.id;
 
-      const clientOffset = monitor.getClientOffset();
-      const initialClientOffset = monitor.getInitialClientOffset();
-      if (!clientOffset || !initialClientOffset) return;
+        if (dragId === hoverId) {
+            return;
+        }
 
-      const deltaX = clientOffset.x - initialClientOffset.x;
+        const clientOffset = monitor.getClientOffset();
+        const initialClientOffset = monitor.getInitialClientOffset();
+        if (!clientOffset || !initialClientOffset) {
+            return;
+        }
 
-      const isIndenting = deltaX > INDENT_WIDTH * 4;
-      const isUnindenting = deltaX < -INDENT_WIDTH * 4;
+        const deltaX = clientOffset.x - initialClientOffset.x;
+        const isIndenting = deltaX > INDENT_WIDTH * 4;
+        const isUnindenting = deltaX < -INDENT_WIDTH * 4;
 
-      const hoverItemCanBeParent = !task.parentId;
-      const dragItemCanBeChild = !tasks.some(t => t.parentId === dragItem.id);
-      
-      if (isIndenting && hoverItemCanBeParent && dragItemCanBeChild && dragItem.id !== task.id) {
-          onSetParent(dragItem.id, task.id);
-          return; // No need to also reorder vertically
-      }
-      
-      if (isUnindenting && dragItem.parentId) {
-          onSetParent(dragItem.id, null);
-          return; // No need to also reorder vertically
-      }
+        const dragItem = getTaskById(dragId);
+        const hoverItem = getTaskById(hoverId);
+
+        if (!dragItem || !hoverItem) return;
+
+        // Handle Indenting
+        if (isIndenting) {
+            // Find the task visually above the hover target
+            const hoverIndex = tasks.findIndex(t => t.id === hoverId);
+            const potentialParent = tasks[hoverIndex];
+            
+            // Check if indenting is valid
+            if (potentialParent && potentialParent.id !== dragId && !potentialParent.parentId) {
+                const isDragItemParent = tasks.some(t => t.parentId === dragId);
+                if (!isDragItemParent) {
+                    onSetParent(dragId, potentialParent.id);
+                    return; // Stop further processing
+                }
+            }
+        }
+        
+        // Handle Un-indenting
+        if (isUnindenting && dragItem.parentId) {
+            onSetParent(dragId, null);
+            return; // Stop further processing
+        }
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!ref.current) {
@@ -348,16 +367,19 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                    <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstSibling}>
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={isFirstInSiblingGroup && !canUnindent}>
                     <ArrowUp className="mr-2 size-4" />
                     <span>Move Up</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={isLastSibling}>
+                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={mySiblingIndex === siblings.length - 1 && !canUnindent}>
                     <ArrowDown className="mr-2 size-4" />
                     <span>Move Down</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem onClick={() => onSetParent(task.id, canUnindent ? null : (tasks[index-1] ? tasks[index-1].id : null))} disabled={!canIndent && !canUnindent}>
+                <DropdownMenuItem 
+                  onClick={() => onSetParent(task.id, canUnindent ? null : (tasks[index-1] ? tasks[index-1].id : null))} 
+                  disabled={!canIndent && !canUnindent}
+                >
                     {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
                     <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
                 </DropdownMenuItem>
