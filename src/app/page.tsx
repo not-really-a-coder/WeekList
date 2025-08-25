@@ -214,7 +214,6 @@ export default function Home() {
       // Prevent nesting a task that already has children
       const hasChildren = currentTasks.some(t => t.parentId === childId);
       if (parentId && hasChildren) {
-        toast({ title: "Nesting Limit", description: "Tasks with sub-tasks cannot be nested.", variant: 'destructive' });
         return currentTasks;
       }
 
@@ -222,7 +221,6 @@ export default function Home() {
       if (parentId) {
         const parentTask = currentTasks.find(t => t.id === parentId);
         if (parentTask?.parentId) {
-          toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
           return currentTasks;
         }
       }
