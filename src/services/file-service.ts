@@ -3,14 +3,18 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const getFilePath = (fileName: string): string => {
-  // In a real scenario, this might point to a user-specific directory
-  // or a database. For this example, we use the project root.
-  return path.join(process.cwd(), fileName);
+const getFilePath = async (fileName: string): Promise<string> => {
+  const dataDir = path.join(process.cwd(), 'public', 'data');
+  try {
+    await fs.mkdir(dataDir, { recursive: true });
+  } catch (error) {
+    console.error('Error creating data directory:', error);
+  }
+  return path.join(dataDir, fileName);
 };
 
 export async function readFile(fileName: string): Promise<string> {
-  const filePath = getFilePath(fileName);
+  const filePath = await getFilePath(fileName);
   try {
     return await fs.readFile(filePath, 'utf-8');
   } catch (error: any) {
@@ -23,6 +27,6 @@ export async function readFile(fileName: string): Promise<string> {
 }
 
 export async function writeFile(fileName: string, content: string): Promise<void> {
-  const filePath = getFilePath(fileName);
+  const filePath = await getFilePath(fileName);
   await fs.writeFile(filePath, content, 'utf-8');
 }

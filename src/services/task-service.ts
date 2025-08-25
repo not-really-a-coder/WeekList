@@ -1,7 +1,7 @@
 'use server';
 
 import type { Task, TaskStatus } from '@/lib/types';
-import { getWeek, getYear, parse, formatISO, format, startOfWeek, addDays, setWeek } from 'date-fns';
+import { getWeek, getYear, parse, formatISO, format, startOfWeek, setWeek } from 'date-fns';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -51,9 +51,8 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
       continue;
     }
 
-    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*?)\s*\(id:(.*)\)$/);
+    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*)\s\(id:(.*)\)$/);
     if (taskMatch) {
-      const indent = taskMatch[1] ? taskMatch[1].length / 2 : 0;
       
       const titleContent = taskMatch[4].trim();
       const metadataString = taskMatch[5];
