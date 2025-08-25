@@ -51,8 +51,7 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
       continue;
     }
 
-    // Updated regex to be more specific and less greedy
-    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*?)\s*\(id: (.*)\)$/);
+    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*?)\s*\(id:(.*)\)$/);
     if (taskMatch) {
       const indent = taskMatch[1] ? taskMatch[1].length / 2 : 0;
       
@@ -60,14 +59,14 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
       const metadataString = taskMatch[5];
       
       const idMatch = metadataString.match(/^(.*?);/);
-      const createdMatch = metadataString.match(/created: (.*?)(;|$)/);
-      const parentIdMatch = metadataString.match(/parentId: (.*)/);
+      const createdMatch = metadataString.match(/created:(.*?)(?:;|$)/);
+      const parentIdMatch = metadataString.match(/parentId:(.*)/);
 
-      if (!idMatch || !createdMatch) continue; // Invalid metadata, skip line
+      if (!idMatch || !createdMatch) continue;
 
-      const id = idMatch[1];
-      const createdAt = formatISO(new Date(createdMatch[1]));
-      const parentId = parentIdMatch ? parentIdMatch[1] : null;
+      const id = idMatch[1].trim();
+      const createdAt = formatISO(new Date(createdMatch[1].trim()));
+      const parentId = parentIdMatch ? parentIdMatch[1].trim() : null;
 
       const title = `${taskMatch[2]} ${titleContent}`;
       const statusesRaw = taskMatch[3];
@@ -129,7 +128,6 @@ export async function formatMarkdown(tasks: Task[]): Promise<string> {
         if (!/^\d{4}-\d{1,2}$/.test(weekKey)) continue;
 
         const [year, weekNum] = weekKey.split('-').map(Number);
-        // Handle cases where week number might be invalid for a year
         if (weekNum < 1 || weekNum > 53) continue;
 
         const date = setWeek(new Date(year, 0, 4), weekNum, { weekStartsOn: 1 });
@@ -158,9 +156,9 @@ export async function formatMarkdown(tasks: Task[]): Promise<string> {
 
                 const taskTextOnly = task.title.substring(task.title.indexOf(']') + 2);
                 
-                let metadata = `(id: ${task.id}; created: ${format(new Date(task.createdAt), 'yyyy-MM-dd')}`;
+                let metadata = `(id:${task.id};created:${format(new Date(task.createdAt), 'yyyy-MM-dd')}`;
                 if (task.parentId) {
-                    metadata += `; parentId: ${task.parentId}`;
+                    metadata += `;parentId:${task.parentId}`;
                 }
                 metadata += ')';
 
