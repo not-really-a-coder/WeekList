@@ -42,13 +42,10 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
 
   for (const line of lines) {
     if (line.startsWith('## Week of')) {
-      // Remove ordinal suffixes (st, nd, rd, th) to make parsing reliable
-      const dateString = line.substring(12).replace(/(\d+)(st|nd|rd|th)/, '$1');
-      // Parsing "Month Day, Year" format
+      const dateString = line.substring(12);
       const parsedDate = parse(dateString, 'MMMM d, yyyy', new Date());
       if (!isNaN(parsedDate.getTime())) {
           currentYear = getYear(parsedDate).toString();
-          // Setting week starts on Monday (1)
           currentWeek = getWeek(parsedDate, { weekStartsOn: 1 }).toString();
       }
       continue;
@@ -71,7 +68,7 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
         createdAt = formatISO(new Date(metadataMatch[3]));
         parentId = metadataMatch[5] || null;
       } else {
-        // Fallback for tasks without metadata (though unlikely with formatMarkdown)
+        // Fallback for tasks without metadata
         titleContent = titleAndMeta;
         id = await generateTaskId(tasks.map(t => t.id));
         createdAt = new Date().toISOString();
@@ -103,15 +100,12 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
     }
   }
 
-  // A second pass to ensure parentIds are correct based on the metadata
   const taskMap = new Map(tasks.map(t => [t.id, t]));
   for (const task of tasks) {
     if (task.parentId && !taskMap.has(task.parentId)) {
-        // If parent specified in metadata doesn't exist, nullify it.
         task.parentId = null;
     }
   }
-
 
   return tasks;
 }
@@ -136,10 +130,12 @@ export async function formatMarkdown(tasks: Task[]): Promise<string> {
     let markdown = '# WeekList Tasks\n\n';
 
     for (const weekKey of sortedWeeks) {
+        if (!/^\d{4}-\d{1,2}$/.test(weekKey)) continue;
+
         const [year, weekNum] = weekKey.split('-').map(Number);
         const firstDayOfYear = new Date(year, 0, 1);
         const date = setWeek(firstDayOfYear, weekNum, { weekStartsOn: 1 });
-        const weekStartFormatted = format(startOfWeek(date, { weekStartsOn: 1 }), 'MMMM do, yyyy');
+        const weekStartFormatted = format(startOfWeek(date, { weekStartsOn: 1 }), 'MMMM d, yyyy');
         
         markdown += `## Week of ${weekStartFormatted}\n\n`;
 
@@ -147,7 +143,6 @@ export async function formatMarkdown(tasks: Task[]): Promise<string> {
         
         const buildTaskTree = (parentId: string | null) => {
             const children = weekTasks.filter(t => t.parentId === parentId)
-              // sort children by their original order in the main tasks array
               .sort((a, b) => tasks.findIndex(t => t.id === a.id) - tasks.findIndex(t => t.id === b.id));
             
             for (const task of children) {

@@ -15,17 +15,12 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, saveTasks, uploadTasks, handleBreakDownTask } from './actions';
+import { getTasks, saveTasks, uploadTasks } from './actions';
 import { generateTaskId } from '@/services/task-service';
+import { handleBreakDownTask } from '@/app/actions';
 
 const formatWeekDisplay = (date: Date) => {
-  const formattedDate = format(date, 'MMMM do, yyyy');
-  const match = formattedDate.match(/(\d+)(st|nd|rd|th)/);
-  if (match) {
-    const [fullMatch, day, suffix] = match;
-    const withSuperscript = formattedDate.replace(fullMatch, `${day}<sup>${suffix}</sup>`);
-    return `Week of ${withSuperscript}`;
-  }
+  const formattedDate = format(date, 'MMMM d, yyyy');
   return `Week of ${formattedDate}`;
 };
 
@@ -457,7 +452,7 @@ export default function Home() {
 
   const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
   
-  const weekDisplayHTML = formatWeekDisplay(startOfWeekDate);
+  const weekDisplay = formatWeekDisplay(startOfWeekDate);
 
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
@@ -481,8 +476,7 @@ export default function Home() {
               <div className="flex items-center gap-2 text-center justify-center">
                   <h2 
                     className="text-base md:text-xl font-bold font-headline whitespace-nowrap"
-                    dangerouslySetInnerHTML={{ __html: weekDisplayHTML }}
-                   />
+                   >{weekDisplay}</h2>
                   {!isCurrentWeek && (
                   <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
                       <Calendar className="h-4 w-4" />
