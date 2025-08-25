@@ -15,7 +15,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, saveTasks, uploadTasks } from './actions';
+import { getTasks, saveTasks, uploadTasks, handleBreakDownTask } from './actions';
 import { generateTaskId } from '@/services/task-service';
 
 const formatWeekDisplay = (date: Date) => {
