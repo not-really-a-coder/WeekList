@@ -61,24 +61,25 @@ export default function Home() {
     setIsClient(true);
   }, [loadTasks]);
 
-  const updateAndSaveTasks = useCallback((newTasks: Task[] | ((currentTasks: Task[]) => Task[])) => {
-    let updatedTasks: Task[];
-    if (typeof newTasks === 'function') {
-      setTasks(currentTasks => {
-        updatedTasks = newTasks(currentTasks);
-        startTransition(() => {
-          saveTasks(updatedTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
-        });
-        return updatedTasks;
-      });
-    } else {
-      updatedTasks = newTasks;
-      setTasks(updatedTasks);
-      startTransition(() => {
-        saveTasks(updatedTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
-      });
-    }
-  }, [toast]);
+  const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
+    let finalTasks: Task[] = [];
+
+    // First, update the state optimistically
+    setTasks(currentTasks => {
+      if (typeof newTasksOrFn === 'function') {
+        finalTasks = newTasksOrFn(currentTasks);
+      } else {
+        finalTasks = newTasksOrFn;
+      }
+      return finalTasks;
+    });
+
+    // Then, trigger the server action in a transition
+    startTransition(() => {
+      // Use the `finalTasks` variable which holds the updated state
+      saveTasks(finalTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
+    });
+  }, [toast, startTransition]);
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
       updateAndSaveTasks(currentTasks => {
@@ -112,6 +113,11 @@ export default function Home() {
       // Prevent nesting a task that already has children
       const hasChildren = currentTasks.some(t => t.parentId === childId);
       if (parentId && hasChildren) {
+        toast({
+          variant: 'destructive',
+          title: 'Nesting failed',
+          description: 'Cannot indent a task that already has sub-tasks.',
+        });
         return currentTasks;
       }
 
@@ -119,6 +125,11 @@ export default function Home() {
       if (parentId) {
         const parentTask = currentTasks.find(t => t.id === parentId);
         if (parentTask?.parentId) {
+          toast({
+            variant: 'destructive',
+            title: 'Nesting failed',
+            description: 'Cannot nest a task more than one level deep.',
+          });
           return currentTasks;
         }
       }
@@ -136,7 +147,7 @@ export default function Home() {
 
       return newTasks;
     });
-  }, [updateAndSaveTasks]);
+  }, [updateAndSaveTasks, toast]);
 
 
   useEffect(() => {
@@ -278,26 +289,23 @@ export default function Home() {
     );
   }
 
-  const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number, currentViewTasks: Task[]) => {
-      updateAndSaveTasks((prevTasks) => {
-        const newTasks = [...prevTasks];
-        
-        const dragItem = currentViewTasks[dragIndex];
-        const hoverItem = currentViewTasks[hoverIndex];
+  const handleMoveTask = useCallback((dragId: string, hoverId: string) => {
+    updateAndSaveTasks((prevTasks) => {
+      const newTasks = [...prevTasks];
+      const dragIndex = newTasks.findIndex(t => t.id === dragId);
+      const hoverIndex = newTasks.findIndex(t => t.id === hoverId);
 
-        const dragItemGlobalIndex = newTasks.findIndex(t => t.id === dragItem.id);
-        const hoverItemGlobalIndex = newTasks.findIndex(t => t.id === hoverItem.id);
+      if (dragIndex === -1 || hoverIndex === -1) {
+          return newTasks;
+      }
 
-        if (dragItemGlobalIndex === -1 || hoverItemGlobalIndex === -1) {
-            return newTasks;
-        }
-
-        const [movedTask] = newTasks.splice(dragItemGlobalIndex, 1);
-        newTasks.splice(hoverItemGlobalIndex, 0, movedTask);
-        
-        return newTasks;
-      });
+      const [movedTask] = newTasks.splice(dragIndex, 1);
+      newTasks.splice(hoverIndex, 0, movedTask);
+      
+      return newTasks;
+    });
   }, [updateAndSaveTasks]);
+
 
   const handleMoveTaskToWeek = useCallback((taskId: string, direction: 'next' | 'previous') => {
     updateAndSaveTasks(currentTasks => {
@@ -459,7 +467,7 @@ export default function Home() {
                 onDeleteTask={handleDeleteTask}
                 onToggleDone={handleToggleDone}
                 onAddTask={handleAddTask}
-                onMoveTask={(dragIndex, hoverIndex) => handleMoveTask(dragIndex, hoverIndex, weeklyTasks)}
+                onMoveTask={handleMoveTask}
                 onSetTaskParent={handleSetTaskParent}
                 getTaskById={getTaskById}
                 weekDates={weekDates}
@@ -506,3 +514,5 @@ export default function Home() {
     </DndProvider>
   );
 }
+
+    

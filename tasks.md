@@ -24,7 +24,6 @@
 - [ ] [ o     ] Plan Q4 team offsite (id: zhxe; created: 2025-08-25)
 - [ ] [  o    ] !Update roadmap for Q4 (id: H9iB; created: 2025-08-25)
 
-## Week of August 4th, 2025
+## Week of August 18th, 2025
 
-- !qwd[   o o ] qwdq (id: UtsY; created: 2025-08-25)
-  - !asd[       ] asdas (id: StSu; created: 2025-08-25; parentId: UtsY)
+- [ ] [       ] New Task (id: s4wM; created: 2025-08-25)
