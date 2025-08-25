@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -11,145 +10,13 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-
-type InitialTask = Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'> & { childOfIndex?: number };
-
-const initialTasksData: InitialTask[] = [
-  {
-    title: '!Plan summer vacation',
-    isDone: false,
-    statuses: {
-      monday: 'planned',
-      tuesday: 'planned',
-      wednesday: 'default',
-      thursday: 'default',
-      friday: 'completed',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-  {
-    title: 'Book flights',
-    isDone: false,
-    statuses: { monday: 'planned', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-    childOfIndex: 0,
-  },
-  {
-    title: 'Weekly grocery shopping, making sure to pick up fresh vegetables and supplies for the weekend BBQ.',
-    isDone: false,
-    statuses: {
-      monday: 'default',
-      tuesday: 'default',
-      wednesday: 'default',
-      thursday: 'default',
-      friday: 'default',
-      saturday: 'completed',
-      sunday: 'default',
-    },
-  },
-  {
-    title: 'Finish Q2 report',
-    isDone: true,
-    statuses: {
-      monday: 'planned',
-      tuesday: 'completed',
-      wednesday: 'default',
-      thursday: 'default',
-      friday: 'default',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-  {
-    title: 'Renew gym membership',
-    isDone: false,
-    statuses: {
-      monday: 'default',
-      tuesday: 'default',
-      wednesday: 'rescheduled',
-      thursday: 'planned',
-      friday: 'default',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-  {
-    title: '!Call the plumber',
-    isDone: false,
-    statuses: {
-      monday: 'cancelled',
-      tuesday: 'default',
-      wednesday: 'default',
-      thursday: 'default',
-      friday: 'default',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-  {
-    title: 'Schedule dentist appointment',
-    isDone: false,
-    statuses: {
-      monday: 'default',
-      tuesday: 'planned',
-      wednesday: 'default',
-      thursday: 'default',
-      friday: 'default',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-  {
-    title: 'Pay electricity bill',
-    isDone: false,
-    statuses: {
-      monday: 'default',
-      tuesday: 'default',
-      wednesday: 'default',
-      thursday: 'completed',
-      friday: 'default',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-  {
-    title: 'Pick up dry cleaning',
-    isDone: false,
-    statuses: {
-      monday: 'default',
-      tuesday: 'default',
-      wednesday: 'default',
-      thursday: 'default',
-      friday: 'planned',
-      saturday: 'default',
-      sunday: 'default',
-    },
-  },
-];
-
-const addIdsAndDates = (tasks: InitialTask[], week: number, year: number): Task[] => {
-  const processedTasks: Task[] = tasks.map((task, index) => ({
-    ...task,
-    id: crypto.randomUUID(),
-    createdAt: new Date(Date.now() - index * 1000).toISOString(),
-    parentId: null,
-    isDone: task.isDone ?? false,
-    week: `${year}-${week}`,
-  }));
-
-  tasks.forEach((task, index) => {
-    if (task.childOfIndex !== undefined && processedTasks[task.childOfIndex]) {
-      processedTasks[index].parentId = processedTasks[task.childOfIndex].id;
-    }
-  });
-
-  return processedTasks;
-};
+import { getTasks, saveTasks, uploadTasks } from './actions';
+import { generateTaskId } from '@/services/task-service';
 
 const formatWeekDisplay = (date: Date) => {
   const formattedDate = format(date, 'MMMM do, yyyy');
@@ -165,25 +32,56 @@ const formatWeekDisplay = (date: Date) => {
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
+  const loadTasks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fetchedTasks = await getTasks();
+      setTasks(fetchedTasks);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error loading tasks',
+        description: error instanceof Error ? error.message : 'Could not load tasks from file.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    const today = new Date();
-    const currentWeek = getWeek(today, { weekStartsOn: 1 });
-    const currentYear = getYear(today);
-    const initialTasks = addIdsAndDates(initialTasksData, currentWeek, currentYear);
-    const sortedInitialTasks = [...initialTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setTasks(sortedInitialTasks);
+    loadTasks();
     setIsClient(true);
-  }, []);
+  }, [loadTasks]);
+
+  const updateAndSaveTasks = useCallback((newTasks: Task[] | ((currentTasks: Task[]) => Task[])) => {
+    let updatedTasks: Task[];
+    if (typeof newTasks === 'function') {
+      setTasks(currentTasks => {
+        updatedTasks = newTasks(currentTasks);
+        startTransition(() => {
+          saveTasks(updatedTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
+        });
+        return updatedTasks;
+      });
+    } else {
+      updatedTasks = newTasks;
+      setTasks(updatedTasks);
+      startTransition(() => {
+        saveTasks(updatedTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
+      });
+    }
+  }, [toast]);
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
-      setTasks(currentTasks => {
+      updateAndSaveTasks(currentTasks => {
         const taskIndex = currentTasks.findIndex(t => t.id === taskId);
         if (taskIndex === -1) return currentTasks;
 
@@ -203,11 +101,11 @@ export default function Home() {
 
         return newTasks;
       });
-  }, []);
+  }, [updateAndSaveTasks]);
 
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
-    setTasks(currentTasks => {
+    updateAndSaveTasks(currentTasks => {
       const childTask = currentTasks.find(t => t.id === childId);
       if (!childTask) return currentTasks;
 
@@ -225,7 +123,7 @@ export default function Home() {
         }
       }
 
-      const newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
+      let newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
 
       // Reorder: move the child to be right after the parent
       if (parentId) {
@@ -238,7 +136,7 @@ export default function Home() {
 
       return newTasks;
     });
-  }, []);
+  }, [updateAndSaveTasks]);
 
 
   useEffect(() => {
@@ -279,7 +177,7 @@ export default function Home() {
         } else {
           if (selectedTaskIndex > 0) {
             const potentialParent = weeklyTasks[selectedTaskIndex - 1];
-            if (!potentialParent.parentId) {
+            if (!potentialParent.parentId && !tasks.some(t => t.parentId === selectedTaskId)) {
               handleSetTaskParent(selectedTaskId, potentialParent.id);
             }
           }
@@ -305,7 +203,7 @@ export default function Home() {
 
   const handleStatusChange = (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => {
     const task = getTaskById(taskId);
-    if (task?.isDone) return;
+    if (task?.title.startsWith('[v]')) return;
     
     if (isMobile) {
       setSelectedTaskId(taskId);
@@ -315,7 +213,7 @@ export default function Home() {
     const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
     const newStatus = STATUS_CYCLE[nextIndex];
 
-    setTasks(currentTasks =>
+    updateAndSaveTasks(currentTasks =>
       currentTasks.map(task => {
         if (task.id === taskId) {
           const newStatuses = { ...task.statuses, [day]: newStatus };
@@ -326,15 +224,15 @@ export default function Home() {
     );
   };
   
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
     const currentYear = getYear(currentDate);
+    const newTaskId = await generateTaskId(tasks.map(t => t.id));
     const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: 'New Task',
+      id: newTaskId,
+      title: '[ ] New Task',
       createdAt: new Date().toISOString(),
       parentId: null,
-      isDone: false,
       statuses: {
         monday: 'default',
         tuesday: 'default',
@@ -347,12 +245,12 @@ export default function Home() {
       week: `${currentYear}-${currentWeek}`,
       isNew: true,
     };
-    setTasks(currentTasks => [newTask, ...currentTasks]);
+    updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
     setSelectedTaskId(newTask.id);
   };
 
   const handleUpdateTask = (taskId: string, newTitle: string) => {
-    setTasks(currentTasks =>
+    updateAndSaveTasks(currentTasks =>
       currentTasks.map(task =>
         task.id === taskId ? { ...task, title: newTitle, isNew: false } : task
       )
@@ -360,16 +258,20 @@ export default function Home() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    setTasks(currentTasks => currentTasks.filter(task => task.id !== taskId && task.parentId !== taskId));
+    updateAndSaveTasks(currentTasks => currentTasks.filter(task => task.id !== taskId && task.parentId !== taskId));
     setSelectedTaskId(null);
   };
   
   const handleToggleDone = (taskId: string) => {
-    setTasks(currentTasks =>
+    updateAndSaveTasks(currentTasks =>
       currentTasks.map(task => {
         if (task.id === taskId) {
-            const isNowDone = !task.isDone;
-            return { ...task, isDone: isNowDone };
+            const isDone = task.title.startsWith('[v]');
+            const newTitle = isDone
+              ? `[ ]${task.title.substring(3)}`
+              : `[v]${task.title.substring(3)}`;
+            
+            return { ...task, title: newTitle };
         }
         return task
       })
@@ -377,7 +279,7 @@ export default function Home() {
   }
 
   const handleMoveTask = useCallback((dragIndex: number, hoverIndex: number, currentViewTasks: Task[]) => {
-      setTasks((prevTasks) => {
+      updateAndSaveTasks((prevTasks) => {
         const newTasks = [...prevTasks];
         
         const dragItem = currentViewTasks[dragIndex];
@@ -395,10 +297,10 @@ export default function Home() {
         
         return newTasks;
       });
-  }, []);
+  }, [updateAndSaveTasks]);
 
   const handleMoveTaskToWeek = useCallback((taskId: string, direction: 'next' | 'previous') => {
-    setTasks(currentTasks => {
+    updateAndSaveTasks(currentTasks => {
       const taskToMove = currentTasks.find(t => t.id === taskId);
       if (!taskToMove) return currentTasks;
   
@@ -423,34 +325,35 @@ export default function Home() {
         return task;
       });
     });
-  }, []);
+  }, [updateAndSaveTasks]);
 
   const handleMoveUnfinishedToNextWeek = useCallback(() => {
     const currentWeekKey = `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`;
-    const unfinishedTasks = tasks.filter(t => t.week === currentWeekKey && !t.isDone);
     
-    if (unfinishedTasks.length === 0) {
-      toast({ title: "All tasks are finished!", description: "Nothing to move to the next week." });
-      return;
-    }
+    updateAndSaveTasks(currentTasks => {
+      const unfinishedTasks = currentTasks.filter(t => t.week === currentWeekKey && !t.title.startsWith('[v]'));
+      
+      if (unfinishedTasks.length === 0) {
+        toast({ title: "All tasks are finished!", description: "Nothing to move to the next week." });
+        return currentTasks;
+      }
 
-    const nextWeekDate = addDays(currentDate, 7);
-    const nextWeek = getWeek(nextWeekDate, { weekStartsOn: 1 });
-    const nextYear = getYear(nextWeekDate);
-    const nextWeekKey = `${nextYear}-${nextWeek}`;
+      const nextWeekDate = addDays(currentDate, 7);
+      const nextWeek = getWeek(nextWeekDate, { weekStartsOn: 1 });
+      const nextYear = getYear(nextWeekDate);
+      const nextWeekKey = `${nextYear}-${nextWeek}`;
 
-    const unfinishedTaskIds = unfinishedTasks.map(t => t.id);
+      const unfinishedTaskIds = unfinishedTasks.map(t => t.id);
 
-    setTasks(currentTasks => 
-      currentTasks.map(task => 
+      toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
+
+      return currentTasks.map(task => 
         unfinishedTaskIds.includes(task.id) 
           ? { ...task, week: nextWeekKey } 
           : task
-      )
-    );
-    
-    toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
-  }, [tasks, currentDate, toast]);
+      );
+    });
+  }, [currentDate, toast, updateAndSaveTasks]);
 
   const handleSelectTask = (taskId: string | null) => {
     if (taskId === selectedTaskId) {
@@ -459,6 +362,32 @@ export default function Home() {
       setSelectedTaskId(taskId);
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const newTasks = await uploadTasks(formData);
+        setTasks(newTasks);
+        toast({ title: 'Success', description: 'Your tasks have been uploaded.' });
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Upload failed',
+            description: error instanceof Error ? error.message : 'Could not upload file.',
+        });
+    } finally {
+        setIsLoading(false);
+        // Reset file input
+        e.target.value = '';
+    }
+  };
+
 
   const goToPreviousWeek = () => {
     setCurrentDate(prevDate => addDays(prevDate, -7));
@@ -493,9 +422,15 @@ export default function Home() {
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
-        <Header />
+        <Header onFileUpload={handleFileUpload} isSaving={isPending} />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="mx-auto px-0 sm:px-2">
+             {isLoading ? (
+                <div className="flex items-center justify-center min-h-[50vh]">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            ) : (
+            <>
             <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
@@ -531,6 +466,7 @@ export default function Home() {
                 onMoveToWeek={handleMoveTaskToWeek}
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={handleSelectTask}
+                allTasks={tasks}
               />
                 <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
@@ -562,6 +498,8 @@ export default function Home() {
                   </div>
                 </div>
             </div>
+            </>
+            )}
           </div>
         </main>
       </div>

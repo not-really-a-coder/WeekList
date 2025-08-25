@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
-import type { Identifier, XYCoord } from 'dnd-core';
+import type { Identifier } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent } from 'lucide-react';
@@ -31,7 +31,6 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/hooks/use-toast';
 
 interface TaskRowProps {
   task: Task;
@@ -68,8 +67,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const ref = useRef<HTMLDivElement>(null);
   const INDENT_WIDTH = 8;
   
-  const isImportant = task.title.startsWith('!');
-  const displayTitle = isImportant ? task.title.substring(1) : task.title;
+  const isDone = task.title.startsWith('[v]');
+  const taskText = task.title.substring(task.title.indexOf(']') + 2);
+  const isImportant = taskText.startsWith('!');
+  const displayTitle = isImportant ? taskText.substring(1) : taskText;
   const isParent = tasks.some(t => t.parentId === task.id);
   
   const isMobile = useIsMobile();
@@ -93,31 +94,19 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     },
     canDrop(item, monitor) {
       if (!ref.current) return false;
-      
-      const dragItem = getTaskById(item.id);
-      const hoverItem = getTaskById(task.id);
-      if (!dragItem || !hoverItem || dragItem.id === hoverItem.id) {
-          return false;
-      }
-      return true;
+      return item.id !== task.id;
     },
     drop(item: DragItem, monitor: DropTargetMonitor) {
-        if (!ref.current) {
-            return;
-        }
+        if (!ref.current) return;
 
         const dragId = item.id;
         const hoverId = task.id;
 
-        if (dragId === hoverId) {
-            return;
-        }
+        if (dragId === hoverId) return;
         
         const clientOffset = monitor.getClientOffset();
         const initialClientOffset = monitor.getInitialClientOffset();
-        if (!clientOffset || !initialClientOffset) {
-            return;
-        }
+        if (!clientOffset || !initialClientOffset) return;
 
         const deltaX = clientOffset.x - initialClientOffset.x;
         const isIndenting = deltaX > INDENT_WIDTH * 4;
@@ -127,7 +116,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
         if (!dragItem || !hoverItem) return;
         
-        // Handle Indenting
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
         const canHoverItemBeParent = !hoverItem.parentId;
         if (isIndenting && canDragItemBeChild && canHoverItemBeParent) {
@@ -135,48 +123,39 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             return;
         }
         
-        // Handle Un-indenting
         const isUnindenting = deltaX < -(INDENT_WIDTH * 4);
         if (isUnindenting && dragItem.parentId) {
             onSetParent(dragId, null);
             return;
         }
 
-        // If not indenting/unindenting, perform regular move
         const dragIndex = tasks.findIndex(t => t.id === dragId);
         const hoverIndex = tasks.findIndex(t => t.id === hoverId);
-        onMove(dragIndex, hoverIndex);
-        item.index = hoverIndex;
+        if (dragIndex !== -1 && hoverIndex !== -1) {
+          onMove(dragIndex, hoverIndex);
+          item.index = hoverIndex;
+        }
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
-      if (!ref.current) {
-        return;
-      }
+      if (!ref.current) return;
+
       const dragIndex = tasks.findIndex(t => t.id === item.id);
       const hoverIndex = index;
       
-      if (dragIndex === hoverIndex) {
-        return;
-      }
+      if (dragIndex === -1 || dragIndex === hoverIndex) return;
       
       const clientOffset = monitor.getClientOffset();
       if (!clientOffset) return;
       
       const deltaX = clientOffset.x - (monitor.getInitialClientOffset()?.x || 0);
-      if (Math.abs(deltaX) > INDENT_WIDTH * 2) {
-          return;
-      }
+      if (Math.abs(deltaX) > INDENT_WIDTH * 2) return;
 
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onMove(dragIndex, hoverIndex);
       item.index = hoverIndex;
@@ -211,7 +190,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   }, [task.title]);
   
   const handleSave = () => {
-    if (title.trim() === '!' || title.trim() === '') {
+    const currentTaskText = title.substring(title.indexOf(']') + 2).trim();
+    if (currentTaskText === '!' || currentTaskText === '') {
         onDelete(task.id);
     } else {
         onUpdate(task.id, title.trim());
@@ -233,7 +213,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!task.isDone && !isMobile) {
+    if (!isDone && !isMobile) {
       setIsEditing(true);
       onSelectTask(task.id);
     }
@@ -243,7 +223,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     e.stopPropagation();
     onSelectTask(task.id);
     longPressTimer.current = setTimeout(() => {
-      if (!task.isDone) {
+      if (!isDone) {
         setIsEditing(true);
       }
     }, 500); // 500ms for long press
@@ -255,11 +235,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const handleRowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isMobile) {
-      onSelectTask(task.id);
-    } else {
-      onSelectTask(task.id);
-    }
+    onSelectTask(task.id);
   };
 
 
@@ -314,7 +290,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                       <p
                         className={cn(
                           "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",
-                          task.isDone && "line-through",
+                          isDone && "line-through text-muted-foreground",
                           isParent && "font-bold"
                         )}
                       >
@@ -329,9 +305,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             size="icon" 
             variant="ghost" 
             onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
-            className={cn('hidden md:flex transition-opacity', task.isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
+            className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
           >
-            <CheckCircle2 className={cn("size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
+            <CheckCircle2 className={cn("size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
           </Button>
 
           <AlertDialog>
@@ -356,8 +332,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
-                   <CheckCircle2 className={cn("mr-2 size-4", task.isDone ? 'text-green-500' : 'text-muted-foreground')} />
-                   <span>{task.isDone ? 'Mark as not done' : 'Mark as done'}</span>
+                   <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                   <span>{isDone ? 'Mark as not done' : 'Mark as done'}</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
@@ -424,5 +400,3 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
-
-    

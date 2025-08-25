@@ -1,0 +1,209 @@
+'use server';
+
+import type { Task, TaskStatus } from '@/lib/types';
+import { getWeek, getYear, parse, formatISO, format } from 'date-fns';
+
+const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const ID_LENGTH = 4;
+
+const STATUS_MAP: Record<string, TaskStatus> = {
+  'o': 'planned',
+  '>': 'rescheduled',
+  'v': 'completed',
+  'x': 'cancelled',
+  ' ': 'default',
+  '-': 'default'
+};
+const STATUS_MAP_REVERSE: Record<TaskStatus, string> = {
+  planned: 'o',
+  rescheduled: '>',
+  completed: 'v',
+  cancelled: 'x',
+  default: ' ',
+};
+
+export async function generateTaskId(existingIds: string[]): Promise<string> {
+  let newId: string;
+  do {
+    newId = '';
+    for (let i = 0; i < ID_LENGTH; i++) {
+      newId += ID_CHARSET.charAt(Math.floor(Math.random() * ID_CHARSET.length));
+    }
+  } while (existingIds.includes(newId));
+  return newId;
+}
+
+export async function parseMarkdown(markdown: string): Promise<Task[]> {
+  const tasks: Task[] = [];
+  let currentWeek = '';
+  let currentYear = '';
+
+  const lines = markdown.split('\n');
+
+  for (const line of lines) {
+    if (line.startsWith('## Week of')) {
+      const dateString = line.substring(12);
+      // Parsing "Month Day, Year" format
+      const parsedDate = parse(dateString, 'MMMM do, yyyy', new Date());
+      if (!isNaN(parsedDate.getTime())) {
+          currentYear = getYear(parsedDate).toString();
+          // Setting week starts on Monday (1)
+          currentWeek = getWeek(parsedDate, { weekStartsOn: 1 }).toString();
+      }
+      continue;
+    }
+
+    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*)/);
+    if (taskMatch) {
+      const indent = taskMatch[1] ? taskMatch[1].length / 2 : 0;
+      const titleAndMeta = taskMatch[4];
+      const metadataMatch = titleAndMeta.match(/(.*)\s\(id: (.*); created: (.*)(; parentId: (.*))?\)$/);
+      
+      let titleContent: string;
+      let id: string;
+      let createdAt: string;
+      let parentId: string | null = null;
+      
+      if (metadataMatch) {
+        titleContent = metadataMatch[1];
+        id = metadataMatch[2];
+        createdAt = formatISO(new Date(metadataMatch[3]));
+        parentId = metadataMatch[5] || null;
+      } else {
+        // Fallback for tasks without metadata (though unlikely with formatMarkdown)
+        titleContent = titleAndMeta;
+        id = await generateTaskId(tasks.map(t => t.id));
+        createdAt = new Date().toISOString();
+      }
+
+      const title = `${taskMatch[2]} ${titleContent}`;
+      const statusesRaw = taskMatch[3];
+
+      const statuses: Task['statuses'] = {
+        monday: STATUS_MAP[statusesRaw[0] || ' '],
+        tuesday: STATUS_MAP[statusesRaw[1] || ' '],
+        wednesday: STATUS_MAP[statusesRaw[2] || ' '],
+        thursday: STATUS_MAP[statusesRaw[3] || ' '],
+        friday: STATUS_MAP[statusesRaw[4] || ' '],
+        saturday: STATUS_MAP[statusesRaw[5] || ' '],
+        sunday: STATUS_MAP[statusesRaw[6] || ' '],
+      };
+
+      const task: Task = {
+        id,
+        title,
+        createdAt,
+        parentId,
+        week: `${currentYear}-${currentWeek}`,
+        statuses,
+      };
+      
+      tasks.push(task);
+    }
+  }
+
+  // A second pass to ensure parentIds are correct based on the metadata
+  const taskMap = new Map(tasks.map(t => [t.id, t]));
+  for (const task of tasks) {
+    if (task.parentId && !taskMap.has(task.parentId)) {
+        // If parent specified in metadata doesn't exist, nullify it.
+        task.parentId = null;
+    }
+  }
+
+
+  return tasks;
+}
+
+
+export async function formatMarkdown(tasks: Task[]): Promise<string> {
+    const tasksByWeek = tasks.reduce((acc, task) => {
+        if (!acc[task.week]) {
+            acc[task.week] = [];
+        }
+        acc[task.week].push(task);
+        return acc;
+    }, {} as Record<string, Task[]>);
+
+    const sortedWeeks = Object.keys(tasksByWeek).sort((a, b) => {
+        const [yearA, weekA] = a.split('-').map(Number);
+        const [yearB, weekB] = b.split('-').map(Number);
+        if (yearA !== yearB) return yearA - yearB;
+        return weekA - weekB;
+    });
+
+    let markdown = '# WeekList Tasks\n\n';
+
+    for (const weekKey of sortedWeeks) {
+        const [year, weekNum] = weekKey.split('-').map(Number);
+        const firstDayOfYear = new Date(year, 0, 1);
+        const date = setWeek(firstDayOfYear, weekNum, { weekStartsOn: 1 });
+        const weekStartFormatted = format(startOfWeek(date, { weekStartsOn: 1 }), 'MMMM do, yyyy');
+        
+        markdown += `## Week of ${weekStartFormatted}\n\n`;
+
+        const weekTasks = tasksByWeek[weekKey];
+        
+        const buildTaskTree = (parentId: string | null) => {
+            const children = weekTasks.filter(t => t.parentId === parentId)
+              // sort children by their original order in the main tasks array
+              .sort((a, b) => tasks.findIndex(t => t.id === a.id) - tasks.findIndex(t => t.id === b.id));
+            
+            for (const task of children) {
+                const indent = task.parentId ? '  ' : '';
+                
+                const statusString = [
+                    STATUS_MAP_REVERSE[task.statuses.monday],
+                    STATUS_MAP_REVERSE[task.statuses.tuesday],
+                    STATUS_MAP_REVERSE[task.statuses.wednesday],
+                    STATUS_MAP_REVERSE[task.statuses.thursday],
+                    STATUS_MAP_REVERSE[task.statuses.friday],
+                    STATUS_MAP_REVERSE[task.statuses.saturday],
+                    STATUS_MAP_REVERSE[task.statuses.sunday],
+                ].join('');
+
+                const taskTextOnly = task.title.substring(task.title.indexOf(']') + 2);
+                
+                let metadata = `(id: ${task.id}; created: ${format(new Date(task.createdAt), 'yyyy-MM-dd')}`;
+                if (task.parentId) {
+                    metadata += `; parentId: ${task.parentId}`;
+                }
+                metadata += ')';
+
+                const coreTitle = `${task.title.substring(0, 4)}[${statusString}] ${taskTextOnly}`;
+
+                const taskLine = `${indent}- ${coreTitle.replace(/\s\(id:.*\)$/, '')} ${metadata}\n`;
+
+                markdown += taskLine;
+                
+                buildTaskTree(task.id);
+            }
+        };
+
+        buildTaskTree(null);
+        markdown += '\n';
+    }
+
+    return markdown.trim() + '\n';
+}
+
+function setWeek(date: Date, weekNumber: number, options: { weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 }) {
+    const year = date.getFullYear();
+    const firstDayOfYear = new Date(year, 0, 1);
+    const dayOfWeek = firstDayOfYear.getDay();
+    const offset = (options.weekStartsOn - dayOfWeek + 7) % 7;
+    const firstWeekStart = new Date(year, 0, 1 - offset);
+    return addDays(firstWeekStart, (weekNumber - 1) * 7);
+}
+
+function startOfWeek(date: Date, options: { weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 }) {
+    const day = date.getDay();
+    const diff = (day - options.weekStartsOn + 7) % 7;
+    return addDays(date, -diff);
+}
+
+function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}

@@ -8,7 +8,6 @@ export interface Task {
   title: string;
   createdAt: string;
   parentId?: string | null;
-  isDone?: boolean;
   week: string; // e.g. "2024-34"
   isNew?: boolean;
   statuses: {

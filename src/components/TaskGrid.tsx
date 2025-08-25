@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 
 interface TaskGridProps {
   tasks: Task[];
+  allTasks: Task[];
   selectedTaskId: string | null;
   onStatusChange: (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => void;
   onUpdateTask: (taskId: string, newTitle: string) => void;
@@ -32,6 +33,7 @@ const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export function TaskGrid({
   tasks,
+  allTasks,
   selectedTaskId,
   onStatusChange,
   onUpdateTask,
@@ -55,10 +57,11 @@ export function TaskGrid({
   }, [] as Task[]);
 
 
-  const renderTask = (task: Task, index: number, allTasks: Task[], level = 0) => {
+  const renderTask = (task: Task, index: number, level = 0) => {
     const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
     const taskIndexInAllTasks = allTasks.findIndex(t => t.id === task.id);
     const isSelected = selectedTaskId === task.id;
+    const isDone = task.title.startsWith('[v]');
 
     return (
       <React.Fragment key={task.id}>
@@ -69,7 +72,7 @@ export function TaskGrid({
                   task={task}
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
-                  disabled={task.isDone}
+                  disabled={isDone}
                   onSetParent={onSetTaskParent}
                 />
               </div>
@@ -85,7 +88,7 @@ export function TaskGrid({
                 onSetParent={onSetTaskParent}
                 level={level}
                 getTaskById={getTaskById}
-                tasks={tasks}
+                tasks={allTasks}
                 onMoveToWeek={onMoveToWeek}
                 onMoveTaskUpDown={onMoveTaskUpDown}
                 onSelectTask={onSelectTask}
@@ -93,7 +96,7 @@ export function TaskGrid({
               />
             </div>
         </div>
-        {children.map((child, childIndex) => renderTask(child, childIndex, allTasks, level + 1))}
+        {children.map((child, childIndex) => renderTask(child, childIndex, level + 1))}
       </React.Fragment>
     );
   };
@@ -117,7 +120,7 @@ export function TaskGrid({
 
       {/* Grid Content */}
       {tasks.length > 0 ? (
-        taskTree.map((task, index) => renderTask(task, index, tasks))
+        taskTree.map((task, index) => renderTask(task, index))
       ) : (
         <div className="col-span-8 bg-card text-center p-12 text-muted-foreground">
           No tasks for this week. Add one or move to a different week.
