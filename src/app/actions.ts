@@ -56,7 +56,9 @@ export async function uploadTasks(formData: FormData): Promise<Task[]> {
 
     try {
         const markdown = await file.text();
+        // Overwrite the existing tasks.md with the uploaded content
         await writeFile('tasks.md', markdown);
+        // Parse and return the tasks from the newly uploaded file
         return await parseMarkdown(markdown);
     } catch (error) {
         console.error('Error processing uploaded file:', error);
