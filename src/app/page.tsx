@@ -17,7 +17,9 @@ import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } fro
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
 
-const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] = [
+type InitialTask = Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'> & { childOfIndex?: number };
+
+const initialTasksData: InitialTask[] = [
   {
     title: '!Plan summer vacation',
     isDone: false,
@@ -32,7 +34,13 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] =
     },
   },
   {
-    title: 'Weekly grocery shopping',
+    title: 'Book flights',
+    isDone: false,
+    statuses: { monday: 'planned', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+    childOfIndex: 0,
+  },
+  {
+    title: 'Weekly grocery shopping, making sure to pick up fresh vegetables and supplies for the weekend BBQ.',
     isDone: false,
     statuses: {
       monday: 'default',
@@ -124,17 +132,23 @@ const initialTasksData: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[] =
   },
 ];
 
-const addIdsAndDates = (tasks: Omit<Task, 'id' | 'createdAt' | 'parentId' | 'week'>[], week: number, year: number): Task[] => {
-  return tasks.map((task, index) => {
-    return {
-      ...task,
-      id: crypto.randomUUID(),
-      createdAt: new Date(Date.now() - index * 1000).toISOString(),
-      parentId: null,
-      isDone: task.isDone ?? false,
-      week: `${year}-${week}`,
-    };
+const addIdsAndDates = (tasks: InitialTask[], week: number, year: number): Task[] => {
+  const processedTasks: Task[] = tasks.map((task, index) => ({
+    ...task,
+    id: crypto.randomUUID(),
+    createdAt: new Date(Date.now() - index * 1000).toISOString(),
+    parentId: null,
+    isDone: task.isDone ?? false,
+    week: `${year}-${week}`,
+  }));
+
+  tasks.forEach((task, index) => {
+    if (task.childOfIndex !== undefined && processedTasks[task.childOfIndex]) {
+      processedTasks[index].parentId = processedTasks[task.childOfIndex].id;
+    }
   });
+
+  return processedTasks;
 };
 
 const formatWeekDisplay = (date: Date) => {
@@ -491,7 +505,7 @@ export default function Home() {
         <Header />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="mx-auto px-0 sm:px-2">
-            <div className="flex items-center justify-between mb-4 md:mb-4 px-2 sm:px-0">
+            <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
               </Button>
