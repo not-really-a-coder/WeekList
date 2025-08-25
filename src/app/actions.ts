@@ -50,7 +50,7 @@ export async function getTasksMarkdown(): Promise<string> {
 export async function uploadTasks(formData: FormData): Promise<Task[]> {
     const file = formData.get('file') as File | null;
 
-    if (!file || file.type !== 'text/markdown') {
+    if (!file || !file.name.endsWith('.md')) {
         throw new Error('Please upload a valid Markdown file.');
     }
 
