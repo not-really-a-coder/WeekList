@@ -1,5 +1,5 @@
 # WeekList Tasks
 
-## Week of August 18, 2025
+## Week of August 25, 2025
 
-- [ ] [       ] !adsdasd (id: M2mk; created: 2025-08-25)
+- [ ] [       ] dgfdg (id: nEkf; created: 2025-08-25)

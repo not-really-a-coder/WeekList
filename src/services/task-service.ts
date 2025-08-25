@@ -1,7 +1,7 @@
 'use server';
 
 import type { Task, TaskStatus } from '@/lib/types';
-import { getWeek, getYear, parse, formatISO, format } from 'date-fns';
+import { getWeek, getYear, parse, formatISO, format, startOfWeek, addDays, setWeek } from 'date-fns';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -51,28 +51,23 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
       continue;
     }
 
-    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*)/);
+    // Updated regex to be more specific and less greedy
+    const taskMatch = line.match(/^- (  )*(\[.?\]) \[(.+)\] (.*?)\s*\(id: (.*)\)$/);
     if (taskMatch) {
       const indent = taskMatch[1] ? taskMatch[1].length / 2 : 0;
-      const titleAndMeta = taskMatch[4];
-      const metadataMatch = titleAndMeta.match(/(.*)\s\(id: (.*); created: (.*)(; parentId: (.*))?\)$/);
       
-      let titleContent: string;
-      let id: string;
-      let createdAt: string;
-      let parentId: string | null = null;
+      const titleContent = taskMatch[4].trim();
+      const metadataString = taskMatch[5];
       
-      if (metadataMatch) {
-        titleContent = metadataMatch[1];
-        id = metadataMatch[2];
-        createdAt = formatISO(new Date(metadataMatch[3]));
-        parentId = metadataMatch[5] || null;
-      } else {
-        // Fallback for tasks without metadata
-        titleContent = titleAndMeta;
-        id = await generateTaskId(tasks.map(t => t.id));
-        createdAt = new Date().toISOString();
-      }
+      const idMatch = metadataString.match(/^(.*?);/);
+      const createdMatch = metadataString.match(/created: (.*?)(;|$)/);
+      const parentIdMatch = metadataString.match(/parentId: (.*)/);
+
+      if (!idMatch || !createdMatch) continue; // Invalid metadata, skip line
+
+      const id = idMatch[1];
+      const createdAt = formatISO(new Date(createdMatch[1]));
+      const parentId = parentIdMatch ? parentIdMatch[1] : null;
 
       const title = `${taskMatch[2]} ${titleContent}`;
       const statusesRaw = taskMatch[3];
@@ -113,6 +108,7 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
 
 export async function formatMarkdown(tasks: Task[]): Promise<string> {
     const tasksByWeek = tasks.reduce((acc, task) => {
+        if (!task.week) return acc;
         if (!acc[task.week]) {
             acc[task.week] = [];
         }
@@ -133,8 +129,10 @@ export async function formatMarkdown(tasks: Task[]): Promise<string> {
         if (!/^\d{4}-\d{1,2}$/.test(weekKey)) continue;
 
         const [year, weekNum] = weekKey.split('-').map(Number);
-        const firstDayOfYear = new Date(year, 0, 1);
-        const date = setWeek(firstDayOfYear, weekNum, { weekStartsOn: 1 });
+        // Handle cases where week number might be invalid for a year
+        if (weekNum < 1 || weekNum > 53) continue;
+
+        const date = setWeek(new Date(year, 0, 4), weekNum, { weekStartsOn: 1 });
         const weekStartFormatted = format(startOfWeek(date, { weekStartsOn: 1 }), 'MMMM d, yyyy');
         
         markdown += `## Week of ${weekStartFormatted}\n\n`;
@@ -181,25 +179,4 @@ export async function formatMarkdown(tasks: Task[]): Promise<string> {
     }
 
     return markdown.trim() + '\n';
-}
-
-function setWeek(date: Date, weekNumber: number, options: { weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 }) {
-    const year = date.getFullYear();
-    const firstDayOfYear = new Date(year, 0, 1);
-    const dayOfWeek = firstDayOfYear.getDay();
-    const offset = (options.weekStartsOn - dayOfWeek + 7) % 7;
-    const firstWeekStart = new Date(year, 0, 1 - offset);
-    return addDays(firstWeekStart, (weekNumber - 1) * 7);
-}
-
-function startOfWeek(date: Date, options: { weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 }) {
-    const day = date.getDay();
-    const diff = (day - options.weekStartsOn + 7) % 7;
-    return addDays(date, -diff);
-}
-
-function addDays(date: Date, days: number): Date {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
 }
