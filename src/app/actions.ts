@@ -193,7 +193,7 @@ export async function getTasks(): Promise<Task[]> {
 
     for (let i = -2; i <= 2; i++) {
         const weekDate = addWeeks(startOfWeek(today, { weekStartsOn: 1 }), i);
-        const weeklyTasks = await generateWeekTasks(weekDate, usedTasks);
+        const weeklyTasks = await generateWeekTasks(weekDate, usedTitles);
         allTasks.push(...weeklyTasks);
     }
     
