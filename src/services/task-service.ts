@@ -42,9 +42,10 @@ export async function parseMarkdown(markdown: string): Promise<Task[]> {
 
   for (const line of lines) {
     if (line.startsWith('## Week of')) {
-      const dateString = line.substring(12);
+      // Remove ordinal suffixes (st, nd, rd, th) to make parsing reliable
+      const dateString = line.substring(12).replace(/(\d+)(st|nd|rd|th)/, '$1');
       // Parsing "Month Day, Year" format
-      const parsedDate = parse(dateString, 'MMMM do, yyyy', new Date());
+      const parsedDate = parse(dateString, 'MMMM d, yyyy', new Date());
       if (!isNaN(parsedDate.getTime())) {
           currentYear = getYear(parsedDate).toString();
           // Setting week starts on Monday (1)
