@@ -79,8 +79,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const isLastSibling = mySiblingIndex === siblings.length - 1;
   
   const canUnindent = !!task.parentId;
-  // A task can be indented if it's not a parent itself and the task above it is not a child.
-  const canIndent = !isParent && index > 0 && tasks[index-1] && !tasks[index-1].parentId;
+  
+  const potentialParent = tasks[index-1];
+  const canIndent = !isParent && index > 0 && potentialParent && !potentialParent.parentId;
 
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
@@ -90,6 +91,56 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         handlerId: monitor.getHandlerId(),
       };
     },
+    canDrop(item, monitor) {
+      if (!ref.current) {
+        return false;
+      }
+      const dragItem = tasks.find(t => t.id === item.id);
+      if (!dragItem || dragItem.id === task.id) return false;
+
+      const hasChildren = tasks.some(t => t.parentId === dragItem.id);
+      const targetIsChild = !!task.parentId;
+
+      const clientOffset = monitor.getClientOffset();
+      const initialClientOffset = monitor.getInitialClientOffset();
+      if (!clientOffset || !initialClientOffset) return false;
+      
+      const deltaX = clientOffset.x - initialClientOffset.x;
+      const isIndenting = deltaX > INDENT_WIDTH * 4;
+
+      if (isIndenting && !targetIsChild && !hasChildren) return true;
+      
+      return true;
+    },
+    drop(item, monitor) {
+      if (!ref.current) {
+        return;
+      }
+      const dragItem = tasks.find(t => t.id === item.id);
+      if (!dragItem) return;
+
+      const clientOffset = monitor.getClientOffset();
+      const initialClientOffset = monitor.getInitialClientOffset();
+      if (!clientOffset || !initialClientOffset) return;
+
+      const deltaX = clientOffset.x - initialClientOffset.x;
+
+      const isIndenting = deltaX > INDENT_WIDTH * 4;
+      const isUnindenting = deltaX < -INDENT_WIDTH * 4;
+
+      const hoverItemCanBeParent = !task.parentId;
+      const dragItemCanBeChild = !tasks.some(t => t.parentId === dragItem.id);
+      
+      if (isIndenting && hoverItemCanBeParent && dragItemCanBeChild && dragItem.id !== task.id) {
+          onSetParent(dragItem.id, task.id);
+          return; // No need to also reorder vertically
+      }
+      
+      if (isUnindenting && dragItem.parentId) {
+          onSetParent(dragItem.id, null);
+          return; // No need to also reorder vertically
+      }
+    },
     hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!ref.current) {
         return;
@@ -97,14 +148,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const dragIndex = item.index;
       const hoverIndex = index;
       
-      const initialClientOffset = monitor.getInitialClientOffset();
-      const currentClientOffset = monitor.getClientOffset();
-
       if (dragIndex === hoverIndex) {
         return;
       }
-      
-      if (!initialClientOffset || !currentClientOffset) return;
       
       const clientOffset = monitor.getClientOffset();
       if (!clientOffset) return;
@@ -113,27 +159,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       
-      const deltaX = currentClientOffset.x - initialClientOffset.x;
-      const isIndenting = deltaX > INDENT_WIDTH * 4;
-      const isUnindenting = deltaX < -INDENT_WIDTH * 4;
-      
-      const dragItem = tasks.find(t => t.id === item.id);
-      if(!dragItem) return;
-
-      const hoverItemCanBeParent = !task.parentId;
-      const dragItemCanBeChild = !tasks.some(t => t.parentId === dragItem.id);
-      
-      if (isIndenting && hoverItemCanBeParent && dragItemCanBeChild && dragItem.id !== task.id) {
-          onSetParent(dragItem.id, task.id);
-          return;
-      }
-      
-      if (isUnindenting && dragItem.parentId) {
-          onSetParent(dragItem.id, null);
-          return;
-      }
-
-
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
         return;
       }
