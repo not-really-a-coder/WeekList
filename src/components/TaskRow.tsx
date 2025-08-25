@@ -78,8 +78,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const isFirstSibling = mySiblingIndex === 0;
   const isLastSibling = mySiblingIndex === siblings.length - 1;
   
-  const canIndent = index > 0 && !task.parentId && tasks[index-1] && !tasks[index-1].parentId;
   const canUnindent = !!task.parentId;
+  // A task can be indented if it's not a parent itself and the task above it is not a child.
+  const canIndent = !isParent && index > 0 && tasks[index-1] && !tasks[index-1].parentId;
 
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
@@ -120,7 +121,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       if(!dragItem) return;
 
       const hoverItemCanBeParent = !task.parentId;
-      const dragItemCanBeChild = !dragItem.parentId;
+      const dragItemCanBeChild = !tasks.some(t => t.parentId === dragItem.id);
       
       if (isIndenting && hoverItemCanBeParent && dragItemCanBeChild && dragItem.id !== task.id) {
           onSetParent(dragItem.id, task.id);

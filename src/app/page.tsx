@@ -208,32 +208,34 @@ export default function Home() {
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
     setTasks(currentTasks => {
-      const newTasks = [...currentTasks];
-      const childIndex = newTasks.findIndex(t => t.id === childId);
-      if (childIndex === -1) return currentTasks;
+      const childTask = currentTasks.find(t => t.id === childId);
+      if (!childTask) return currentTasks;
 
-      const childTask = newTasks[childIndex];
+      // Prevent nesting a task that already has children
+      const hasChildren = currentTasks.some(t => t.parentId === childId);
+      if (parentId && hasChildren) {
+        toast({ title: "Nesting Limit", description: "Tasks with sub-tasks cannot be nested.", variant: 'destructive' });
+        return currentTasks;
+      }
 
-      // Prevent nesting more than one level
+      // Prevent nesting more than one level deep
       if (parentId) {
-        const parentTask = newTasks.find(t => t.id === parentId);
+        const parentTask = currentTasks.find(t => t.id === parentId);
         if (parentTask?.parentId) {
           toast({ title: "Nesting Limit", description: "You can only have one level of nesting.", variant: 'destructive' });
           return currentTasks;
         }
       }
 
-      // Update parentId
-      newTasks[childIndex] = { ...childTask, parentId: parentId };
+      const newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
 
       // Reorder: move the child to be right after the parent
       if (parentId) {
+        const childIndex = newTasks.findIndex(t => t.id === childId);
+        const [movedChild] = newTasks.splice(childIndex, 1);
+        
         const parentIndex = newTasks.findIndex(t => t.id === parentId);
-        if (parentIndex > -1) {
-          const [movedChild] = newTasks.splice(childIndex, 1);
-          const newParentIndex = newTasks.findIndex(t => t.id === parentId); // Re-find parent index after splice
-          newTasks.splice(newParentIndex + 1, 0, movedChild);
-        }
+        newTasks.splice(parentIndex + 1, 0, movedChild);
       }
 
       return newTasks;
