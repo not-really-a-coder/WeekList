@@ -238,7 +238,7 @@ export default function Home() {
 
       return newTasks;
     });
-  }, [toast]);
+  }, []);
 
 
   useEffect(() => {
@@ -369,16 +369,7 @@ export default function Home() {
       currentTasks.map(task => {
         if (task.id === taskId) {
             const isNowDone = !task.isDone;
-            // if marking as done, clear any planned statuses
-            const newStatuses = { ...task.statuses };
-            if(isNowDone){
-                for(const day in newStatuses){
-                    if(newStatuses[day as keyof Task['statuses']] === 'planned'){
-                        newStatuses[day as keyof Task['statuses']] = 'default';
-                    }
-                }
-            }
-          return { ...task, isDone: isNowDone, statuses: newStatuses };
+            return { ...task, isDone: isNowDone };
         }
         return task
       })
