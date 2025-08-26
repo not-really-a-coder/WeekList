@@ -283,10 +283,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
   return markdown;
 }
 
-export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Task[]; logs: string[] }> {
-    const logs: string[] = [];
-    logs.push('Starting markdown parsing process...');
-    
+export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
     const tasks: Task[] = [];
     const lines = markdown.split('\n');
     let currentWeekKey = '';
@@ -295,43 +292,31 @@ export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Tas
     };
     const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-    const parentChildMap: { [childId: string]: string } = {};
-    const taskLevels: { [id: string]: number } = {};
-    const taskStack: Task[] = [];
-
-    logs.push(`Processing ${lines.length} lines of markdown.`);
-
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
         if (line.trim() === '') {
-            logs.push(`L${i+1}: Skipping empty line.`);
             continue;
         }
 
         if (line.startsWith('## Week of ')) {
-            const dateStr = line.substring(11);
-            logs.push(`L${i+1}: Found week header. Parsing date: "${dateStr}"`);
+            const dateStr = line.substring(11).trim();
             try {
                 const date = parse(dateStr, 'MMMM d, yyyy', new Date());
                 if (isNaN(date.getTime())) {
-                    logs.push(`L${i+1}: ERROR - Invalid date format for "${dateStr}". Skipping week.`);
                     currentWeekKey = '';
                     continue;
                 }
                 const year = getYear(date);
                 const week = getWeek(date, { weekStartsOn: 1 });
                 currentWeekKey = `${year}-${week}`;
-                logs.push(`L${i+1}: Successfully parsed week. Key: ${currentWeekKey}`);
             } catch (e) {
-                logs.push(`L${i+1}: CRITICAL ERROR parsing week date: "${dateStr}". Error: ${e instanceof Error ? e.message : String(e)}`);
                 currentWeekKey = '';
             }
             continue;
         }
 
         if (!currentWeekKey) {
-            logs.push(`L${i+1}: Skipping line as no valid week is set. Line: "${line}"`);
             continue;
         }
 
@@ -339,20 +324,10 @@ export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Tas
         const match = line.match(taskRegex);
 
         if (!match) {
-            logs.push(`L${i+1}: FAILED to match task regex. Line: "${line}"`);
             continue;
         }
         
-        logs.push(`L${i+1}: Successfully matched task regex. Line: "${line}"`);
-
         const [, indent, doneMarker, statusStr, titleText, metadataStr] = match;
-        const level = indent.length / 2;
-        logs.push(`L${i+1}:  - Indent level: ${level}`);
-        logs.push(`L${i+1}:  - Done marker: ${doneMarker}`);
-        logs.push(`L${i+1}:  - Status string: ${statusStr}`);
-        logs.push(`L${i+1}:  - Title text: ${titleText}`);
-        logs.push(`L${i+1}:  - Metadata: ${metadataStr}`);
-
 
         const metadata: Record<string, string> = {};
         metadataStr.split(';').forEach(part => {
@@ -361,10 +336,8 @@ export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Tas
                 metadata[key.trim()] = valueParts.join(':').trim();
             }
         });
-        logs.push(`L${i+1}:  - Parsed metadata object: ${JSON.stringify(metadata)}`);
 
         if (!metadata.id || !metadata.created) {
-            logs.push(`L${i+1}: ERROR - Task metadata is missing 'id' or 'created'. Skipping task.`);
             continue;
         }
 
@@ -377,7 +350,6 @@ export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Tas
                 statuses[day] = statusMap[statusStr[index]] || 'default';
             });
         }
-        logs.push(`L${i+1}:  - Parsed statuses: ${JSON.stringify(statuses)}`);
 
         const task: Task = {
             id: metadata.id,
@@ -389,60 +361,38 @@ export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Tas
         };
         
         tasks.push(task);
-        logs.push(`L${i+1}: Successfully created task object: ${JSON.stringify(task)}`);
     }
-
-    logs.push(`Finished parsing. Found ${tasks.length} tasks in total.`);
-    logs.push(`Re-ordering tasks to ensure parent-child hierarchy...`);
     
     const taskMap = new Map(tasks.map(t => [t.id, t]));
     const result: Task[] = [];
     const processedIds = new Set<string>();
 
-    for (const task of tasks) {
-        if (processedIds.has(task.id)) continue;
+    const addTaskWithChildren = (task: Task) => {
+        if (processedIds.has(task.id)) return;
         
-        if (task.parentId === null) {
-            result.push(task);
-            processedIds.add(task.id);
-            
-            const queue = [task];
-            while (queue.length > 0) {
-                const parent = queue.shift();
-                if (!parent) continue;
-                
-                const children = tasks.filter(t => t.parentId === parent.id);
-                for (const child of children) {
-                    if (!processedIds.has(child.id)) {
-                        const parentIndex = result.findIndex(p => p.id === parent.id);
-                        const siblings = result.filter(s => s.parentId === parent.id);
-                        const lastSiblingIndex = siblings.length > 0 
-                          ? result.findLastIndex(p => p.id === siblings[siblings.length - 1].id) 
-                          : -1;
-
-                        const insertIndex = lastSiblingIndex !== -1 ? lastSiblingIndex + 1 : parentIndex + 1;
-                        
-                        result.splice(insertIndex, 0, child);
-                        processedIds.add(child.id);
-                        queue.push(child);
-                    }
-                }
-            }
+        result.push(task);
+        processedIds.add(task.id);
+        
+        const children = tasks.filter(t => t.parentId === task.id);
+        for (const child of children) {
+            addTaskWithChildren(child);
+        }
+    };
+    
+    for (const task of tasks) {
+        if (!task.parentId) {
+            addTaskWithChildren(task);
         }
     }
-
+    
     for (const task of tasks) {
         if (!processedIds.has(task.id)) {
-            logs.push(`WARNING: Found orphaned task with no parent in the final list: ${task.id}. Appending to the end.`);
             result.push(task);
             processedIds.add(task.id);
         }
     }
 
-    logs.push('Task re-ordering complete.');
-    logs.push('Parsing process finished.');
-
-    return { tasks: result, logs };
+    return result;
 }
 
 export async function saveTasks(tasks: Task[]): Promise<void> {

@@ -10,12 +10,11 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { DebugWindow } from '@/components/DebugWindow';
 import { getTasks, saveTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
@@ -45,8 +44,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [logs, setLogs] = useState<string[]>([]);
-
+  
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -437,7 +435,6 @@ export default function Home() {
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLogs([]);
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -446,8 +443,7 @@ export default function Home() {
       const content = e.target?.result;
       if (typeof content === 'string') {
         try {
-          const { tasks: newTasks, logs: importLogs } = await parseTasksMarkdown(content);
-          setLogs(importLogs);
+          const newTasks = await parseTasksMarkdown(content);
           if (newTasks.length > 0) {
             setTasks(newTasks);
             toast({ title: 'Success', description: `Imported ${newTasks.length} tasks successfully.` });
@@ -460,7 +456,6 @@ export default function Home() {
           }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Could not parse the markdown file.';
-          setLogs(prevLogs => [...prevLogs, `CRITICAL ERROR: ${errorMessage}`]);
           toast({
             variant: 'destructive',
             title: 'Import failed',
@@ -604,17 +599,6 @@ export default function Home() {
                     </AlertDialog>
                   </div>
                 </div>
-                {logs.length > 0 && (
-                    <div className="mt-4 px-2 sm:px-0">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-bold font-headline">Import Logs</h3>
-                            <Button variant="ghost" size="icon" onClick={() => setLogs([])}>
-                                <X className="size-4" />
-                            </Button>
-                        </div>
-                        <DebugWindow logs={logs} />
-                    </div>
-                )}
             </div>
             </>
             )}
