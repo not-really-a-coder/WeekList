@@ -309,7 +309,6 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
   };
   const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-  // This regex now correctly captures the title and the metadata block separately
   const taskRegex = /^\s*- (\[[ v]\]) \[([ovx >]{7})\] (.*?) \((.*)\)\s*$/;
 
   for (const line of lines) {
@@ -389,7 +388,12 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
         const children = tasks.filter(t => t.parentId === parent.id);
         for(const child of children) {
             if(!processedIds.has(child.id)) {
-                result.push(child);
+                // Find the index of the parent (or last added sibling) to insert after
+                const parentIndex = result.findIndex(p => p.id === parent.id);
+                const lastSiblingIndex = result.findLastIndex(p => p.parentId === parent.id);
+                const insertIndex = lastSiblingIndex !== -1 ? lastSiblingIndex + 1 : parentIndex + 1;
+                
+                result.splice(insertIndex, 0, child);
                 processedIds.add(child.id);
                 queue.push(child);
             }
