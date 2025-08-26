@@ -21,11 +21,11 @@ interface HeaderProps {
 export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
   return (
     <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
-      <div className="flex items-center justify-between mx-auto px-4 py-2 w-full max-w-6xl gap-4">
+      <div className="flex items-center justify-between px-4 py-2 w-full max-w-6xl gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
           <Logo className="size-8" />
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
+            <h1 className="text-2xl font-bold font-headline text-foreground">FlowDo</h1>
             {isSaving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
           </div>
         </div>
