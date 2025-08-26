@@ -541,7 +541,7 @@ export default function Home() {
           onUpload={handleUploadClick}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
-          <div className="w-full sm:px-2 max-w-6xl">
+          <div className="w-full sm:px-2 max-w-7xl">
              {isLoading ? (
                 <div className="flex items-center justify-center min-h-[50vh]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -566,7 +566,7 @@ export default function Home() {
                   <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="px-0 sm:px-0">
+            <div className="sm:px-0">
               <TaskGrid
                 tasks={weeklyTasks}
                 selectedTaskId={selectedTaskId}
