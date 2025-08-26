@@ -234,14 +234,19 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
     return acc;
   }, {} as Record<string, Task[]>);
 
-  const sortedWeeks = Object.keys(groupedByWeek).sort();
+  const sortedWeeks = Object.keys(groupedByWeek).sort((a, b) => {
+    const [yearA, weekA] = a.split('-').map(Number);
+    const [yearB, weekB] = b.split('-').map(Number);
+    if (yearA !== yearB) return yearA - yearB;
+    return weekA - weekB;
+  });
 
   for (const week of sortedWeeks) {
     const [year, weekNum] = week.split('-').map(Number);
     // To reliably get the start date of a specific week number for a year:
     const firstDayOfYear = new Date(year, 0, 4); // Use Jan 4th as it's always in week 1
-    const firstWeekStart = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
-    const weekStartDate = addWeeks(firstWeekStart, weekNum - 1);
+    const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
+    const weekStartDate = addWeeks(startOfFirstWeek, weekNum - 1);
     
     markdown += `## Week of ${format(weekStartDate, 'MMMM d, yyyy')}\n\n`;
 
@@ -268,11 +273,11 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
         .map(day => statusChars[task.statuses[day as keyof Task['statuses']]])
         .join('');
 
-      let metadata = `(id: ${task.id}; created: ${task.createdAt}`;
+      let metadataParts = [`id: ${task.id}`, `created: ${task.createdAt}`];
       if (task.parentId) {
-        metadata += `; parentid: ${task.parentId}`;
+        metadataParts.push(`parentid: ${task.parentId}`);
       }
-      metadata += ')';
+      const metadata = `(${metadataParts.join('; ')})`;
 
       let line = `${indent}- ${doneMarker} [${statusString}] ${titleText} ${metadata}\n`;
 
@@ -283,6 +288,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
       return line;
     };
     
+    // Process only root tasks to maintain hierarchy in the output
     for (const task of weekTasks) {
       if (!task.parentId) {
           markdown += formatTaskLine(task, 0);
@@ -299,65 +305,69 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
   const lines = markdown.split('\n');
   let currentWeekKey = '';
   const statusMap: { [key: string]: TaskStatus } = {
-    ' ': 'default',
-    'o': 'planned',
-    'v': 'completed',
-    '>': 'rescheduled',
-    'x': 'cancelled',
+    ' ': 'default', 'o': 'planned', 'v': 'completed', '>': 'rescheduled', 'x': 'cancelled',
   };
   const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+  // This regex now correctly captures the title and the metadata block separately
+  const taskRegex = /^\s*- (\[[ v]\]) \[([ovx >]{7})\] (.*?) \((.*)\)\s*$/;
 
   for (const line of lines) {
     if (line.startsWith('## Week of ')) {
       const dateStr = line.substring(12);
       try {
         const date = parse(dateStr, 'MMMM d, yyyy', new Date());
+        if (isNaN(date.getTime())) {
+            console.error("Invalid date parsed:", dateStr);
+            currentWeekKey = '';
+            continue;
+        }
         const year = getYear(date);
         const week = getWeek(date, { weekStartsOn: 1 });
         currentWeekKey = `${year}-${week}`;
       } catch (e) {
         console.error("Error parsing week date:", dateStr, e);
-        currentWeekKey = ''; // Invalidate if parsing fails
+        currentWeekKey = '';
       }
       continue;
     }
     
-    if (line.trim().startsWith('- [') && currentWeekKey) {
-        const match = line.match(/^- ( *?)(\[.?\]) \[(.{7})\] (.*?)\((.*)\)/);
-        if (!match) continue;
+    if (!currentWeekKey) continue;
 
-        const [, indent, done, statusStr, title, metadataStr] = match;
-        
-        const metadata: Record<string, string> = {};
-        metadataStr.split(';').forEach(part => {
-            const [key, ...valueParts] = part.split(':');
-            if (key && valueParts.length > 0) {
-                metadata[key.trim()] = valueParts.join(':').trim();
-            }
-        });
-        
-        const statuses: Task['statuses'] = {
-            monday: 'default', tuesday: 'default', wednesday: 'default',
-            thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
-        };
+    const match = line.match(taskRegex);
+    if (!match) continue;
 
-        if (statusStr.length === 7) {
-            weekdays.forEach((day, index) => {
-                statuses[day] = statusMap[statusStr[index]] || 'default';
-            });
+    const [, doneMarker, statusStr, titleText, metadataStr] = match;
+
+    const metadata: Record<string, string> = {};
+    metadataStr.split(';').forEach(part => {
+        const [key, ...valueParts] = part.split(':');
+        if (key && valueParts.length > 0) {
+            metadata[key.trim()] = valueParts.join(':').trim();
         }
-        
-        const task: Task = {
-            id: metadata.id,
-            title: `${done} ${title.trim()}`,
-            createdAt: metadata.created,
-            parentId: metadata.parentid || null,
-            week: currentWeekKey,
-            statuses: statuses,
-        };
+    });
 
-        tasks.push(task);
+    if (!metadata.id || !metadata.created) continue;
+
+    const statuses: Task['statuses'] = {
+        monday: 'default', tuesday: 'default', wednesday: 'default',
+        thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
+    };
+    if (statusStr.length === 7) {
+        weekdays.forEach((day, index) => {
+            statuses[day] = statusMap[statusStr[index]] || 'default';
+        });
     }
+
+    const task: Task = {
+        id: metadata.id,
+        title: `${doneMarker} ${titleText.trim()}`,
+        createdAt: metadata.created,
+        parentId: metadata.parentid || null,
+        week: currentWeekKey,
+        statuses: statuses,
+    };
+    tasks.push(task);
   }
 
   // Re-order tasks to ensure children follow parents for rendering
@@ -368,23 +378,12 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
   for (const task of tasks) {
     if (processedIds.has(task.id)) continue;
     
-    // If it's a child, ensure its parent is processed first
-    const path = [];
-    let current: Task | undefined = task;
-    while (current && current.parentId && !processedIds.has(current.parentId)) {
-      path.unshift(current);
-      current = taskMap.get(current.parentId);
-    }
-
-    // Process the root of the current chain
-    if (current && !processedIds.has(current.id)) {
-       result.push(current);
-       processedIds.add(current.id);
-    }
-
-    // Process children
-    const queue = [current];
-    while(queue.length > 0) {
+    if (task.parentId === null) {
+      result.push(task);
+      processedIds.add(task.id);
+      
+      const queue = [task];
+      while(queue.length > 0) {
         const parent = queue.shift();
         if (!parent) continue;
         const children = tasks.filter(t => t.parentId === parent.id);
@@ -395,17 +394,25 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
                 queue.push(child);
             }
         }
+      }
+    }
+  }
+
+  // Add any orphaned children that might have been missed
+  for(const task of tasks){
+    if(!processedIds.has(task.id)){
+      result.push(task);
+      processedIds.add(task.id);
     }
   }
 
   return result;
 }
 
-
 // This function no longer saves to a file. It's now a placeholder.
 export async function saveTasks(tasks: Task[]): Promise<void> {
   // In a real application, this would save to a database or other persistent storage.
-  // For this example, we do nothing, and tasks are regenerated on each page load.
-  console.log('Task saving is disabled in this demo.');
+  // For this example, we do nothing, and tasks are regenerated on each page load unless imported.
+  console.log('Task saving is a client-side operation in this demo.');
   return Promise.resolve();
 }
