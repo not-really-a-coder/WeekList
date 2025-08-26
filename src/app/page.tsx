@@ -12,7 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse } from 'date-fns';
+import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse, getDate } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
 import { getTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
@@ -35,9 +35,13 @@ async function generateTaskId(existingIds: string[]): Promise<string> {
 }
 
 
-const formatWeekDisplay = (date: Date) => {
-  const formattedDate = format(date, 'MMMM d, yyyy');
-  return `Week of ${formattedDate}`;
+const getDayWithSuffix = (date: Date) => {
+    const day = getDate(date);
+    let suffix = 'th';
+    if (day % 10 === 1 && day !== 11) suffix = 'st';
+    if (day % 10 === 2 && day !== 12) suffix = 'nd';
+    if (day % 10 === 3 && day !== 13) suffix = 'rd';
+    return <>{day}<sup>{suffix}</sup></>;
 };
 
 export default function Home() {
@@ -85,21 +89,17 @@ export default function Home() {
   }, [loadTasks]);
   
   const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
-    setTasks(newTasksOrFn);
-  }, []);
-
-  // Effect to save tasks to localStorage whenever they change
-  useEffect(() => {
-    if (!isLoading && isClient) {
-      startTransition(() => {
+    const newTasks = typeof newTasksOrFn === 'function' ? newTasksOrFn(tasks) : newTasksOrFn;
+    setTasks(newTasks);
+    startTransition(() => {
         try {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newTasks));
         } catch (e) {
           toast({ variant: 'destructive', title: 'Save failed', description: 'Could not save tasks to local storage.' });
         }
-      });
-    }
-  }, [tasks, isLoading, isClient, toast, startTransition]);
+    });
+  }, [tasks, toast, startTransition]);
+
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
       updateAndSaveTasks(currentTasks => {
@@ -516,7 +516,11 @@ export default function Home() {
 
   const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
   
-  const weekDisplay = formatWeekDisplay(startOfWeekDate);
+  const weekDisplay = (
+    <>
+      Week of {format(startOfWeekDate, 'MMMM')} {getDayWithSuffix(startOfWeekDate)}, {format(startOfWeekDate, 'yyyy')}
+    </>
+  );
 
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
