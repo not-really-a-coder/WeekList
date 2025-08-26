@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, AlertCircle, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2 } from 'lucide-react';
+import { Save, Trash2, GripVertical, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2 } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { handleBreakDownTask } from '@/app/actions';
+import { ExclamationMark } from './ExclamationMark';
 
 
 interface TaskRowProps {
@@ -313,7 +314,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                       className="flex items-center flex-grow min-w-0 gap-2 select-none"
                       onClick={handleTitleClick}
                     >
-                      {isImportant && <AlertCircle className="size-4 text-destructive shrink-0" />}
+                      {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
                       <p
                         className={cn(
                           "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",

@@ -1,13 +1,14 @@
 
-import { Check, X, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Check, X, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Dot } from './Dot';
+import { ExclamationMark } from './ExclamationMark';
 
 const legendItems = [
   { icon: <Dot className="size-3 text-muted-foreground/50" />, label: 'Planned' },
   { icon: <ArrowRight className="size-4 text-blue-500" />, label: 'Rescheduled' },
   { icon: <Check className="size-4 text-green-500" />, label: 'Completed' },
   { icon: <X className="size-4 text-red-500" />, label: 'Cancelled' },
-  { icon: <AlertCircle className="size-4 text-destructive" />, label: 'Important' },
+  { icon: <ExclamationMark className="size-4 text-destructive" />, label: 'Important' },
   { icon: <CheckCircle2 className="size-4 text-green-500" />, label: 'Closed' },
 ];
 
