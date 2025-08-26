@@ -19,7 +19,7 @@ export function Legend() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
         {legendItems.map((item) => (
           <div key={item.label} className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-5 h-5">{item.icon}</div>
+            <div className="flex items-center justify-center h-5 w-auto">{item.icon}</div>
             <span className="text-sm text-muted-foreground">{item.label}</span>
           </div>
         ))}

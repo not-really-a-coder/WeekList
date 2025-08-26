@@ -280,7 +280,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     >
         <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '')}>
             <div
-                className='flex items-center flex-grow min-w-0 gap-2'
+                className='flex items-center flex-grow min-w-0 gap-1'
             >
                 <div 
                   ref={drag}
@@ -294,6 +294,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 </div>
                 <div className="flex items-center flex-grow min-w-0 gap-2" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
                   {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+                  {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
                   {isEditing ? (
                     <>
                       <Input
@@ -314,7 +315,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                       className="flex items-center flex-grow min-w-0 gap-2 select-none"
                       onClick={handleTitleClick}
                     >
-                      {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
                       <p
                         className={cn(
                           "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",
