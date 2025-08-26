@@ -78,31 +78,28 @@ export default function Home() {
   }, [toast]);
   
   useEffect(() => {
-    loadTasks();
-    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      loadTasks();
+      setIsClient(true);
+    }
   }, [loadTasks]);
-
+  
   const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
-    let finalTasks: Task[] = [];
+    setTasks(newTasksOrFn);
+  }, []);
 
-    setTasks(currentTasks => {
-      if (typeof newTasksOrFn === 'function') {
-        finalTasks = newTasksOrFn(currentTasks);
-      } else {
-        finalTasks = newTasksOrFn;
-      }
-      
+  // Effect to save tasks to localStorage whenever they change
+  useEffect(() => {
+    if (!isLoading && isClient) {
       startTransition(() => {
         try {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(finalTasks));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
         } catch (e) {
           toast({ variant: 'destructive', title: 'Save failed', description: 'Could not save tasks to local storage.' });
         }
       });
-      
-      return finalTasks;
-    });
-  }, [toast, startTransition]);
+    }
+  }, [tasks, isLoading, isClient, toast, startTransition]);
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
       updateAndSaveTasks(currentTasks => {
