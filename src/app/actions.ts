@@ -238,11 +238,10 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
   for (const week of sortedWeeks) {
     const [year, weekNum] = week.split('-').map(Number);
-    // The 'parse' function from date-fns is not suited for week numbers alone. 
-    // It's better to construct a date within that week.
-    // Let's create a date for the first day of the year and then set the week.
-    const firstDayOfYear = new Date(year, 0, 1);
-    const weekStartDate = startOfWeek(addWeeks(firstDayOfYear, weekNum - 1), { weekStartsOn: 1 });
+    // To reliably get the start date of a specific week number for a year:
+    const firstDayOfYear = new Date(year, 0, 4); // Use Jan 4th as it's always in week 1
+    const firstWeekStart = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
+    const weekStartDate = addWeeks(firstWeekStart, weekNum - 1);
     
     markdown += `## Week of ${format(weekStartDate, 'MMMM d, yyyy')}\n\n`;
 
