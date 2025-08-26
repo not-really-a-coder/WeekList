@@ -12,7 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
+import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
 import { getTasks, saveTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
@@ -44,7 +44,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
+  const [DndBackend, setDndBackend] = useState<any>(null);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -65,11 +66,12 @@ export default function Home() {
       setIsLoading(false);
     }
   }, [toast]);
-
+  
   useEffect(() => {
     loadTasks();
     setIsClient(true);
-  }, [loadTasks]);
+    setDndBackend(isMobile ? TouchBackend : HTML5Backend);
+  }, [loadTasks, isMobile]);
 
   const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
     let finalTasks: Task[] = [];
@@ -362,8 +364,9 @@ export default function Home() {
   
       const [year, weekNumber] = taskToMove.week.split('-').map(Number);
       
-      const firstDayOfYear = parseISO(`${year}-01-01`);
-      const taskDate = setWeek(firstDayOfYear, weekNumber, { weekStartsOn: 1 });
+      const firstDayOfYear = parse(`${year}-01-04`, 'yyyy-MM-dd', new Date());
+      const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
+      const taskDate = addDays(startOfFirstWeek, (weekNumber -1) * 7);
       
       const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
       
@@ -481,7 +484,7 @@ export default function Home() {
     setCurrentDate(new Date());
   };
 
-  if (!isClient || DndBackend === null) {
+  if (!isClient || !DndBackend) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
