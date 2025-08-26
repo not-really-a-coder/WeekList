@@ -541,14 +541,14 @@ export default function Home() {
           onUpload={handleUploadClick}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
-          <div className="mx-auto px-2 max-w-6xl">
+          <div className="w-full px-2 sm:px-4 max-w-6xl">
              {isLoading ? (
                 <div className="flex items-center justify-center min-h-[50vh]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
             ) : (
             <>
-            <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+            <div className="flex items-center justify-between mb-4">
               <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                   <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -566,7 +566,7 @@ export default function Home() {
                   <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="px-0">
+            <div className="px-0 sm:px-2">
               <TaskGrid
                 tasks={weeklyTasks}
                 selectedTaskId={selectedTaskId}
@@ -585,7 +585,7 @@ export default function Home() {
                 onSelectTask={handleSelectTask}
                 allTasks={tasks}
               />
-                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
+                <div className="mt-4 flex flex-row items-start justify-between gap-4">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>
