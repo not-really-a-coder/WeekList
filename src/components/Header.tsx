@@ -2,17 +2,18 @@
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, Upload } from 'lucide-react';
 import { Button } from './ui/button';
 
 
 interface HeaderProps {
     isSaving: boolean;
     onDownload: () => void;
+    onUpload: () => void;
 }
 
 
-export function Header({ isSaving, onDownload }: HeaderProps) {
+export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
   
   return (
     <header className="border-b">
@@ -25,9 +26,13 @@ export function Header({ isSaving, onDownload }: HeaderProps) {
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 flex-grow">
+          <Button variant="outline" size="sm" onClick={onUpload}>
+            <Upload className="mr-2" />
+            Import
+          </Button>
           <Button variant="outline" size="sm" onClick={onDownload}>
             <Download className="mr-2" />
-            Download
+            Export
           </Button>
           <ThemeToggle />
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +15,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, saveTasks, getTasksMarkdown } from './actions';
+import { getTasks, saveTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -48,6 +48,7 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -428,6 +429,38 @@ export default function Home() {
     }
   };
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const content = e.target?.result;
+      if (typeof content === 'string') {
+        try {
+          const newTasks = await parseTasksMarkdown(content);
+          setTasks(newTasks);
+          toast({ title: 'Success', description: 'Tasks imported successfully.' });
+        } catch (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Import failed',
+            description: error instanceof Error ? error.message : 'Could not parse the markdown file.',
+          });
+        }
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset file input
+    if(event.target) event.target.value = '';
+  };
+
+
   const handleSelectTask = (taskId: string | null) => {
     if (taskId === selectedTaskId) {
       setSelectedTaskId(null); // unselect if clicked again
@@ -469,7 +502,18 @@ export default function Home() {
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
-        <Header isSaving={isPending} onDownload={handleDownload} />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept=".md, .txt"
+          className="hidden"
+        />
+        <Header 
+          isSaving={isPending} 
+          onDownload={handleDownload}
+          onUpload={handleUploadClick}
+        />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="mx-auto px-0 sm:px-2">
              {isLoading ? (

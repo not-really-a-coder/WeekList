@@ -271,7 +271,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
       let metadata = `(id: ${task.id}; created: ${task.createdAt}`;
       if (task.parentId) {
-        metadata += `; parentId: ${task.parentId}`;
+        metadata += `; parentid: ${task.parentId}`;
       }
       metadata += ')';
 
@@ -294,6 +294,114 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
   return markdown;
 }
+
+export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
+  const tasks: Task[] = [];
+  const lines = markdown.split('\n');
+  let currentWeekKey = '';
+  const statusMap: { [key: string]: TaskStatus } = {
+    ' ': 'default',
+    'o': 'planned',
+    'v': 'completed',
+    '>': 'rescheduled',
+    'x': 'cancelled',
+  };
+  const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+  for (const line of lines) {
+    if (line.startsWith('## Week of ')) {
+      const dateStr = line.substring(12);
+      try {
+        const date = parse(dateStr, 'MMMM d, yyyy', new Date());
+        const year = getYear(date);
+        const week = getWeek(date, { weekStartsOn: 1 });
+        currentWeekKey = `${year}-${week}`;
+      } catch (e) {
+        console.error("Error parsing week date:", dateStr, e);
+        currentWeekKey = ''; // Invalidate if parsing fails
+      }
+      continue;
+    }
+    
+    if (line.trim().startsWith('- [') && currentWeekKey) {
+        const match = line.match(/^- ( *?)(\[.?\]) \[(.{7})\] (.*?)\((.*)\)/);
+        if (!match) continue;
+
+        const [, indent, done, statusStr, title, metadataStr] = match;
+        
+        const metadata: Record<string, string> = {};
+        metadataStr.split(';').forEach(part => {
+            const [key, ...valueParts] = part.split(':');
+            if (key && valueParts.length > 0) {
+                metadata[key.trim()] = valueParts.join(':').trim();
+            }
+        });
+        
+        const statuses: Task['statuses'] = {
+            monday: 'default', tuesday: 'default', wednesday: 'default',
+            thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
+        };
+
+        if (statusStr.length === 7) {
+            weekdays.forEach((day, index) => {
+                statuses[day] = statusMap[statusStr[index]] || 'default';
+            });
+        }
+        
+        const task: Task = {
+            id: metadata.id,
+            title: `${done} ${title.trim()}`,
+            createdAt: metadata.created,
+            parentId: metadata.parentid || null,
+            week: currentWeekKey,
+            statuses: statuses,
+        };
+
+        tasks.push(task);
+    }
+  }
+
+  // Re-order tasks to ensure children follow parents for rendering
+  const taskMap = new Map(tasks.map(t => [t.id, t]));
+  const result: Task[] = [];
+  const processedIds = new Set<string>();
+
+  for (const task of tasks) {
+    if (processedIds.has(task.id)) continue;
+    
+    // If it's a child, ensure its parent is processed first
+    const path = [];
+    let current: Task | undefined = task;
+    while (current && current.parentId && !processedIds.has(current.parentId)) {
+      path.unshift(current);
+      current = taskMap.get(current.parentId);
+    }
+
+    // Process the root of the current chain
+    if (current && !processedIds.has(current.id)) {
+       result.push(current);
+       processedIds.add(current.id);
+    }
+
+    // Process children
+    const queue = [current];
+    while(queue.length > 0) {
+        const parent = queue.shift();
+        if (!parent) continue;
+        const children = tasks.filter(t => t.parentId === parent.id);
+        for(const child of children) {
+            if(!processedIds.has(child.id)) {
+                result.push(child);
+                processedIds.add(child.id);
+                queue.push(child);
+            }
+        }
+    }
+  }
+
+  return result;
+}
+
 
 // This function no longer saves to a file. It's now a placeholder.
 export async function saveTasks(tasks: Task[]): Promise<void> {
