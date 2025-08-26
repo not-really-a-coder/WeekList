@@ -25,7 +25,7 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
         <div className="flex items-center gap-3 flex-shrink-0">
           <Logo className="size-8" />
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold font-headline text-foreground">FlowDo</h1>
+            <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
             {isSaving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
           </div>
         </div>
