@@ -2,7 +2,7 @@
 
 import type { Task, TaskStatus } from '@/lib/types';
 import { breakDownTask } from '@/ai/flows/break-down-large-tasks';
-import { addWeeks, getWeek, getYear, startOfWeek, parse, format } from 'date-fns';
+import { addWeeks, getWeek, getYear, startOfWeek, parse, format, parseISO } from 'date-fns';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -85,7 +85,7 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     const parentTask: Task = {
         id: parentId,
         title: `[ ] ${parentTitle}`,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString().split('T')[0],
         parentId: null,
         statuses: { monday: 'planned', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
         week: weekKey,
@@ -100,7 +100,7 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     const childTask: Task = {
         id: childId,
         title: `[ ] ${childTitle}`,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString().split('T')[0],
         parentId: parentId,
         statuses: { monday: 'default', tuesday: 'planned', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
         week: weekKey,
@@ -115,7 +115,7 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     const importantTask: Task = {
         id: importantId,
         title: `[ ] !${importantTitle}`,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString().split('T')[0],
         parentId: null,
         statuses: { monday: 'default', tuesday: 'default', wednesday: 'planned', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
         week: weekKey,
@@ -130,7 +130,7 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     const closedTask: Task = {
         id: closedId,
         title: `[v] ${closedTitle}`,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString().split('T')[0],
         parentId: null,
         statuses: { monday: 'completed', tuesday: 'completed', wednesday: 'completed', thursday: 'completed', friday: 'completed', saturday: 'default', sunday: 'default' },
         week: weekKey,
@@ -145,7 +145,7 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
      const longTask: Task = {
         id: longDescId,
         title: `[ ] ${longTaskTitle}`,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString().split('T')[0],
         parentId: null,
         statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'planned', friday: 'default', saturday: 'default', sunday: 'default' },
         week: weekKey,
@@ -162,7 +162,7 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
         const task: Task = {
             id: newId,
             title: `[ ] ${title}`,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date().toISOString().split('T')[0],
             parentId: null,
             statuses: { monday: generateRandomStatus(), tuesday: generateRandomStatus(), wednesday: generateRandomStatus(), thursday: generateRandomStatus(), friday: generateRandomStatus(), saturday: generateRandomStatus(), sunday: generateRandomStatus() },
             week: weekKey,
@@ -238,7 +238,12 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
   for (const week of sortedWeeks) {
     const [year, weekNum] = week.split('-').map(Number);
-    const weekStartDate = startOfWeek(parse(`${year}-W${weekNum}`, 'yyyy-Www', new Date()), { weekStartsOn: 1 });
+    // The 'parse' function from date-fns is not suited for week numbers alone. 
+    // It's better to construct a date within that week.
+    // Let's create a date for the first day of the year and then set the week.
+    const firstDayOfYear = new Date(year, 0, 1);
+    const weekStartDate = startOfWeek(addWeeks(firstDayOfYear, weekNum - 1), { weekStartsOn: 1 });
+    
     markdown += `## Week of ${format(weekStartDate, 'MMMM d, yyyy')}\n\n`;
 
     const weekTasks = groupedByWeek[week];
@@ -264,7 +269,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
         .map(day => statusChars[task.statuses[day as keyof Task['statuses']]])
         .join('');
 
-      let metadata = `(id: ${task.id}; created: ${format(parseISO(task.createdAt), 'yyyy-MM-dd')}`;
+      let metadata = `(id: ${task.id}; created: ${task.createdAt}`;
       if (task.parentId) {
         metadata += `; parentId: ${task.parentId}`;
       }
