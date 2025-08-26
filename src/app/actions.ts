@@ -2,7 +2,7 @@
 
 import type { Task, TaskStatus } from '@/lib/types';
 import { breakDownTask } from '@/ai/flows/break-down-large-tasks';
-import { addWeeks, getWeek, getYear, startOfWeek, parse, format, parseISO } from 'date-fns';
+import { addWeeks, getWeek, getYear, startOfWeek, parse, format } from 'date-fns';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -51,7 +51,6 @@ const generateRandomStatus = (): TaskStatus => {
     return statuses[Math.floor(Math.random() * statuses.length)];
 };
 
-// Helper to shuffle an array
 const shuffleArray = <T>(array: T[]): T[] => {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -68,16 +67,13 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     const weekTasks: Task[] = [];
     const allIds: string[] = [];
 
-    // Filter out already used titles and shuffle the remaining ones
     const availableTitles = shuffleArray(exampleTaskTitles.filter(t => !usedTitles.has(t)));
 
-    // Ensure we have enough unique titles
     if (availableTitles.length < 5) {
         console.warn("Not enough unique task titles available for a full week's generation.");
         return [];
     }
 
-    // 1. Create a parent task
     const parentId = await generateTaskId(allIds);
     allIds.push(parentId);
     const parentTitle = availableTitles[0];
@@ -92,7 +88,6 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     };
     weekTasks.push(parentTask);
 
-    // 2. Create a child task for the parent
     const childId = await generateTaskId(allIds);
     allIds.push(childId);
     const childTitle = availableTitles[1];
@@ -107,7 +102,6 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     };
     weekTasks.push(childTask);
     
-    // 3. Create an important task
     const importantId = await generateTaskId(allIds);
     allIds.push(importantId);
     const importantTitle = availableTitles[2];
@@ -122,7 +116,6 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     };
     weekTasks.push(importantTask);
 
-    // 4. Create a closed task
     const closedId = await generateTaskId(allIds);
     allIds.push(closedId);
     const closedTitle = availableTitles[3];
@@ -137,24 +130,22 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
     };
     weekTasks.push(closedTask);
 
-    // 5. Create a task with a very long description
     const longDescId = await generateTaskId(allIds);
-    allIds.push(longDescId);
-    const longTaskTitle = 'This is a task with a deliberately very long description to test how the user interface handles text overflow, wrapping, and general layout within the constrained space of the task row. It needs to be long enough to see if the line-clamping is effective and if the UI remains usable.';
-    usedTitles.add(longTaskTitle); // even though it's not in the main list
-     const longTask: Task = {
-        id: longDescId,
-        title: `[ ] ${longTaskTitle}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        parentId: null,
-        statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'planned', friday: 'default', saturday: 'default', sunday: 'default' },
-        week: weekKey,
-    };
-    weekTasks.push(longTask);
+allIds.push(longDescId);
+const longTaskTitle = 'This is a task with a deliberately very long description to test how the user interface handles text overflow, wrapping, and general layout within the constrained space of the task row. It needs to be long enough to see if the line-clamping is effective and if the UI remains usable.';
+usedTitles.add(longTaskTitle);
+ const longTask: Task = {
+    id: longDescId,
+    title: `[ ] ${longTaskTitle}`,
+    createdAt: new Date().toISOString().split('T')[0],
+    parentId: null,
+    statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'planned', friday: 'default', saturday: 'default', sunday: 'default' },
+    week: weekKey,
+};
+weekTasks.push(longTask);
 
 
-    // Add a few more random tasks to fill the week
-    const remainingTitles = availableTitles.slice(4, 6); // Add up to 2 more tasks
+    const remainingTitles = availableTitles.slice(4, 6);
     for (const title of remainingTitles) {
         const newId = await generateTaskId(allIds);
         allIds.push(newId);
@@ -169,7 +160,6 @@ const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<T
         };
         weekTasks.push(task);
     }
-
 
     return shuffleArray(weekTasks);
 };
@@ -197,7 +187,6 @@ export async function getTasks(): Promise<Task[]> {
         allTasks.push(...weeklyTasks);
     }
     
-    // Re-order tasks to ensure children follow parents
     const taskMap = new Map(allTasks.map(t => [t.id, t]));
     const result: Task[] = [];
     const processedIds = new Set<string>();
@@ -206,22 +195,18 @@ export async function getTasks(): Promise<Task[]> {
         if (processedIds.has(task.id)) continue;
 
         if (task.parentId && taskMap.has(task.parentId)) {
-            // This is a child, it will be processed with its parent
             continue;
         }
 
-        // This is a root task
         result.push(task);
         processedIds.add(task.id);
 
-        // Find and add its children
         const children = allTasks.filter(t => t.parentId === task.id);
         for (const child of children) {
             result.push(child);
             processedIds.add(child.id);
         }
     }
-
 
     return result;
 }
@@ -243,8 +228,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
   for (const week of sortedWeeks) {
     const [year, weekNum] = week.split('-').map(Number);
-    // To reliably get the start date of a specific week number for a year:
-    const firstDayOfYear = new Date(year, 0, 4); // Use Jan 4th as it's always in week 1
+    const firstDayOfYear = new Date(year, 0, 4);
     const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
     const weekStartDate = addWeeks(startOfFirstWeek, weekNum - 1);
     
@@ -288,7 +272,6 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
       return line;
     };
     
-    // Process only root tasks to maintain hierarchy in the output
     for (const task of weekTasks) {
       if (!task.parentId) {
           markdown += formatTaskLine(task, 0);
@@ -300,123 +283,169 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
   return markdown;
 }
 
-export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
-  const tasks: Task[] = [];
-  const lines = markdown.split('\n');
-  let currentWeekKey = '';
-  const statusMap: { [key: string]: TaskStatus } = {
-    ' ': 'default', 'o': 'planned', 'v': 'completed', '>': 'rescheduled', 'x': 'cancelled',
-  };
-  const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Task[]; logs: string[] }> {
+    const logs: string[] = [];
+    logs.push('Starting markdown parsing process...');
+    
+    const tasks: Task[] = [];
+    const lines = markdown.split('\n');
+    let currentWeekKey = '';
+    const statusMap: { [key: string]: TaskStatus } = {
+        ' ': 'default', 'o': 'planned', 'v': 'completed', '>': 'rescheduled', 'x': 'cancelled',
+    };
+    const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-  const taskRegex = /^\s*- (\[[ v]\]) \[([ovx >]{7})\] (.*?) \((.*)\)\s*$/;
+    const parentChildMap: { [childId: string]: string } = {};
+    const taskLevels: { [id: string]: number } = {};
+    const taskStack: Task[] = [];
 
-  for (const line of lines) {
-    if (line.startsWith('## Week of ')) {
-      const dateStr = line.substring(12);
-      try {
-        const date = parse(dateStr, 'MMMM d, yyyy', new Date());
-        if (isNaN(date.getTime())) {
-            console.error("Invalid date parsed:", dateStr);
-            currentWeekKey = '';
+    logs.push(`Processing ${lines.length} lines of markdown.`);
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.trim() === '') {
+            logs.push(`L${i+1}: Skipping empty line.`);
             continue;
         }
-        const year = getYear(date);
-        const week = getWeek(date, { weekStartsOn: 1 });
-        currentWeekKey = `${year}-${week}`;
-      } catch (e) {
-        console.error("Error parsing week date:", dateStr, e);
-        currentWeekKey = '';
-      }
-      continue;
-    }
-    
-    if (!currentWeekKey) continue;
 
-    const match = line.match(taskRegex);
-    if (!match) continue;
-
-    const [, doneMarker, statusStr, titleText, metadataStr] = match;
-
-    const metadata: Record<string, string> = {};
-    metadataStr.split(';').forEach(part => {
-        const [key, ...valueParts] = part.split(':');
-        if (key && valueParts.length > 0) {
-            metadata[key.trim()] = valueParts.join(':').trim();
+        if (line.startsWith('## Week of ')) {
+            const dateStr = line.substring(12);
+            logs.push(`L${i+1}: Found week header. Parsing date: "${dateStr}"`);
+            try {
+                const date = parse(dateStr, 'MMMM d, yyyy', new Date());
+                if (isNaN(date.getTime())) {
+                    logs.push(`L${i+1}: ERROR - Invalid date format for "${dateStr}". Skipping week.`);
+                    currentWeekKey = '';
+                    continue;
+                }
+                const year = getYear(date);
+                const week = getWeek(date, { weekStartsOn: 1 });
+                currentWeekKey = `${year}-${week}`;
+                logs.push(`L${i+1}: Successfully parsed week. Key: ${currentWeekKey}`);
+            } catch (e) {
+                logs.push(`L${i+1}: CRITICAL ERROR parsing week date: "${dateStr}". Error: ${e instanceof Error ? e.message : String(e)}`);
+                currentWeekKey = '';
+            }
+            continue;
         }
-    });
 
-    if (!metadata.id || !metadata.created) continue;
+        if (!currentWeekKey) {
+            logs.push(`L${i+1}: Skipping line as no valid week is set. Line: "${line}"`);
+            continue;
+        }
 
-    const statuses: Task['statuses'] = {
-        monday: 'default', tuesday: 'default', wednesday: 'default',
-        thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
-    };
-    if (statusStr.length === 7) {
-        weekdays.forEach((day, index) => {
-            statuses[day] = statusMap[statusStr[index]] || 'default';
+        const taskRegex = /^(\s*)- (\[[ v]\]) \[([ovx >]{7})\] (.*?) \((.*)\)\s*$/;
+        const match = line.match(taskRegex);
+
+        if (!match) {
+            logs.push(`L${i+1}: FAILED to match task regex. Line: "${line}"`);
+            continue;
+        }
+        
+        logs.push(`L${i+1}: Successfully matched task regex. Line: "${line}"`);
+
+        const [, indent, doneMarker, statusStr, titleText, metadataStr] = match;
+        const level = indent.length / 2;
+        logs.push(`L${i+1}:  - Indent level: ${level}`);
+        logs.push(`L${i+1}:  - Done marker: ${doneMarker}`);
+        logs.push(`L${i+1}:  - Status string: ${statusStr}`);
+        logs.push(`L${i+1}:  - Title text: ${titleText}`);
+        logs.push(`L${i+1}:  - Metadata: ${metadataStr}`);
+
+
+        const metadata: Record<string, string> = {};
+        metadataStr.split(';').forEach(part => {
+            const [key, ...valueParts] = part.split(':');
+            if (key && valueParts.length > 0) {
+                metadata[key.trim()] = valueParts.join(':').trim();
+            }
         });
+        logs.push(`L${i+1}:  - Parsed metadata object: ${JSON.stringify(metadata)}`);
+
+        if (!metadata.id || !metadata.created) {
+            logs.push(`L${i+1}: ERROR - Task metadata is missing 'id' or 'created'. Skipping task.`);
+            continue;
+        }
+
+        const statuses: Task['statuses'] = {
+            monday: 'default', tuesday: 'default', wednesday: 'default',
+            thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
+        };
+        if (statusStr.length === 7) {
+            weekdays.forEach((day, index) => {
+                statuses[day] = statusMap[statusStr[index]] || 'default';
+            });
+        }
+        logs.push(`L${i+1}:  - Parsed statuses: ${JSON.stringify(statuses)}`);
+
+        const task: Task = {
+            id: metadata.id,
+            title: `${doneMarker} ${titleText.trim()}`,
+            createdAt: metadata.created,
+            parentId: metadata.parentid || null,
+            week: currentWeekKey,
+            statuses: statuses,
+        };
+        
+        tasks.push(task);
+        logs.push(`L${i+1}: Successfully created task object: ${JSON.stringify(task)}`);
     }
 
-    const task: Task = {
-        id: metadata.id,
-        title: `${doneMarker} ${titleText.trim()}`,
-        createdAt: metadata.created,
-        parentId: metadata.parentid || null,
-        week: currentWeekKey,
-        statuses: statuses,
-    };
-    tasks.push(task);
-  }
-
-  // Re-order tasks to ensure children follow parents for rendering
-  const taskMap = new Map(tasks.map(t => [t.id, t]));
-  const result: Task[] = [];
-  const processedIds = new Set<string>();
-
-  for (const task of tasks) {
-    if (processedIds.has(task.id)) continue;
+    logs.push(`Finished parsing. Found ${tasks.length} tasks in total.`);
+    logs.push(`Re-ordering tasks to ensure parent-child hierarchy...`);
     
-    if (task.parentId === null) {
-      result.push(task);
-      processedIds.add(task.id);
-      
-      const queue = [task];
-      while(queue.length > 0) {
-        const parent = queue.shift();
-        if (!parent) continue;
-        const children = tasks.filter(t => t.parentId === parent.id);
-        for(const child of children) {
-            if(!processedIds.has(child.id)) {
-                // Find the index of the parent (or last added sibling) to insert after
-                const parentIndex = result.findIndex(p => p.id === parent.id);
-                const lastSiblingIndex = result.findLastIndex(p => p.parentId === parent.id);
-                const insertIndex = lastSiblingIndex !== -1 ? lastSiblingIndex + 1 : parentIndex + 1;
+    const taskMap = new Map(tasks.map(t => [t.id, t]));
+    const result: Task[] = [];
+    const processedIds = new Set<string>();
+
+    for (const task of tasks) {
+        if (processedIds.has(task.id)) continue;
+        
+        if (task.parentId === null) {
+            result.push(task);
+            processedIds.add(task.id);
+            
+            const queue = [task];
+            while (queue.length > 0) {
+                const parent = queue.shift();
+                if (!parent) continue;
                 
-                result.splice(insertIndex, 0, child);
-                processedIds.add(child.id);
-                queue.push(child);
+                const children = tasks.filter(t => t.parentId === parent.id);
+                for (const child of children) {
+                    if (!processedIds.has(child.id)) {
+                        const parentIndex = result.findIndex(p => p.id === parent.id);
+                        const siblings = result.filter(s => s.parentId === parent.id);
+                        const lastSiblingIndex = siblings.length > 0 
+                          ? result.findLastIndex(p => p.id === siblings[siblings.length - 1].id) 
+                          : -1;
+
+                        const insertIndex = lastSiblingIndex !== -1 ? lastSiblingIndex + 1 : parentIndex + 1;
+                        
+                        result.splice(insertIndex, 0, child);
+                        processedIds.add(child.id);
+                        queue.push(child);
+                    }
+                }
             }
         }
-      }
     }
-  }
 
-  // Add any orphaned children that might have been missed
-  for(const task of tasks){
-    if(!processedIds.has(task.id)){
-      result.push(task);
-      processedIds.add(task.id);
+    for (const task of tasks) {
+        if (!processedIds.has(task.id)) {
+            logs.push(`WARNING: Found orphaned task with no parent in the final list: ${task.id}. Appending to the end.`);
+            result.push(task);
+            processedIds.add(task.id);
+        }
     }
-  }
 
-  return result;
+    logs.push('Task re-ordering complete.');
+    logs.push('Parsing process finished.');
+
+    return { tasks: result, logs };
 }
 
-// This function no longer saves to a file. It's now a placeholder.
 export async function saveTasks(tasks: Task[]): Promise<void> {
-  // In a real application, this would save to a database or other persistent storage.
-  // For this example, we do nothing, and tasks are regenerated on each page load unless imported.
   console.log('Task saving is a client-side operation in this demo.');
   return Promise.resolve();
 }

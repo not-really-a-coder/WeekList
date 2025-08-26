@@ -10,11 +10,12 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
+import { DebugWindow } from '@/components/DebugWindow';
 import { getTasks, saveTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
@@ -44,6 +45,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [logs, setLogs] = useState<string[]>([]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -74,7 +76,6 @@ export default function Home() {
   const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
     let finalTasks: Task[] = [];
 
-    // First, update the state optimistically
     setTasks(currentTasks => {
       if (typeof newTasksOrFn === 'function') {
         finalTasks = newTasksOrFn(currentTasks);
@@ -84,9 +85,7 @@ export default function Home() {
       return finalTasks;
     });
 
-    // Then, trigger the server action in a transition
     startTransition(() => {
-      // Use the `finalTasks` variable which holds the updated state
       saveTasks(finalTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
     });
   }, [toast, startTransition]);
@@ -106,7 +105,6 @@ export default function Home() {
         const taskToMove = newTasks[taskIndex];
         const taskToSwapWith = newTasks[targetIndex];
         
-        // simple swap
         newTasks[taskIndex] = taskToSwapWith;
         newTasks[targetIndex] = taskToMove;
 
@@ -120,7 +118,6 @@ export default function Home() {
       const childTask = currentTasks.find(t => t.id === childId);
       if (!childTask) return currentTasks;
 
-      // Prevent nesting a task that already has children
       const hasChildren = currentTasks.some(t => t.parentId === childId);
       if (parentId && hasChildren) {
         toast({
@@ -131,7 +128,6 @@ export default function Home() {
         return currentTasks;
       }
 
-      // Prevent nesting more than one level deep
       if (parentId) {
         const parentTask = currentTasks.find(t => t.id === parentId);
         if (parentTask?.parentId) {
@@ -146,7 +142,6 @@ export default function Home() {
 
       let newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
 
-      // Reorder: move the child to be right after the parent
       if (parentId) {
         const childIndex = newTasks.findIndex(t => t.id === childId);
         const [movedChild] = newTasks.splice(childIndex, 1);
@@ -174,7 +169,6 @@ export default function Home() {
       const weeklyTasks = tasks.filter(t => t.week === `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`);
       const selectedTaskIndex = weeklyTasks.findIndex(t => t.id === selectedTaskId);
 
-      // New Hotkey Logic
       if (e.key === 'ArrowUp' && !e.ctrlKey) {
         e.preventDefault();
         if (selectedTaskIndex > 0) {
@@ -412,6 +406,14 @@ export default function Home() {
   const handleDownload = async () => {
     try {
       const markdown = await getTasksMarkdown(tasks);
+      if (!markdown || markdown.trim() === '# WeekList Tasks') {
+        toast({
+            variant: 'destructive',
+            title: 'Export failed',
+            description: 'There are no tasks to export.',
+        });
+        return;
+      }
       const blob = new Blob([markdown], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -435,6 +437,7 @@ export default function Home() {
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLogs([]);
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -443,28 +446,38 @@ export default function Home() {
       const content = e.target?.result;
       if (typeof content === 'string') {
         try {
-          const newTasks = await parseTasksMarkdown(content);
-          setTasks(newTasks);
-          toast({ title: 'Success', description: 'Tasks imported successfully.' });
+          const { tasks: newTasks, logs: importLogs } = await parseTasksMarkdown(content);
+          setLogs(importLogs);
+          if (newTasks.length > 0) {
+            setTasks(newTasks);
+            toast({ title: 'Success', description: `Imported ${newTasks.length} tasks successfully.` });
+          } else {
+            toast({
+                variant: 'destructive',
+                title: 'Import failed',
+                description: 'No tasks were found in the file. See debug logs for details.',
+            });
+          }
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Could not parse the markdown file.';
+          setLogs(prevLogs => [...prevLogs, `CRITICAL ERROR: ${errorMessage}`]);
           toast({
             variant: 'destructive',
             title: 'Import failed',
-            description: error instanceof Error ? error.message : 'Could not parse the markdown file.',
+            description: errorMessage,
           });
         }
       }
     };
     reader.readAsText(file);
     
-    // Reset file input
     if(event.target) event.target.value = '';
   };
 
 
   const handleSelectTask = (taskId: string | null) => {
     if (taskId === selectedTaskId) {
-      setSelectedTaskId(null); // unselect if clicked again
+      setSelectedTaskId(null);
     } else {
       setSelectedTaskId(taskId);
     }
@@ -486,6 +499,7 @@ export default function Home() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
+  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
 
@@ -500,7 +514,6 @@ export default function Home() {
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
   
-  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
@@ -509,7 +522,7 @@ export default function Home() {
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept=".md, .txt"
+          accept=".md,.txt"
           className="hidden"
         />
         <Header 
@@ -591,6 +604,17 @@ export default function Home() {
                     </AlertDialog>
                   </div>
                 </div>
+                {logs.length > 0 && (
+                    <div className="mt-4 px-2 sm:px-0">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold font-headline">Import Logs</h3>
+                            <Button variant="ghost" size="icon" onClick={() => setLogs([])}>
+                                <X className="size-4" />
+                            </Button>
+                        </div>
+                        <DebugWindow logs={logs} />
+                    </div>
+                )}
             </div>
             </>
             )}
