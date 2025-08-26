@@ -541,7 +541,7 @@ export default function Home() {
           onUpload={handleUploadClick}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
-          <div className="mx-auto px-0 sm:px-2">
+          <div className="mx-auto px-2 max-w-6xl">
              {isLoading ? (
                 <div className="flex items-center justify-center min-h-[50vh]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
