@@ -191,13 +191,12 @@ export async function getTasks(): Promise<Task[]> {
     const result: Task[] = [];
     const processedIds = new Set<string>();
 
+    // This logic ensures parent tasks are followed by their children
     for (const task of allTasks) {
-        if (processedIds.has(task.id)) continue;
+        // Skip if already processed or if it's a child (will be handled by parent)
+        if (processedIds.has(task.id) || task.parentId) continue;
 
-        if (task.parentId && taskMap.has(task.parentId)) {
-            continue;
-        }
-
+        const parentIndex = result.length;
         result.push(task);
         processedIds.add(task.id);
 
@@ -205,6 +204,14 @@ export async function getTasks(): Promise<Task[]> {
         for (const child of children) {
             result.push(child);
             processedIds.add(child.id);
+        }
+    }
+    
+    // Add any orphans that might have been missed (should not happen with current logic, but good for safety)
+    for (const task of allTasks) {
+        if (!processedIds.has(task.id)) {
+            result.push(task);
+            processedIds.add(task.id);
         }
     }
 
@@ -228,7 +235,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
   for (const week of sortedWeeks) {
     const [year, weekNum] = week.split('-').map(Number);
-    const firstDayOfYear = new Date(year, 0, 4);
+    const firstDayOfYear = new Date(year, 0, 4); // ISO 8601 week number definition
     const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
     const weekStartDate = addWeeks(startOfFirstWeek, weekNum - 1);
     
@@ -285,49 +292,46 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 
 export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
     const tasks: Task[] = [];
-    const lines = markdown.split('\n');
     let currentWeekKey = '';
+    const lines = markdown.split('\n');
+
     const statusMap: { [key: string]: TaskStatus } = {
         ' ': 'default', 'o': 'planned', 'v': 'completed', '>': 'rescheduled', 'x': 'cancelled',
     };
     const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+    let parentStack: (Task | null)[] = [null];
 
-        if (line.trim() === '') {
-            continue;
-        }
+    for (const line of lines) {
+        if (line.trim() === '') continue;
 
         if (line.startsWith('## Week of ')) {
             const dateStr = line.substring(11).trim();
             try {
                 const date = parse(dateStr, 'MMMM d, yyyy', new Date());
-                if (isNaN(date.getTime())) {
-                    currentWeekKey = '';
-                    continue;
-                }
                 const year = getYear(date);
                 const week = getWeek(date, { weekStartsOn: 1 });
                 currentWeekKey = `${year}-${week}`;
             } catch (e) {
+                console.error(`Invalid date format for "${dateStr}". Skipping week.`);
                 currentWeekKey = '';
             }
             continue;
         }
 
-        if (!currentWeekKey) {
-            continue;
-        }
+        if (!currentWeekKey) continue;
 
-        const taskRegex = /^(\s*)- (\[[ v]\]) \[([ovx >]{7})\] (.*?) \((.*)\)\s*$/;
-        const match = line.match(taskRegex);
-
-        if (!match) {
-            continue;
-        }
+        const indentMatch = line.match(/^(\s*)-/);
+        if (!indentMatch) continue;
         
-        const [, indent, doneMarker, statusStr, titleText, metadataStr] = match;
+        const indentLevel = indentMatch[1].length / 2;
+        
+        const taskRegex = /-\s(\[([ v])\])\s\[([ovx >]{7})\]\s(.*?)\s\((.*)\)\s*$/;
+        const taskMatch = line.trim().match(taskRegex);
+
+        if (!taskMatch) continue;
+
+        const [, doneMarker, , statusStr, titleText, metadataStr] = taskMatch;
 
         const metadata: Record<string, string> = {};
         metadataStr.split(';').forEach(part => {
@@ -337,9 +341,7 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
             }
         });
 
-        if (!metadata.id || !metadata.created) {
-            continue;
-        }
+        if (!metadata.id || !metadata.created) continue;
 
         const statuses: Task['statuses'] = {
             monday: 'default', tuesday: 'default', wednesday: 'default',
@@ -350,12 +352,14 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
                 statuses[day] = statusMap[statusStr[index]] || 'default';
             });
         }
+        
+        const parentId = metadata.parentid || null;
 
         const task: Task = {
             id: metadata.id,
-            title: `${doneMarker} ${titleText.trim()}`,
+            title: `${doneMarker.trim()} ${titleText.trim()}`,
             createdAt: metadata.created,
-            parentId: metadata.parentid || null,
+            parentId: parentId,
             week: currentWeekKey,
             statuses: statuses,
         };
@@ -363,39 +367,9 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
         tasks.push(task);
     }
     
-    const taskMap = new Map(tasks.map(t => [t.id, t]));
-    const result: Task[] = [];
-    const processedIds = new Set<string>();
-
-    const addTaskWithChildren = (task: Task) => {
-        if (processedIds.has(task.id)) return;
-        
-        result.push(task);
-        processedIds.add(task.id);
-        
-        const children = tasks.filter(t => t.parentId === task.id);
-        for (const child of children) {
-            addTaskWithChildren(child);
-        }
-    };
-    
-    for (const task of tasks) {
-        if (!task.parentId) {
-            addTaskWithChildren(task);
-        }
-    }
-    
-    for (const task of tasks) {
-        if (!processedIds.has(task.id)) {
-            result.push(task);
-            processedIds.add(task.id);
-        }
-    }
-
-    return result;
-}
-
-export async function saveTasks(tasks: Task[]): Promise<void> {
-  console.log('Task saving is a client-side operation in this demo.');
-  return Promise.resolve();
+    // The previous implementation of re-ordering was complex and potentially buggy.
+    // The markdown structure itself defines the order. By simply pushing tasks as we parse them,
+    // and correctly identifying their parents from the metadata, the final order will be correct
+    // when rendered by the UI, which uses a tree-like structure.
+    return tasks;
 }

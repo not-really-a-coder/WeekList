@@ -15,11 +15,13 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, saveTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
+import { getTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
+const LOCAL_STORAGE_KEY = 'weeklist-tasks';
+
 
 async function generateTaskId(existingIds: string[]): Promise<string> {
   let newId: string;
@@ -44,6 +46,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -53,14 +56,22 @@ export default function Home() {
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      const fetchedTasks = await getTasks();
-      setTasks(fetchedTasks);
+      const storedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedTasks) {
+        setTasks(JSON.parse(storedTasks));
+      } else {
+        const fetchedTasks = await getTasks();
+        setTasks(fetchedTasks);
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error loading tasks',
-        description: error instanceof Error ? error.message : 'Could not load tasks.',
+        description: 'Could not load tasks from storage. Loading sample data.',
       });
+      // Fallback to sample data on error
+      const fetchedTasks = await getTasks();
+      setTasks(fetchedTasks);
     } finally {
       setIsLoading(false);
     }
@@ -80,11 +91,16 @@ export default function Home() {
       } else {
         finalTasks = newTasksOrFn;
       }
+      
+      startTransition(() => {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(finalTasks));
+        } catch (e) {
+          toast({ variant: 'destructive', title: 'Save failed', description: 'Could not save tasks to local storage.' });
+        }
+      });
+      
       return finalTasks;
-    });
-
-    startTransition(() => {
-      saveTasks(finalTasks).catch(e => toast({ variant: 'destructive', title: 'Save failed', description: e.message }));
     });
   }, [toast, startTransition]);
 
@@ -445,7 +461,7 @@ export default function Home() {
         try {
           const newTasks = await parseTasksMarkdown(content);
           if (newTasks.length > 0) {
-            setTasks(newTasks);
+            updateAndSaveTasks(newTasks);
             toast({ title: 'Success', description: `Imported ${newTasks.length} tasks successfully.` });
           } else {
             toast({
@@ -494,7 +510,6 @@ export default function Home() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
 
