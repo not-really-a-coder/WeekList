@@ -292,7 +292,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
-                <div className="flex items-center flex-grow min-w-0 gap-2" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
+                <div className="flex items-center flex-grow min-w-0 gap-1" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
                   {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
                   {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
                   {isEditing ? (
@@ -312,7 +312,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     </>
                   ) : (
                     <div
-                      className="flex items-center flex-grow min-w-0 gap-2 select-none"
+                      className="flex items-center flex-grow min-w-0 gap-1 select-none"
                       onClick={handleTitleClick}
                     >
                       <p
