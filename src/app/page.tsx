@@ -44,7 +44,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [DndBackend, setDndBackend] = useState<any>(null);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -70,8 +69,7 @@ export default function Home() {
   useEffect(() => {
     loadTasks();
     setIsClient(true);
-    setDndBackend(isMobile ? TouchBackend : HTML5Backend);
-  }, [loadTasks, isMobile]);
+  }, [loadTasks]);
 
   const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
     let finalTasks: Task[] = [];
@@ -484,7 +482,7 @@ export default function Home() {
     setCurrentDate(new Date());
   };
 
-  if (!isClient || !DndBackend) {
+  if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
@@ -501,6 +499,8 @@ export default function Home() {
 
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
+  
+  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
