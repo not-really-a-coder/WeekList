@@ -2,7 +2,7 @@
 
 import type { Task, TaskStatus } from '@/lib/types';
 import { breakDownTask } from '@/ai/flows/break-down-large-tasks';
-import { addWeeks, getWeek, getYear, startOfWeek } from 'date-fns';
+import { addWeeks, getWeek, getYear, startOfWeek, parse, format } from 'date-fns';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -224,6 +224,70 @@ export async function getTasks(): Promise<Task[]> {
 
 
     return result;
+}
+
+export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
+  let markdown = '# WeekList Tasks\n\n';
+
+  const groupedByWeek = tasks.reduce((acc, task) => {
+    (acc[task.week] = acc[task.week] || []).push(task);
+    return acc;
+  }, {} as Record<string, Task[]>);
+
+  const sortedWeeks = Object.keys(groupedByWeek).sort();
+
+  for (const week of sortedWeeks) {
+    const [year, weekNum] = week.split('-').map(Number);
+    const weekStartDate = startOfWeek(parse(`${year}-W${weekNum}`, 'yyyy-Www', new Date()), { weekStartsOn: 1 });
+    markdown += `## Week of ${format(weekStartDate, 'MMMM d, yyyy')}\n\n`;
+
+    const weekTasks = groupedByWeek[week];
+    const taskMap = new Map(weekTasks.map(t => [t.id, t]));
+    const processedIds = new Set<string>();
+
+    const formatTaskLine = (task: Task, level: number) => {
+      if (processedIds.has(task.id)) return '';
+      processedIds.add(task.id);
+
+      const indent = '  '.repeat(level);
+      const doneMarker = task.title.startsWith('[v]') ? '[v]' : '[ ]';
+      const titleText = task.title.substring(task.title.indexOf(']') + 2);
+
+      const statusChars = {
+        default: ' ',
+        planned: 'o',
+        completed: 'v',
+        rescheduled: '>',
+        cancelled: 'x',
+      };
+      const statusString = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        .map(day => statusChars[task.statuses[day as keyof Task['statuses']]])
+        .join('');
+
+      let metadata = `(id: ${task.id}; created: ${format(parseISO(task.createdAt), 'yyyy-MM-dd')}`;
+      if (task.parentId) {
+        metadata += `; parentId: ${task.parentId}`;
+      }
+      metadata += ')';
+
+      let line = `${indent}- ${doneMarker} [${statusString}] ${titleText} ${metadata}\n`;
+
+      const children = weekTasks.filter(t => t.parentId === task.id);
+      for (const child of children) {
+        line += formatTaskLine(child, level + 1);
+      }
+      return line;
+    };
+    
+    for (const task of weekTasks) {
+      if (!task.parentId) {
+          markdown += formatTaskLine(task, 0);
+      }
+    }
+    markdown += '\n';
+  }
+
+  return markdown;
 }
 
 // This function no longer saves to a file. It's now a placeholder.

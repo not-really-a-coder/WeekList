@@ -15,7 +15,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, saveTasks } from './actions';
+import { getTasks, saveTasks, getTasksMarkdown } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -407,6 +407,27 @@ export default function Home() {
     });
   }, [currentDate, toast, updateAndSaveTasks]);
 
+  const handleDownload = async () => {
+    try {
+      const markdown = await getTasksMarkdown(tasks);
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'weeklist.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error downloading file',
+        description: 'Could not generate or download the markdown file.',
+      });
+    }
+  };
+
   const handleSelectTask = (taskId: string | null) => {
     if (taskId === selectedTaskId) {
       setSelectedTaskId(null); // unselect if clicked again
@@ -448,7 +469,7 @@ export default function Home() {
   return (
     <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
-        <Header isSaving={isPending} />
+        <Header isSaving={isPending} onDownload={handleDownload} />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="mx-auto px-0 sm:px-2">
              {isLoading ? (
