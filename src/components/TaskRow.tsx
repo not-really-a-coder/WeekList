@@ -287,7 +287,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     e.stopPropagation();
                     onSelectTask(task.id)
                   }}
-                  className='flex p-1 -m-1 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none'
+                  className='flex p-0 -m-1 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none'
                 >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
@@ -329,17 +329,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             </div>
             
           <Button 
-              size="icon" 
-              variant="ghost" 
-              onClick={handleBreakdownClick}
-              disabled={isBreakingDown || isDone}
-              className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-0' : 'opacity-0 group-hover/row:opacity-100')}
-              aria-label="Break down task with AI"
-          >
-              <Wand2 className={cn("size-4 text-muted-foreground", isBreakingDown && "animate-pulse")} />
-          </Button>
-
-          <Button 
             size="icon" 
             variant="ghost" 
             onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
@@ -369,13 +358,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone} className="md:hidden">
-                   <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
-                   <span>Break down task</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
                    <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
                    <span>{isDone ? 'Mark as not done' : 'Mark as done'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
+                   <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
+                   <span>Break down task</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
