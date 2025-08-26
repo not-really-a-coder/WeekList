@@ -310,7 +310,7 @@ export async function parseTasksMarkdown(markdown: string): Promise<{ tasks: Tas
         }
 
         if (line.startsWith('## Week of ')) {
-            const dateStr = line.substring(12);
+            const dateStr = line.substring(11);
             logs.push(`L${i+1}: Found week header. Parsing date: "${dateStr}"`);
             try {
                 const date = parse(dateStr, 'MMMM d, yyyy', new Date());
