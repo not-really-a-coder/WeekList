@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${fontPoppins.variable} ${fontPtSans.variable}`} suppressHydrationWarning={true}>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased" suppressHydrationWarning={true}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
