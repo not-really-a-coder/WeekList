@@ -40,11 +40,11 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onUpload}>
                 <Upload className="mr-2" />
-                Import
+                Import (.md)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDownload}>
                 <Download className="mr-2" />
-                Export
+                Export (.md)
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <ThemeToggle />
