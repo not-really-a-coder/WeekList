@@ -88,17 +88,21 @@ export default function Home() {
     }
   }, [loadTasks]);
   
-  const updateAndSaveTasks = useCallback((newTasksOrFn: Task[] | ((currentTasks: Task[]) => Task[])) => {
-    const newTasks = typeof newTasksOrFn === 'function' ? newTasksOrFn(tasks) : newTasksOrFn;
-    setTasks(newTasks);
-    startTransition(() => {
+  const updateAndSaveTasks = useCallback((newTasksOrFn: React.SetStateAction<Task[]>) => {
+    setTasks(newTasksOrFn);
+  }, []);
+
+  useEffect(() => {
+    if(!isLoading) {
+      startTransition(() => {
         try {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newTasks));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
         } catch (e) {
           toast({ variant: 'destructive', title: 'Save failed', description: 'Could not save tasks to local storage.' });
         }
-    });
-  }, [tasks, toast, startTransition]);
+      });
+    }
+  }, [tasks, isLoading, toast, startTransition]);
 
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
@@ -275,6 +279,36 @@ export default function Home() {
     setSelectedTaskId(newTask.id);
   };
   
+  const handleAddTaskAfter = async (afterTaskId: string) => {
+    const afterTask = getTaskById(afterTaskId);
+    if (!afterTask) return;
+
+    const newTaskId = await generateTaskId(tasks.map(t => t.id));
+    const newTask: Task = {
+      id: newTaskId,
+      title: '[ ] New Task',
+      createdAt: new Date().toISOString(),
+      parentId: afterTask.parentId, // Inherit parentage
+      statuses: {
+        monday: 'default', tuesday: 'default', wednesday: 'default',
+        thursday: 'default', friday: 'default', saturday: 'default',
+        sunday: 'default',
+      },
+      week: afterTask.week,
+      isNew: true,
+    };
+
+    updateAndSaveTasks(currentTasks => {
+      const afterIndex = currentTasks.findIndex(t => t.id === afterTaskId);
+      if (afterIndex === -1) return currentTasks;
+
+      const newTasks = [...currentTasks];
+      newTasks.splice(afterIndex + 1, 0, newTask);
+      return newTasks;
+    });
+    setSelectedTaskId(newTask.id);
+  };
+
   const handleAddSubTasks = useCallback(async (parentId: string, subTaskTitles: string[]) => {
       const parentTask = tasks.find(t => t.id === parentId);
       if (!parentTask) return;
@@ -576,6 +610,7 @@ export default function Home() {
                 onDeleteTask={handleDeleteTask}
                 onToggleDone={handleToggleDone}
                 onAddTask={handleAddTask}
+                onAddTaskAfter={handleAddTaskAfter}
                 onAddSubTasks={handleAddSubTasks}
                 onMoveTask={handleMoveTask}
                 onSetTaskParent={handleSetTaskParent}

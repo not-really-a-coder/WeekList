@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2 } from 'lucide-react';
+import { Save, Trash2, GripVertical, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2, PlusCircle } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -51,6 +50,7 @@ interface TaskRowProps {
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
   onSelectTask: (taskId: string | null) => void;
   onAddSubTasks: (parentId: string, subTasks: string[]) => void;
+  onAddTaskAfter: (taskId: string) => void;
 }
 
 interface DragItem {
@@ -64,7 +64,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [editableTitle, setEditableTitle] = useState(task.title.substring(task.title.indexOf(']') + 2));
   const [isBreakingDown, setIsBreakingDown] = useState(false);
@@ -266,21 +266,33 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       }
   };
 
+  const handleAddBetween = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onAddTaskAfter(task.id);
+  };
+
 
   return (
     <div 
       ref={ref} 
       style={{ opacity }} 
       data-handler-id={handlerId} 
-      className={cn("w-full", isSelected ? 'bg-accent/20' : '')}
+      className={cn("w-full relative", isSelected ? 'bg-accent/20' : '')}
       onClick={handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
       onTouchEnd={isMobile ? handleTouchEnd : undefined}
       onTouchMove={isMobile ? handleTouchEnd : undefined}
     >
+        <button
+          onClick={handleAddBetween}
+          className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover/row:opacity-100 group-data-[state=selected]/row:opacity-100 transition-opacity"
+          aria-label="Add task below"
+        >
+          <PlusCircle className="size-5 bg-background text-muted-foreground hover:text-primary rounded-full" />
+        </button>
         <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '')}>
             <div
-                className='flex items-center flex-grow min-w-0 gap-1'
+                className='flex items-center flex-grow min-w-0'
             >
                 <div 
                   ref={drag}

@@ -18,8 +18,9 @@ interface TaskGridProps {
   onDeleteTask: (taskId:string) => void;
   onToggleDone: (taskId: string) => void;
   onAddTask: () => void;
+  onAddTaskAfter: (taskId: string) => void;
   onAddSubTasks: (parentId: string, subTasks: string[]) => void;
-  onMoveTask: (dragIndex: number, hoverIndex: number) => void;
+  onMoveTask: (dragId: string, hoverId: string) => void;
   onSetTaskParent: (childId: string, parentId: string | null) => void;
   getTaskById: (taskId: string) => Task | undefined;
   weekDates: Date[];
@@ -40,6 +41,7 @@ export function TaskGrid({
   onDeleteTask,
   onToggleDone,
   onAddTask,
+  onAddTaskAfter,
   onAddSubTasks,
   onMoveTask,
   onSetTaskParent,
@@ -66,7 +68,7 @@ export function TaskGrid({
 
     return (
       <React.Fragment key={task.id}>
-        <div className="contents group/row">
+        <div className="contents group/row" data-state={isSelected ? 'selected' : 'unselected'}>
             {weekdays.map((day) => (
               <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", isSelected ? 'bg-accent/20' : '')}>
                 <StatusCell
@@ -78,7 +80,7 @@ export function TaskGrid({
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors", isSelected ? 'bg-accent/20' : '')}>
+            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors relative", isSelected ? 'bg-accent/20' : '')}>
               <TaskRow
                 task={task}
                 index={taskIndexInAllTasks}
@@ -95,6 +97,7 @@ export function TaskGrid({
                 onSelectTask={onSelectTask}
                 isSelected={isSelected}
                 onAddSubTasks={onAddSubTasks}
+                onAddTaskAfter={onAddTaskAfter}
               />
             </div>
         </div>
