@@ -21,6 +21,7 @@ import { handleBreakDownTask } from '@/app/actions';
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
 const LOCAL_STORAGE_KEY = 'weeklist-tasks';
+const SHOW_WEEKENDS_KEY = 'weeklist-show-weekends';
 
 
 async function generateTaskId(existingIds: string[]): Promise<string> {
@@ -54,6 +55,7 @@ export default function Home() {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [showWeekends, setShowWeekends] = useState(true);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +69,11 @@ export default function Home() {
         const fetchedTasks = await getTasks();
         setTasks(fetchedTasks);
       }
+      const storedShowWeekends = localStorage.getItem(SHOW_WEEKENDS_KEY);
+      if (storedShowWeekends) {
+        setShowWeekends(JSON.parse(storedShowWeekends));
+      }
+
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -103,6 +110,14 @@ export default function Home() {
       });
     }
   }, [tasks, isLoading, toast, startTransition]);
+
+  const handleToggleWeekends = () => {
+    setShowWeekends(current => {
+      const newValue = !current;
+      localStorage.setItem(SHOW_WEEKENDS_KEY, JSON.stringify(newValue));
+      return newValue;
+    });
+  }
 
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
@@ -574,6 +589,8 @@ export default function Home() {
           isSaving={isPending} 
           onDownload={handleDownload}
           onUpload={handleUploadClick}
+          showWeekends={showWeekends}
+          onToggleWeekends={handleToggleWeekends}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="w-full sm:px-2 max-w-7xl">
@@ -620,6 +637,7 @@ export default function Home() {
                 onMoveTaskUpDown={handleMoveTaskUpDown}
                 onSelectTask={handleSelectTask}
                 allTasks={tasks}
+                showWeekends={showWeekends}
               />
                 <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">

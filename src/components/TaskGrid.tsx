@@ -27,6 +27,7 @@ interface TaskGridProps {
   onMoveToWeek: (taskId: string, direction: 'next' | 'previous') => void;
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
   onSelectTask: (taskId: string | null) => void;
+  showWeekends: boolean;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -50,6 +51,7 @@ export function TaskGrid({
   onMoveToWeek,
   onMoveTaskUpDown,
   onSelectTask,
+  showWeekends,
 }: TaskGridProps) {
 
   const taskTree = tasks.reduce((acc, task, index) => {
@@ -59,6 +61,12 @@ export function TaskGrid({
     return acc;
   }, [] as Task[]);
 
+  const visibleWeekdays = showWeekends ? weekdays : weekdays.slice(0, 5);
+  const taskColumnSpan = showWeekends ? 'col-start-8' : 'col-start-6';
+  const taskHeaderSpan = showWeekends ? 'col-start-8' : 'col-start-6';
+  const gridColsClass = showWeekends 
+    ? 'grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)]' 
+    : 'grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,14fr)]';
 
   const renderTask = (task: Task, index: number, level = 0) => {
     const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
@@ -69,7 +77,7 @@ export function TaskGrid({
     return (
       <React.Fragment key={task.id}>
         <div className="contents group/row" data-state={isSelected ? 'selected' : 'unselected'}>
-            {weekdays.map((day) => (
+            {visibleWeekdays.map((day) => (
               <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", isSelected ? 'bg-accent/20' : '')}>
                 <StatusCell
                   task={task}
@@ -80,7 +88,7 @@ export function TaskGrid({
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center col-start-8 group-hover/row:bg-muted/50 transition-colors relative", isSelected ? 'bg-accent/20' : '')}>
+            <div className={cn("bg-card flex items-center group-hover/row:bg-muted/50 transition-colors relative", taskColumnSpan, isSelected ? 'bg-accent/20' : '')}>
               <TaskRow
                 task={task}
                 index={taskIndexInAllTasks}
@@ -108,15 +116,15 @@ export function TaskGrid({
 
 
   return (
-    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)] gap-px bg-border border md:rounded-lg shadow-lg" onClick={(e) => e.stopPropagation()}>
+    <div className={cn("grid gap-px bg-border border md:rounded-lg shadow-lg", gridColsClass)} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
-      {dayHeaders.map((day, index) => (
+      {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => (
         <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10">
           <span className="text-sm">{day}</span>
           <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
-      <div className="bg-muted p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between sticky top-14 z-10">
+      <div className={cn("bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between sticky top-14 z-10", taskHeaderSpan)}>
         <span className="text-sm">Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
@@ -127,7 +135,7 @@ export function TaskGrid({
       {tasks.length > 0 ? (
         taskTree.map((task, index) => renderTask(task, index))
       ) : (
-        <div className="col-span-8 bg-card text-center p-12 text-muted-foreground">
+        <div className={cn("bg-card text-center p-12 text-muted-foreground", showWeekends ? "col-span-8" : "col-span-6")}>
           No tasks for this week. Add one or move to a different week.
         </div>
       )}

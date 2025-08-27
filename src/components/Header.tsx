@@ -2,7 +2,7 @@
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download, Upload, Menu } from 'lucide-react';
+import { Loader2, Download, Upload, Menu, Check } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -10,15 +10,18 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   isSaving: boolean;
   onDownload: () => void;
   onUpload: () => void;
+  showWeekends: boolean;
+  onToggleWeekends: () => void;
 }
 
-export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
+export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleWeekends }: HeaderProps) {
   return (
     <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
       <div className="flex items-center justify-between px-4 py-2 w-full max-w-7xl gap-4">
@@ -38,6 +41,14 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuCheckboxItem
+                checked={showWeekends}
+                onSelect={(e) => e.preventDefault()} // prevent menu from closing
+                onClick={onToggleWeekends}
+              >
+                Show Weekends
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onUpload}>
                 <Upload className="mr-2" />
                 Import (.md)
