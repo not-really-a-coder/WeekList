@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -300,7 +301,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     e.stopPropagation();
                     onSelectTask(task.id)
                   }}
-                  className='flex p-0 -m-1 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none'
+                  className='flex p-0 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none'
                 >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
@@ -341,14 +342,16 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 </div>
             </div>
             
-          <Button 
-            size="icon" 
-            variant="ghost" 
-            onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
-            className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
-          >
-            <CheckCircle2 className={cn("size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-          </Button>
+          {!task.isNew && (
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
+              className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
+            >
+              <CheckCircle2 className={cn("size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+            </Button>
+          )}
 
           <AlertDialog>
             <DropdownMenu>
