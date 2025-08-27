@@ -76,7 +76,7 @@ export function TaskGrid({
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
                   disabled={isDone}
-                  onSetParent={onSetTaskParent}
+                  onSetTaskParent={onSetTaskParent}
                 />
               </div>
             ))}
@@ -88,7 +88,7 @@ export function TaskGrid({
                 onDelete={onDeleteTask}
                 onToggleDone={onToggleDone}
                 onMove={onMoveTask}
-                onSetParent={onSetParent}
+                onSetParent={onSetTaskParent}
                 level={level}
                 getTaskById={getTaskById}
                 tasks={allTasks}

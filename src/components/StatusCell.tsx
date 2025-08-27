@@ -14,7 +14,7 @@ interface StatusCellProps {
   onStatusChange: (newStatus: TaskStatus) => void;
   className?: string;
   disabled?: boolean;
-  onSetParent?: (childId: string, parentId: string | null) => void;
+  onSetTaskParent?: (childId: string, parentId: string | null) => void;
   task: Task;
 }
 
@@ -38,13 +38,13 @@ const statusIcons: Record<TaskStatus, React.ReactNode> = {
   cancelled: <X className="size-4 text-red-500" />,
 };
 
-export function StatusCell({ status, onStatusChange, className, disabled = false, onSetParent, task }: StatusCellProps) {
+export function StatusCell({ status, onStatusChange, className, disabled = false, onSetTaskParent, task }: StatusCellProps) {
 
   const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>(() => ({
     accept: ItemTypes.TASK,
     drop: (item, monitor) => {
-        if (onSetParent && task.parentId) {
-            onSetParent(task.id, null);
+        if (onSetTaskParent && task.parentId) {
+            onSetTaskParent(task.id, null);
         }
     },
     canDrop: (item, monitor) => {
@@ -53,7 +53,7 @@ export function StatusCell({ status, onStatusChange, className, disabled = false
     collect: (monitor) => ({
       isOver: monitor.isOver() && monitor.canDrop(),
     }),
-  }), [task, onSetParent]);
+  }), [task, onSetTaskParent]);
 
 
   return (
