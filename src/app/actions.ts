@@ -268,9 +268,9 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
       if (task.parentId) {
         metadataParts.push(`parentid: ${task.parentId}`);
       }
-      const metadata = `(${metadataParts.join('; ')})`;
+      const metadata = `{%${metadataParts.join('; ')}}`;
 
-      let line = `${indent}- ${doneMarker} [${statusString}] ${titleText} ${metadata}\n`;
+      let line = `${indent}- ${doneMarker} [${statusString}] ${titleText.trim()} ${metadata}\n`;
 
       const children = weekTasks.filter(t => t.parentId === task.id);
       for (const child of children) {
@@ -326,7 +326,7 @@ export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
         
         const indentLevel = indentMatch[1].length / 2;
         
-        const taskRegex = /-\s(\[([ v])\])\s\[([ovx >]{7})\]\s(.*?)\s\((.*)\)\s*$/;
+        const taskRegex = /-\s(\[([ v])\])\s\[([ovx >]{7})\]\s(.*?)\s*\{%(.*)\}/;
         const taskMatch = line.trim().match(taskRegex);
 
         if (!taskMatch) continue;
