@@ -88,7 +88,7 @@ export function TaskGrid({
                 onDelete={onDeleteTask}
                 onToggleDone={onToggleDone}
                 onMove={onMoveTask}
-                onSetParent={onSetTaskParent}
+                onSetParent={onSetParent}
                 level={level}
                 getTaskById={getTaskById}
                 tasks={allTasks}
@@ -108,7 +108,7 @@ export function TaskGrid({
 
 
   return (
-    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)] gap-px bg-border border md:rounded-lg overflow-hidden shadow-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)] gap-px bg-border border md:rounded-lg shadow-lg" onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.map((day, index) => (
         <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base">
