@@ -293,53 +293,49 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         </button>
         <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '')}>
             <div
-                className='flex items-center flex-grow min-w-0'
-            >
-                <div 
-                  ref={drag}
-                  onClick={(e) => {
+                ref={drag}
+                onClick={(e) => {
                     e.stopPropagation();
                     onSelectTask(task.id)
-                  }}
-                  className='flex p-0 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none'
+                }}
+                className='flex p-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none shrink-0'
+            >
+                <GripVertical className="size-4 text-muted-foreground" />
+            </div>
+            <div className="flex items-center flex-grow min-w-0" style={{ paddingLeft: `${level * INDENT_WIDTH}px`, gap: '0.1rem' }}>
+                {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+                {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
+                {isEditing ? (
+                <>
+                    <Input
+                    ref={inputRef}
+                    type="text"
+                    value={editableTitle}
+                    onChange={(e) => setEditableTitle(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleSave}
+                    className="flex-grow mr-2 bg-background"
+                    />
+                    <Button size="icon" variant="ghost" onClick={handleSave}>
+                    <Save className="size-4" />
+                    </Button>
+                </>
+                ) : (
+                <div
+                    className="flex items-center flex-grow min-w-0 select-none"
+                    onClick={handleTitleClick}
                 >
-                    <GripVertical className="size-4 text-muted-foreground" />
-                </div>
-                <div className="flex items-center flex-grow min-w-0" style={{ paddingLeft: `${level * INDENT_WIDTH}px`, gap: '0.1rem' }}>
-                  {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
-                  {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
-                  {isEditing ? (
-                    <>
-                      <Input
-                        ref={inputRef}
-                        type="text"
-                        value={editableTitle}
-                        onChange={(e) => setEditableTitle(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onBlur={handleSave}
-                        className="flex-grow mr-2 bg-background"
-                      />
-                      <Button size="icon" variant="ghost" onClick={handleSave}>
-                        <Save className="size-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <div
-                      className="flex items-center flex-grow min-w-0 select-none"
-                      onClick={handleTitleClick}
+                    <p
+                    className={cn(
+                        "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",
+                        isDone && "line-through text-muted-foreground",
+                        isParent && "font-bold"
+                    )}
                     >
-                      <p
-                        className={cn(
-                          "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",
-                          isDone && "line-through text-muted-foreground",
-                          isParent && "font-bold"
-                        )}
-                      >
-                        {displayTitle}
-                      </p>
-                    </div>
-                  )}
+                    {displayTitle}
+                    </p>
                 </div>
+                )}
             </div>
             
           {!task.isNew && (
