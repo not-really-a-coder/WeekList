@@ -111,12 +111,12 @@ export function TaskGrid({
     <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)] gap-px bg-border border md:rounded-lg shadow-lg" onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.map((day, index) => (
-        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base">
+        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10">
           <span className="text-sm">{day}</span>
           <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
-      <div className="bg-muted p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between">
+      <div className="bg-muted p-2 font-bold font-headline text-muted-foreground col-start-8 flex items-center justify-between sticky top-14 z-10">
         <span className="text-sm">Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
