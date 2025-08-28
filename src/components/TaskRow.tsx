@@ -308,7 +308,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             </div>
             <div className="flex items-center flex-grow min-w-0 gap-1" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
                 {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
-                {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
                 {isEditing ? (
                 <div className="flex items-center flex-grow min-w-0">
                     <Input
