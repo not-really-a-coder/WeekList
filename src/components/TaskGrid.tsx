@@ -7,7 +7,7 @@ import { TaskRow } from './TaskRow';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 
 interface TaskGridProps {
   tasks: Task[];
@@ -29,6 +29,7 @@ interface TaskGridProps {
   onSelectTask: (taskId: string | null) => void;
   showWeekends: boolean;
   weeklyTasksCount: number;
+  today: Date;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -54,6 +55,7 @@ export function TaskGrid({
   onSelectTask,
   showWeekends,
   weeklyTasksCount,
+  today,
 }: TaskGridProps) {
 
   const taskTree = tasks.reduce((acc, task, index) => {
@@ -85,8 +87,7 @@ export function TaskGrid({
               <div key={day} className={cn(
                   "bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", 
                   isSelected ? 'bg-accent/20' : '',
-                  isLastTask && dayIndex === 0 && "md:rounded-bl-lg",
-                  isLastTask && dayIndex === visibleWeekdays.length - 1 && "hidden md:flex"
+                  isLastTask && dayIndex === 0 && "md:rounded-bl-lg"
                 )}>
                 <StatusCell
                   task={task}
@@ -131,15 +132,19 @@ export function TaskGrid({
   return (
     <div className={cn("grid gap-px bg-border border md:rounded-lg shadow-lg", gridColsClass)} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
-      {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => (
-        <div key={index} className={cn(
-          "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10",
-          index === 0 && "md:rounded-tl-lg",
-        )}>
-          <span className="text-sm">{day}</span>
-          <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
-        </div>
-      ))}
+      {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
+        const isToday = isSameDay(weekDates[index], today);
+        return (
+          <div key={index} className={cn(
+            "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10",
+            index === 0 && "md:rounded-tl-lg",
+            isToday && "border-b-2 border-primary"
+          )}>
+            <span className="text-sm">{day}</span>
+            <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
+          </div>
+        )
+      })}
       <div className={cn(
           "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between sticky top-14 z-10 md:rounded-tr-lg", 
           taskHeaderSpan
