@@ -308,7 +308,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                         e.stopPropagation();
                         onSelectTask(task.id)
                     }}
-                    className='flex p-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none shrink-0'
+                    className='flex px-1 py-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none shrink-0'
                 >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
@@ -459,5 +459,3 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
-
-    
