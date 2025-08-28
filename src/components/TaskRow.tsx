@@ -73,7 +73,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const INDENT_WIDTH = 24; // Increased indent width
+  const INDENT_WIDTH = 12; // Increased indent width
   
   const isDone = task.title.startsWith('[v]');
   const taskText = task.title.substring(task.title.indexOf(']') + 2);
