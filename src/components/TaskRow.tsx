@@ -189,12 +189,14 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      // For new tasks, select the text so user can start typing immediately
       if (task.isNew) {
         inputRef.current.select();
       }
+      if (isMobile) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
-  }, [isEditing, task.isNew]);
+  }, [isEditing, task.isNew, isMobile]);
   
   useEffect(() => {
     // When the original task title changes from outside, update the editable title
@@ -278,7 +280,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       ref={ref} 
       style={{ opacity }} 
       data-handler-id={handlerId} 
-      className={cn("w-full relative", isSelected ? 'bg-accent/20' : '')}
+      className={cn("w-full relative", isSelected ? 'bg-accent/10' : '')}
       onClick={handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
       onTouchEnd={isMobile ? handleTouchEnd : undefined}
@@ -294,7 +296,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         <div className={cn(
           'flex items-center w-full p-2 min-h-14 md:min-h-12', 
           isDragging ? 'bg-muted' : '',
-          isImportant && 'border-l-2 border-destructive'
+          isImportant && !isDone && 'border-l-2 border-destructive'
         )}>
             <div
                 ref={drag}
@@ -450,3 +452,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
+    
