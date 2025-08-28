@@ -55,6 +55,11 @@ export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleW
     openPrintPage();
     setShowPrintDialog(false);
   };
+  
+  const handlePrintInDarkMode = () => {
+    openPrintPage();
+    setShowPrintDialog(false);
+  }
 
   return (
     <>
@@ -113,8 +118,9 @@ export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleW
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button variant="outline" onClick={handlePrintInDarkMode}>Print in Dark Mode</Button>
             <AlertDialogAction onClick={handleSwitchThemeAndPrint}>
-              Switch & Print
+              Switch to the Light theme & Print
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
