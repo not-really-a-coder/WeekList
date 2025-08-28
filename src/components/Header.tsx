@@ -118,9 +118,9 @@ export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleW
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button variant="outline" onClick={handlePrintInDarkMode}>Print in Dark Mode</Button>
+            <Button variant="outline" onClick={handlePrintInDarkMode}>Print in Dark theme</Button>
             <AlertDialogAction onClick={handleSwitchThemeAndPrint}>
-              Switch to the Light theme & Print
+              Switch to Light theme & Print
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
