@@ -277,8 +277,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       style={{ opacity }} 
       data-handler-id={handlerId} 
       className={cn(
-        "w-full relative group/row", 
-        !isPrint && "group-hover/row:z-20 group-hover/row:shadow-[0_0_0_1px_hsl(var(--primary))]",
+        "w-full relative", 
+        !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
         )}
       onClick={handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
@@ -288,7 +288,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       {!isPrint && (
         <button
           onClick={handleAddBetween}
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover/row:opacity-100 group-data-[state=selected]/row:opacity-100 transition-opacity"
+          className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 opacity-0 group-data-[state=selected]/row:opacity-100 group-hover/row-hover:opacity-100 transition-opacity"
           aria-label="Add task below"
         >
           <PlusCircle className="size-5 bg-background text-muted-foreground hover:text-primary rounded-full" />
@@ -311,7 +311,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                         e.stopPropagation();
                         onSelectTask(task.id)
                     }}
-                    className='flex px-1 py-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none shrink-0'
+                    className='flex px-1 py-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row-hover:opacity-100 touch-none shrink-0'
                 >
                     <GripVertical className="size-4 text-muted-foreground" />
                 </div>
@@ -327,7 +327,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     onChange={(e) => setEditableTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onBlur={handleSave}
-                    className="h-8 flex-grow mr-2 bg-background"
+                    className="h-8 flex-grow mr-2 bg-background rounded-none"
                     />
                     <Button size="icon" variant="ghost" onClick={handleSave} className="shrink-0">
                     <Save className="size-4" />
@@ -357,7 +357,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 size="icon" 
                 variant="ghost" 
                 onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
-                className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
+                className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row-hover:opacity-100')}
                 >
                 <CheckCircle2 className={cn("size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
                 </Button>
@@ -376,7 +376,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                             e.stopPropagation();
                             onSelectTask(task.id)
                         }}
-                        className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8"
+                        className="transition-opacity md:opacity-0 group-hover/row-hover:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8"
                         aria-label="More options"
                         >
                         <MoreHorizontal className="size-4" />
@@ -462,3 +462,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
+    
