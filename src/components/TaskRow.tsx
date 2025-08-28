@@ -292,7 +292,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         </button>
       )}
         <div className={cn(
-          'flex items-center w-full p-2 min-h-14 md:min-h-12', 
+          'flex items-center w-full p-2 min-h-12 md:min-h-[44px]', 
           isDragging ? 'bg-muted' : '',
           isImportant && !isDone && 'border-l-2 border-destructive'
         )}>
