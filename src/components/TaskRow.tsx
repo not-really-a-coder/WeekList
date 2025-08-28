@@ -378,7 +378,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
                     <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-                    <span>{isDone ? 'Mark as not done' : 'Mark as done'}</span>
+                    <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
                     <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
