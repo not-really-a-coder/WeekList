@@ -86,7 +86,7 @@ export function TaskGrid({
             {visibleWeekdays.map((day, dayIndex) => (
               <div key={day} className={cn(
                   "bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", 
-                  isSelected ? 'bg-accent/20' : '',
+                  isSelected ? 'bg-accent/10' : '',
                   isLastTask && dayIndex === 0 && "md:rounded-bl-lg"
                 )}>
                 <StatusCell
@@ -100,7 +100,7 @@ export function TaskGrid({
             ))}
             <div className={cn("bg-card flex items-center group-hover/row:bg-muted/50 transition-colors relative", 
                 taskColumnSpan, 
-                isSelected ? 'bg-accent/20' : '',
+                isSelected ? 'bg-accent/10' : '',
                 isLastTask && "md:rounded-br-lg"
               )}>
               <TaskRow
