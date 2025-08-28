@@ -75,7 +75,7 @@ export function TaskGrid({
     const taskIndexInAllTasks = allTasks.findIndex(t => t.id === task.id);
     const isSelected = selectedTaskId === task.id;
     const isDone = task.title.startsWith('[v]');
-    const isLastTask = index === weeklyTasksCount -1;
+    const isLastTask = index === tasks.length -1;
 
 
     return (
@@ -122,7 +122,7 @@ export function TaskGrid({
               />
             </div>
         </div>
-        {children.map((child, childIndex) => renderTask(child, childIndex, level + 1))}
+        {children.map((child, childIndex) => renderTask(child, tasks.findIndex(t => t.id === child.id), level + 1))}
       </React.Fragment>
     );
   };
@@ -152,7 +152,7 @@ export function TaskGrid({
 
       {/* Grid Content */}
       {tasks.length > 0 ? (
-        taskTree.map((task, index) => renderTask(task, index))
+        taskTree.map((task, index) => renderTask(task, tasks.findIndex(t => t.id === task.id)))
       ) : (
         <div className={cn("bg-card text-center p-12 text-muted-foreground md:rounded-b-lg", showWeekends ? "col-span-8" : "col-span-6")}>
           No tasks for this week. Add one or move to a different week.
