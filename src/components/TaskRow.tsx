@@ -302,11 +302,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             >
                 <GripVertical className="size-4 text-muted-foreground" />
             </div>
-            <div className="flex items-center flex-grow min-w-0" style={{ paddingLeft: `${level * INDENT_WIDTH}px`, gap: '0.1rem' }}>
+            <div className="flex items-center flex-grow min-w-0 gap-1" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
                 {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
                 {isImportant && <ExclamationMark className="size-4 text-destructive shrink-0" />}
                 {isEditing ? (
-                <>
+                <div className="flex items-center flex-grow min-w-0">
                     <Input
                     ref={inputRef}
                     type="text"
@@ -314,12 +314,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     onChange={(e) => setEditableTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onBlur={handleSave}
-                    className="flex-grow mr-2 bg-background"
+                    className="h-8 flex-grow mr-2 bg-background"
                     />
-                    <Button size="icon" variant="ghost" onClick={handleSave}>
+                    <Button size="icon" variant="ghost" onClick={handleSave} className="shrink-0">
                     <Save className="size-4" />
                     </Button>
-                </>
+                </div>
                 ) : (
                 <div
                     className="flex items-center flex-grow min-w-0 select-none"
@@ -339,106 +339,110 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             </div>
             
           {!task.isNew && (
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
-              className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
-            >
-              <CheckCircle2 className={cn("size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-            </Button>
+            <div className="flex items-center shrink-0">
+                <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={(e) => { e.stopPropagation(); onToggleDone(task.id); }}
+                className={cn('hidden md:flex transition-opacity', isDone ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100')}
+                >
+                <CheckCircle2 className={cn("size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                </Button>
+            </div>
           )}
 
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectTask(task.id)
-                  }}
-                  className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
-                  aria-label="More options"
-                >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuLabel className="font-normal text-muted-foreground">
-                    Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
-                   <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-                   <span>{isDone ? 'Mark as not done' : 'Mark as done'}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
-                   <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
-                   <span>Break down task</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
-                    <ArrowUp className="mr-2 size-4" />
-                    <span>Move Up</span>
-                    <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={index === tasks.length - 1}>
-                    <ArrowDown className="mr-2 size-4" />
-                    <span>Move Down</span>
-                    <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem 
-                  onClick={() => {
-                    if (canUnindent) {
-                      onSetParent(task.id, null);
-                    } else if (canIndent && taskAbove) {
-                      onSetParent(task.id, taskAbove.id);
-                    }
-                  }} 
-                  disabled={!canIndent && !canUnindent}
-                >
-                    {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
-                    <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
-                    <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
-                </DropdownMenuItem>
+          <div className="flex items-center shrink-0">
+            <AlertDialog>
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTask(task.id)
+                    }}
+                    className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
+                    aria-label="More options"
+                    >
+                    <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuLabel className="font-normal text-muted-foreground">
+                        Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
+                    <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                    <span>{isDone ? 'Mark as not done' : 'Mark as done'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
+                    <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
+                    <span>Break down task</span>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
+                        <ArrowUp className="mr-2 size-4" />
+                        <span>Move Up</span>
+                        <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={index === tasks.length - 1}>
+                        <ArrowDown className="mr-2 size-4" />
+                        <span>Move Down</span>
+                        <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem 
+                    onClick={() => {
+                        if (canUnindent) {
+                        onSetParent(task.id, null);
+                        } else if (canIndent && taskAbove) {
+                        onSetParent(task.id, taskAbove.id);
+                        }
+                    }} 
+                    disabled={!canIndent && !canUnindent}
+                    >
+                        {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
+                        <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
+                        <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
+                    </DropdownMenuItem>
 
 
-                <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
-                  <ArrowRight className="mr-2 size-4" />
-                  <span>Move to next week</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
-                  <ArrowLeft className="mr-2 size-4" />
-                  <span>Move to previous week</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive focus:text-destructive">
-                    <Trash2 className="mr-2 size-4" />
-                    <span>Delete task</span>
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the
-                  task "{displayTitle}" and all its sub-tasks.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onDelete(task.id)}>
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                    <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
+                    <ArrowRight className="mr-2 size-4" />
+                    <span>Move to next week</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
+                    <ArrowLeft className="mr-2 size-4" />
+                    <span>Move to previous week</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <AlertDialogTrigger asChild>
+                    <DropdownMenuItem className="text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 size-4" />
+                        <span>Delete task</span>
+                    </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                </DropdownMenuContent>
+                </DropdownMenu>
+                <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the
+                    task "{displayTitle}" and all its sub-tasks.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(task.id)}>
+                    Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
     </div>
   );
