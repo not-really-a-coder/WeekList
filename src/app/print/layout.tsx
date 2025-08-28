@@ -27,7 +27,6 @@ export default function PrintLayout({
   children: React.ReactNode;
 }>) {
   // This layout applies the light theme for printing and passes children through.
-  // It does not render its own <html> or <body> tags.
   return (
     <div className={`${fontPoppins.variable} ${fontPtSans.variable} light font-body antialiased bg-background text-foreground`}>
         {children}

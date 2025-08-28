@@ -87,7 +87,8 @@ export function TaskGrid({
         <div className="contents group/row" data-state={isSelected ? 'selected' : 'unselected'}>
             {visibleWeekdays.map((day, dayIndex) => (
               <div key={day} className={cn(
-                  "bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", 
+                  "bg-card transition-colors flex items-center justify-center", 
+                  !isPrint && "group-hover/row:bg-muted/50",
                   isSelected && !isPrint ? 'bg-accent/10' : '',
                   isLastTask && dayIndex === 0 && "md:rounded-bl-lg"
                 )}>
@@ -100,8 +101,9 @@ export function TaskGrid({
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center group-hover/row:bg-muted/50 transition-colors relative", 
+            <div className={cn("bg-card flex items-center transition-colors relative", 
                 taskColumnSpan, 
+                !isPrint && "group-hover/row:bg-muted/50",
                 isSelected && !isPrint ? 'bg-accent/10' : '',
                 isLastTask && "md:rounded-br-lg"
               )}>
@@ -139,7 +141,8 @@ export function TaskGrid({
         const isToday = isSameDay(weekDates[index], today);
         return (
           <div key={index} className={cn(
-            "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10",
+            "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base",
+            !isPrint && "sticky top-14 z-10",
             index === 0 && "md:rounded-tl-lg",
             isToday && !isPrint && "border-b-2 border-primary"
           )}>
@@ -149,8 +152,9 @@ export function TaskGrid({
         )
       })}
       <div className={cn(
-          "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between sticky top-14 z-10 md:rounded-tr-lg", 
-          taskHeaderSpan
+          "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between md:rounded-tr-lg", 
+          taskHeaderSpan,
+          !isPrint && "sticky top-14 z-10"
         )}>
         <span className="text-sm">Task</span>
         {!isPrint && (
