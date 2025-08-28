@@ -638,6 +638,7 @@ export default function Home() {
                 onSelectTask={handleSelectTask}
                 allTasks={tasks}
                 showWeekends={showWeekends}
+                weeklyTasksCount={weeklyTasks.length}
               />
                 <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">

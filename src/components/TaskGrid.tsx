@@ -28,6 +28,7 @@ interface TaskGridProps {
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
   onSelectTask: (taskId: string | null) => void;
   showWeekends: boolean;
+  weeklyTasksCount: number;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -52,6 +53,7 @@ export function TaskGrid({
   onMoveTaskUpDown,
   onSelectTask,
   showWeekends,
+  weeklyTasksCount,
 }: TaskGridProps) {
 
   const taskTree = tasks.reduce((acc, task, index) => {
@@ -73,12 +75,19 @@ export function TaskGrid({
     const taskIndexInAllTasks = allTasks.findIndex(t => t.id === task.id);
     const isSelected = selectedTaskId === task.id;
     const isDone = task.title.startsWith('[v]');
+    const isLastTask = index === weeklyTasksCount -1;
+
 
     return (
       <React.Fragment key={task.id}>
         <div className="contents group/row" data-state={isSelected ? 'selected' : 'unselected'}>
-            {visibleWeekdays.map((day) => (
-              <div key={day} className={cn("bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", isSelected ? 'bg-accent/20' : '')}>
+            {visibleWeekdays.map((day, dayIndex) => (
+              <div key={day} className={cn(
+                  "bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", 
+                  isSelected ? 'bg-accent/20' : '',
+                  isLastTask && dayIndex === 0 && "md:rounded-bl-lg",
+                  isLastTask && dayIndex === visibleWeekdays.length - 1 && "hidden" // handled by TaskRow
+                )}>
                 <StatusCell
                   task={task}
                   status={task.statuses[day]}
@@ -88,7 +97,11 @@ export function TaskGrid({
                 />
               </div>
             ))}
-            <div className={cn("bg-card flex items-center group-hover/row:bg-muted/50 transition-colors relative", taskColumnSpan, isSelected ? 'bg-accent/20' : '')}>
+            <div className={cn("bg-card flex items-center group-hover/row:bg-muted/50 transition-colors relative", 
+                taskColumnSpan, 
+                isSelected ? 'bg-accent/20' : '',
+                isLastTask && "md:rounded-br-lg"
+              )}>
               <TaskRow
                 task={task}
                 index={taskIndexInAllTasks}
@@ -119,12 +132,18 @@ export function TaskGrid({
     <div className={cn("grid gap-px bg-border border md:rounded-lg shadow-lg", gridColsClass)} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => (
-        <div key={index} className="bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10">
+        <div key={index} className={cn(
+          "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10",
+          index === 0 && "md:rounded-tl-lg",
+        )}>
           <span className="text-sm">{day}</span>
           <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
         </div>
       ))}
-      <div className={cn("bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between sticky top-14 z-10", taskHeaderSpan)}>
+      <div className={cn(
+          "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between sticky top-14 z-10 md:rounded-tr-lg", 
+          taskHeaderSpan
+        )}>
         <span className="text-sm">Task</span>
         <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
           <Plus className="size-4" />
@@ -135,7 +154,7 @@ export function TaskGrid({
       {tasks.length > 0 ? (
         taskTree.map((task, index) => renderTask(task, index))
       ) : (
-        <div className={cn("bg-card text-center p-12 text-muted-foreground", showWeekends ? "col-span-8" : "col-span-6")}>
+        <div className={cn("bg-card text-center p-12 text-muted-foreground md:rounded-b-lg", showWeekends ? "col-span-8" : "col-span-6")}>
           No tasks for this week. Add one or move to a different week.
         </div>
       )}
