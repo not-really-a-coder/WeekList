@@ -13,9 +13,9 @@ const legendItems = [
 
 export function Legend() {
   return (
-    <div className="py-4 pr-4 pl-2 sm:pl-4 border rounded-lg bg-card text-card-foreground shadow-sm max-w-md">
-      <h3 className="font-bold mb-2 font-headline text-sm">Legend</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
+    <div className="py-4 pr-4 pl-0 sm:pl-4 border rounded-lg bg-card text-card-foreground shadow-sm max-w-md">
+      <h3 className="font-bold mb-2 font-headline text-sm pl-4 sm:pl-0">Legend</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 pl-4 sm:pl-0">
         {legendItems.map((item) => (
           <div key={item.label} className="flex items-center gap-2">
             <div className="flex items-center justify-center h-5 w-5">{item.icon}</div>

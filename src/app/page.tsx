@@ -642,7 +642,7 @@ export default function Home() {
                 weeklyTasksCount={weeklyTasks.length}
                 today={today}
               />
-                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
+                <div className="mt-4 flex flex-row items-start justify-between gap-4">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>
