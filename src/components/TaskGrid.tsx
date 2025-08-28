@@ -75,7 +75,7 @@ export function TaskGrid({
     const taskIndexInAllTasks = allTasks.findIndex(t => t.id === task.id);
     const isSelected = selectedTaskId === task.id;
     const isDone = task.title.startsWith('[v]');
-    const isLastTask = index === tasks.length -1;
+    const isLastTask = index === weeklyTasksCount -1;
 
 
     return (
@@ -86,7 +86,7 @@ export function TaskGrid({
                   "bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", 
                   isSelected ? 'bg-accent/20' : '',
                   isLastTask && dayIndex === 0 && "md:rounded-bl-lg",
-                  isLastTask && dayIndex === visibleWeekdays.length - 1 && "hidden" // handled by TaskRow
+                  isLastTask && dayIndex === visibleWeekdays.length - 1 && "hidden md:flex"
                 )}>
                 <StatusCell
                   task={task}
