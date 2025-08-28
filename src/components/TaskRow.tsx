@@ -225,25 +225,16 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isDone && !isMobile && !isPrint) {
-      setIsEditing(true);
-      onSelectTask(task.id);
-    }
-  };
-  
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isPrint) return;
-    e.stopPropagation();
-    onSelectTask(task.id);
-    longPressTimer.current = setTimeout(() => {
-      if (!isDone) {
-        setIsEditing(true);
-      }
-    }, 500); // 500ms for long press
-  };
+    if (isDone || isPrint) return;
 
-  const handleTouchEnd = () => {
-    if(longPressTimer.current) clearTimeout(longPressTimer.current);
+    if (isMobile) {
+        // On mobile, a single tap selects, a long press (if implemented) would edit.
+        // For now, we allow editing via the menu.
+        onSelectTask(task.id);
+    } else {
+        setIsEditing(true);
+        onSelectTask(task.id);
+    }
   };
   
   const handleRowClick = (e: React.MouseEvent) => {
@@ -281,9 +272,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
         )}
       onClick={handleRowClick}
-      onTouchStart={isMobile ? handleTouchStart : undefined}
-      onTouchEnd={isMobile ? handleTouchEnd : undefined}
-      onTouchMove={isMobile ? handleTouchEnd : undefined}
     >
       {!isPrint && (
         <button
@@ -387,6 +375,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                             Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDone}>
+                            Edit
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
                         <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
                         <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
