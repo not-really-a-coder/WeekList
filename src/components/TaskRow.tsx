@@ -291,7 +291,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         >
           <PlusCircle className="size-5 bg-background text-muted-foreground hover:text-primary rounded-full" />
         </button>
-        <div className={cn('flex items-center w-full p-2 min-h-14 md:min-h-12', isDragging ? 'bg-muted' : '')}>
+        <div className={cn(
+          'flex items-center w-full p-2 min-h-14 md:min-h-12', 
+          isDragging ? 'bg-muted' : '',
+          isImportant && 'border-l-2 border-destructive'
+        )}>
             <div
                 ref={drag}
                 onClick={(e) => {
