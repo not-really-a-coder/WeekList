@@ -373,7 +373,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                             e.stopPropagation();
                             onSelectTask(task.id)
                         }}
-                        className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
+                        className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8"
                         aria-label="More options"
                         >
                         <MoreHorizontal className="size-4" />

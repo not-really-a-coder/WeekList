@@ -618,7 +618,7 @@ export default function Home() {
                   <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="sm:px-0">
+            <div className="px-2 sm:px-0">
               <TaskGrid
                 tasks={weeklyTasks}
                 selectedTaskId={selectedTaskId}
