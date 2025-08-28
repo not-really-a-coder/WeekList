@@ -276,7 +276,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       ref={ref} 
       style={{ opacity }} 
       data-handler-id={handlerId} 
-      className={cn("w-full relative", isSelected && !isPrint ? 'bg-accent/10' : '')}
+      className={cn(
+        "w-full relative group/row", 
+        !isPrint && "group-hover/row:z-20 group-hover/row:shadow-[0_0_0_1px_hsl(var(--primary))] rounded-lg",
+        isSelected && !isPrint ? 'bg-accent/10' : ''
+        )}
       onClick={handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
       onTouchEnd={isMobile ? handleTouchEnd : undefined}

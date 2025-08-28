@@ -73,6 +73,7 @@ export function TaskGrid({
   const gridColsClass = showWeekends 
     ? 'grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)]' 
     : 'grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,14fr)]';
+  const rowColumnSpan = showWeekends ? 'col-span-8' : 'col-span-6';
 
   const renderTask = (task: Task, index: number, level = 0) => {
     const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
@@ -84,11 +85,12 @@ export function TaskGrid({
 
     return (
       <React.Fragment key={task.id}>
-        <div className="contents group/row" data-state={isSelected ? 'selected' : 'unselected'}>
+        <div className={cn(
+          "contents group/row",
+        )} data-state={isSelected ? 'selected' : 'unselected'}>
             {visibleWeekdays.map((day, dayIndex) => (
               <div key={day} className={cn(
-                  "bg-card transition-colors flex items-center justify-center", 
-                  !isPrint && "group-hover/row:bg-muted/50",
+                  "bg-card transition-colors flex items-center justify-center relative",
                   isSelected && !isPrint ? 'bg-accent/10' : '',
                   isLastTask && dayIndex === 0 && "md:rounded-bl-lg"
                 )}>
@@ -103,7 +105,6 @@ export function TaskGrid({
             ))}
             <div className={cn("bg-card flex items-center transition-colors relative", 
                 taskColumnSpan, 
-                !isPrint && "group-hover/row:bg-muted/50",
                 isSelected && !isPrint ? 'bg-accent/10' : '',
                 isLastTask && "md:rounded-br-lg"
               )}>
@@ -135,7 +136,7 @@ export function TaskGrid({
 
 
   return (
-    <div className={cn("grid gap-px bg-border border md:rounded-lg shadow-lg", gridColsClass)} onClick={(e) => e.stopPropagation()}>
+    <div className={cn("grid gap-px bg-border border md:rounded-lg shadow-lg relative", gridColsClass)} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
         const isToday = isSameDay(weekDates[index], today);
