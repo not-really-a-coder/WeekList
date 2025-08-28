@@ -13,7 +13,7 @@ const legendItems = [
 
 export function Legend() {
   return (
-    <div className="p-4 border rounded-lg bg-card text-card-foreground shadow-sm max-w-md">
+    <div className="py-4 pr-4 pl-2 sm:pl-4 border rounded-lg bg-card text-card-foreground shadow-sm max-w-md">
       <h3 className="font-bold mb-2 font-headline text-sm">Legend</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
         {legendItems.map((item) => (
