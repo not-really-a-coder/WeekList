@@ -35,7 +35,7 @@ interface HeaderProps {
 }
 
 export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleWeekends }: HeaderProps) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [showPrintDialog, setShowPrintDialog] = useState(false);
 
   const openPrintPage = () => {
@@ -43,7 +43,7 @@ export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleW
   };
 
   const handlePrint = () => {
-    if (theme === 'dark') {
+    if (resolvedTheme === 'dark') {
       setShowPrintDialog(true);
     } else {
       openPrintPage();
