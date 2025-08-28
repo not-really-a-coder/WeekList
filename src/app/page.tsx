@@ -52,6 +52,7 @@ export default function Home() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
+  const dndOptions = isMobile ? { enableMouseEvents: false, enableTouchEvents: true } : {};
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -576,7 +577,7 @@ export default function Home() {
   
   
   return (
-    <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
+    <DndProvider backend={DndBackend} options={dndOptions}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
         <input
           type="file"
@@ -593,7 +594,7 @@ export default function Home() {
           onToggleWeekends={handleToggleWeekends}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
-          <div className="w-full sm:px-2 max-w-7xl">
+          <div className="w-full px-2 max-w-7xl">
              {isLoading ? (
                 <div className="flex items-center justify-center min-h-[50vh]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />

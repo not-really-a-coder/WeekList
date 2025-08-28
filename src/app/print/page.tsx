@@ -31,6 +31,7 @@ export default function PrintPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
+  const dndOptions = isMobile ? { enableMouseEvents: false, enableTouchEvents: true } : {};
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showWeekends, setShowWeekends] = useState(true);
@@ -97,7 +98,7 @@ export default function PrintPage() {
   const today = new Date();
   
   return (
-    <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
+    <DndProvider backend={DndBackend} options={dndOptions}>
         <main className="flex-grow p-4">
             <div className="w-full max-w-7xl mx-auto">
                 <div className="text-center mb-4">
