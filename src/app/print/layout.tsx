@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import '../globals.css';
 import { Poppins, PT_Sans } from 'next/font/google';
@@ -25,12 +26,11 @@ export default function PrintLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Force light theme for printing
+  // This layout applies the light theme for printing and passes children through.
+  // It does not render its own <html> or <body> tags.
   return (
-    <html lang="en" className={`${fontPoppins.variable} ${fontPtSans.variable} light`} suppressHydrationWarning={true}>
-      <body className="font-body antialiased bg-background text-foreground">
+    <div className={`${fontPoppins.variable} ${fontPtSans.variable} light font-body antialiased bg-background text-foreground`}>
         {children}
-      </body>
-    </html>
+    </div>
   );
 }

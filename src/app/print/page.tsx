@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -6,6 +7,10 @@ import { useToast } from '@/hooks/use-toast';
 import { TaskGrid } from '@/components/TaskGrid';
 import { addDays, getWeek, getYear, startOfWeek, format, getDate } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { TouchBackend } from 'react-dnd-touch-backend';
 
 const LOCAL_STORAGE_KEY = 'weeklist-tasks';
 const SHOW_WEEKENDS_KEY = 'weeklist-show-weekends';
@@ -24,6 +29,8 @@ export default function PrintPage() {
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showWeekends, setShowWeekends] = useState(true);
@@ -58,10 +65,12 @@ export default function PrintPage() {
   }, [loadTasks]);
 
   useEffect(() => {
-    if (!isLoading && tasks.length > 0) {
-      setTimeout(() => window.print(), 500); // Timeout to allow rendering
+    if (!isLoading && tasks.length > 0 && isClient) {
+      // Small timeout allows the page to render fully before printing
+      const timer = setTimeout(() => window.print(), 500); 
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, tasks]);
+  }, [isLoading, tasks, isClient]);
 
   if (!isClient || isLoading) {
     return <div className="flex flex-col items-center justify-center min-h-screen">
@@ -88,36 +97,38 @@ export default function PrintPage() {
   const today = new Date();
   
   return (
-    <main className="flex-grow p-4">
-        <div className="w-full max-w-7xl mx-auto">
-            <div className="text-center mb-4">
-                <h1 className="text-2xl font-bold font-headline">WeekList</h1>
-                <h2 className="text-lg font-headline text-muted-foreground">{weekDisplay}</h2>
+    <DndProvider backend={DndBackend} options={{ enableMouseEvents: !isMobile }}>
+        <main className="flex-grow p-4">
+            <div className="w-full max-w-7xl mx-auto">
+                <div className="text-center mb-4">
+                    <h1 className="text-2xl font-bold font-headline">WeekList</h1>
+                    <h2 className="text-lg font-headline text-muted-foreground">{weekDisplay}</h2>
+                </div>
+                <TaskGrid
+                isPrint
+                tasks={weeklyTasks}
+                selectedTaskId={null}
+                onStatusChange={() => {}}
+                onUpdateTask={() => {}}
+                onDeleteTask={() => {}}
+                onToggleDone={() => {}}
+                onAddTask={() => {}}
+                onAddTaskAfter={() => {}}
+                onAddSubTasks={() => {}}
+                onMoveTask={() => {}}
+                onSetTaskParent={() => {}}
+                getTaskById={(id) => tasks.find(t => t.id === id)}
+                weekDates={weekDates}
+                onMoveToWeek={() => {}}
+                onMoveTaskUpDown={() => {}}
+                onSelectTask={() => {}}
+                allTasks={tasks}
+                showWeekends={showWeekends}
+                weeklyTasksCount={weeklyTasks.length}
+                today={today}
+                />
             </div>
-            <TaskGrid
-            isPrint
-            tasks={weeklyTasks}
-            selectedTaskId={null}
-            onStatusChange={() => {}}
-            onUpdateTask={() => {}}
-            onDeleteTask={() => {}}
-            onToggleDone={() => {}}
-            onAddTask={() => {}}
-            onAddTaskAfter={() => {}}
-            onAddSubTasks={() => {}}
-            onMoveTask={() => {}}
-            onSetTaskParent={() => {}}
-            getTaskById={(id) => tasks.find(t => t.id === id)}
-            weekDates={weekDates}
-            onMoveToWeek={() => {}}
-            onMoveTaskUpDown={() => {}}
-            onSelectTask={() => {}}
-            allTasks={tasks}
-            showWeekends={showWeekends}
-            weeklyTasksCount={weeklyTasks.length}
-            today={today}
-            />
-        </div>
-    </main>
+        </main>
+    </DndProvider>
   );
 }
