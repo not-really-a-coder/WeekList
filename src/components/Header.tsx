@@ -2,7 +2,7 @@
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download, Upload, Menu, Check } from 'lucide-react';
+import { Loader2, Download, Upload, Menu, Check, Printer } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -22,8 +22,13 @@ interface HeaderProps {
 }
 
 export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleWeekends }: HeaderProps) {
+  
+  const handlePrint = () => {
+    window.open('/print', '_blank');
+  };
+
   return (
-    <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
+    <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10 print:hidden">
       <div className="flex items-center justify-between px-4 py-2 w-full max-w-7xl gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
           <Logo className="size-8" />
@@ -56,6 +61,10 @@ export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleW
               <DropdownMenuItem onClick={onDownload}>
                 <Download className="mr-2" />
                 Export (.md)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePrint}>
+                <Printer className="mr-2" />
+                Print
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <ThemeToggle />

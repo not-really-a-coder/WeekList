@@ -30,6 +30,7 @@ interface TaskGridProps {
   showWeekends: boolean;
   weeklyTasksCount: number;
   today: Date;
+  isPrint?: boolean;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -56,6 +57,7 @@ export function TaskGrid({
   showWeekends,
   weeklyTasksCount,
   today,
+  isPrint = false,
 }: TaskGridProps) {
 
   const taskTree = tasks.reduce((acc, task, index) => {
@@ -86,24 +88,25 @@ export function TaskGrid({
             {visibleWeekdays.map((day, dayIndex) => (
               <div key={day} className={cn(
                   "bg-card group-hover/row:bg-muted/50 transition-colors flex items-center justify-center", 
-                  isSelected ? 'bg-accent/10' : '',
+                  isSelected && !isPrint ? 'bg-accent/10' : '',
                   isLastTask && dayIndex === 0 && "md:rounded-bl-lg"
                 )}>
                 <StatusCell
                   task={task}
                   status={task.statuses[day]}
                   onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
-                  disabled={isDone}
+                  disabled={isDone || isPrint}
                   onSetTaskParent={onSetTaskParent}
                 />
               </div>
             ))}
             <div className={cn("bg-card flex items-center group-hover/row:bg-muted/50 transition-colors relative", 
                 taskColumnSpan, 
-                isSelected ? 'bg-accent/10' : '',
+                isSelected && !isPrint ? 'bg-accent/10' : '',
                 isLastTask && "md:rounded-br-lg"
               )}>
               <TaskRow
+                isPrint={isPrint}
                 task={task}
                 index={taskIndexInAllTasks}
                 onUpdate={onUpdateTask}
@@ -138,7 +141,7 @@ export function TaskGrid({
           <div key={index} className={cn(
             "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base sticky top-14 z-10",
             index === 0 && "md:rounded-tl-lg",
-            isToday && "border-b-2 border-primary"
+            isToday && !isPrint && "border-b-2 border-primary"
           )}>
             <span className="text-sm">{day}</span>
             <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
@@ -150,9 +153,11 @@ export function TaskGrid({
           taskHeaderSpan
         )}>
         <span className="text-sm">Task</span>
-        <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
-          <Plus className="size-4" />
-        </Button>
+        {!isPrint && (
+            <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
+                <Plus className="size-4" />
+            </Button>
+        )}
       </div>
 
       {/* Grid Content */}

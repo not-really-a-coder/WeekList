@@ -52,6 +52,7 @@ interface TaskRowProps {
   onSelectTask: (taskId: string | null) => void;
   onAddSubTasks: (parentId: string, subTasks: string[]) => void;
   onAddTaskAfter: (taskId: string) => void;
+  isPrint?: boolean;
 }
 
 interface DragItem {
@@ -65,7 +66,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter, isPrint = false }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [editableTitle, setEditableTitle] = useState(task.title.substring(task.title.indexOf(']') + 2));
   const [isBreakingDown, setIsBreakingDown] = useState(false);
@@ -100,13 +101,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       };
     },
     canDrop(item, monitor) {
-      if (!ref.current) return false;
-      // Allow dropping as long as it's not on itself.
-      // The detailed logic for indent/unindent/reorder is in the drop handler.
+      if (!ref.current || isPrint) return false;
       return item.id !== task.id;
     },
     drop(item: DragItem, monitor: DropTargetMonitor) {
-        if (!ref.current) return;
+        if (!ref.current || isPrint) return;
 
         const dragId = item.id;
         const hoverId = task.id;
@@ -128,25 +127,22 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
         const canHoverItemBeParent = !hoverItem.parentId;
         
-        // Indent Action
         if (isIndenting && canDragItemBeChild && canHoverItemBeParent) {
             onSetParent(dragId, hoverId);
-            return; // Prevent reordering if indenting
+            return;
         }
         
         const isUnindenting = deltaX < -(INDENT_WIDTH * 4);
         
-        // Un-indent Action
         if (isUnindenting && dragItem.parentId) {
             onSetParent(dragId, null);
-            return; // Prevent reordering if un-indenting
+            return;
         }
 
-        // Default: Reorder Action
         onMove(dragId, hoverId);
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
-      if (!ref.current) return;
+      if (!ref.current || isPrint) return;
 
       const dragId = item.id;
       const hoverId = task.id;
@@ -178,6 +174,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     item: () => {
       return { id: task.id, index, type: ItemTypes.TASK, level };
     },
+    canDrag: !isPrint,
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -199,7 +196,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   }, [isEditing, task.isNew, isMobile]);
   
   useEffect(() => {
-    // When the original task title changes from outside, update the editable title
     setEditableTitle(task.title.substring(task.title.indexOf(']') + 2));
   }, [task.title]);
 
@@ -219,10 +215,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (e.key === 'Enter') {
       handleSave();
     } else if (e.key === 'Escape') {
-      // Revert to original title on escape
       setEditableTitle(task.title.substring(task.title.indexOf(']') + 2));
       setIsEditing(false);
-      // If it was a new task, delete it on escape
       if(task.isNew){
         onDelete(task.id);
       }
@@ -231,13 +225,14 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isDone && !isMobile) {
+    if (!isDone && !isMobile && !isPrint) {
       setIsEditing(true);
       onSelectTask(task.id);
     }
   };
   
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isPrint) return;
     e.stopPropagation();
     onSelectTask(task.id);
     longPressTimer.current = setTimeout(() => {
@@ -252,6 +247,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   };
   
   const handleRowClick = (e: React.MouseEvent) => {
+    if (isPrint) return;
     e.stopPropagation();
     onSelectTask(task.id);
   };
@@ -280,12 +276,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       ref={ref} 
       style={{ opacity }} 
       data-handler-id={handlerId} 
-      className={cn("w-full relative", isSelected ? 'bg-accent/10' : '')}
+      className={cn("w-full relative", isSelected && !isPrint ? 'bg-accent/10' : '')}
       onClick={handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
       onTouchEnd={isMobile ? handleTouchEnd : undefined}
       onTouchMove={isMobile ? handleTouchEnd : undefined}
     >
+      {!isPrint && (
         <button
           onClick={handleAddBetween}
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover/row:opacity-100 group-data-[state=selected]/row:opacity-100 transition-opacity"
@@ -293,11 +290,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         >
           <PlusCircle className="size-5 bg-background text-muted-foreground hover:text-primary rounded-full" />
         </button>
+      )}
         <div className={cn(
           'flex items-center w-full p-2 min-h-14 md:min-h-12', 
           isDragging ? 'bg-muted' : '',
           isImportant && !isDone && 'border-l-2 border-destructive'
         )}>
+          {!isPrint && (
             <div
                 ref={drag}
                 onClick={(e) => {
@@ -308,9 +307,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             >
                 <GripVertical className="size-4 text-muted-foreground" />
             </div>
+          )}
             <div className="flex items-center flex-grow min-w-0 gap-1" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
                 {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
-                {isEditing ? (
+                {isEditing && !isPrint ? (
                 <div className="flex items-center flex-grow min-w-0">
                     <Input
                     ref={inputRef}
@@ -343,7 +343,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 )}
             </div>
             
-          {!task.isNew && (
+          {!task.isNew && !isPrint && (
             <div className="flex items-center shrink-0">
                 <Button 
                 size="icon" 
@@ -356,101 +356,101 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             </div>
           )}
 
-          <div className="flex items-center shrink-0">
-            <AlertDialog>
-                <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectTask(task.id)
-                    }}
-                    className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
-                    aria-label="More options"
-                    >
-                    <MoreHorizontal className="size-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuLabel className="font-normal text-muted-foreground">
-                        Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
-                    <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-                    <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
-                    <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
-                    <span>Break down task</span>
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
-                        <ArrowUp className="mr-2 size-4" />
-                        <span>Move Up</span>
-                        <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={index === tasks.length - 1}>
-                        <ArrowDown className="mr-2 size-4" />
-                        <span>Move Down</span>
-                        <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem 
-                    onClick={() => {
-                        if (canUnindent) {
-                        onSetParent(task.id, null);
-                        } else if (canIndent && taskAbove) {
-                        onSetParent(task.id, taskAbove.id);
-                        }
-                    }} 
-                    disabled={!canIndent && !canUnindent}
-                    >
-                        {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
-                        <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
-                        <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
-                    </DropdownMenuItem>
+          {!isPrint && (
+            <div className="flex items-center shrink-0">
+                <AlertDialog>
+                    <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectTask(task.id)
+                        }}
+                        className="transition-opacity md:opacity-0 group-hover/row:opacity-100 data-[state=open]:opacity-100"
+                        aria-label="More options"
+                        >
+                        <MoreHorizontal className="size-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuLabel className="font-normal text-muted-foreground">
+                            Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
+                        <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                        <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
+                        <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
+                        <span>Break down task</span>
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
+                            <ArrowUp className="mr-2 size-4" />
+                            <span>Move Up</span>
+                            <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={index === tasks.length - 1}>
+                            <ArrowDown className="mr-2 size-4" />
+                            <span>Move Down</span>
+                            <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem 
+                        onClick={() => {
+                            if (canUnindent) {
+                            onSetParent(task.id, null);
+                            } else if (canIndent && taskAbove) {
+                            onSetParent(task.id, taskAbove.id);
+                            }
+                        }} 
+                        disabled={!canIndent && !canUnindent}
+                        >
+                            {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
+                            <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
+                            <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
+                        </DropdownMenuItem>
 
 
-                    <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
-                    <ArrowRight className="mr-2 size-4" />
-                    <span>Move to next week</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
-                    <ArrowLeft className="mr-2 size-4" />
-                    <span>Move to previous week</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <AlertDialogTrigger asChild>
-                    <DropdownMenuItem className="text-destructive focus:text-destructive">
-                        <Trash2 className="mr-2 size-4" />
-                        <span>Delete task</span>
-                    </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                </DropdownMenuContent>
-                </DropdownMenu>
-                <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the
-                    task "{displayTitle}" and all its sub-tasks.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(task.id)}>
-                    Delete
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                        <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
+                        <ArrowRight className="mr-2 size-4" />
+                        <span>Move to next week</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
+                        <ArrowLeft className="mr-2 size-4" />
+                        <span>Move to previous week</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 size-4" />
+                            <span>Delete task</span>
+                        </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                    </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the
+                        task "{displayTitle}" and all its sub-tasks.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(task.id)}>
+                        Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+          )}
         </div>
     </div>
   );
 }
-
-    

@@ -48,12 +48,12 @@ export function StatusCell({ status, onStatusChange, className, disabled = false
         }
     },
     canDrop: (item, monitor) => {
-        return item.id === task.id && !!task.parentId;
+        return !disabled && item.id === task.id && !!task.parentId;
     },
     collect: (monitor) => ({
       isOver: monitor.isOver() && monitor.canDrop(),
     }),
-  }), [task, onSetTaskParent]);
+  }), [task, onSetTaskParent, disabled]);
 
 
   return (
