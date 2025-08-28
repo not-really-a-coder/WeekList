@@ -73,7 +73,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const INDENT_WIDTH = 8;
+  const INDENT_WIDTH = 24; // Increased indent width
   
   const isDone = task.title.startsWith('[v]');
   const taskText = task.title.substring(task.title.indexOf(']') + 2);
@@ -296,20 +296,25 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
           isDragging ? 'bg-muted' : '',
           isImportant && !isDone && 'border-l-2 border-destructive'
         )}>
-          {!isPrint && (
-            <div
-                ref={drag}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectTask(task.id)
-                }}
-                className='flex p-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none shrink-0'
+          
+            <div 
+              className="flex items-center flex-grow min-w-0 gap-2" 
+              style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}
             >
-                <GripVertical className="size-4 text-muted-foreground" />
-            </div>
-          )}
-            <div className="flex items-center flex-grow min-w-0 gap-1" style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}>
+              {!isPrint && (
+                <div
+                    ref={drag}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTask(task.id)
+                    }}
+                    className='flex p-2 -m-2 transition-opacity opacity-25 cursor-grab md:opacity-0 group-hover/row:opacity-100 touch-none shrink-0'
+                >
+                    <GripVertical className="size-4 text-muted-foreground" />
+                </div>
+              )}
                 {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
+                
                 {isEditing && !isPrint ? (
                 <div className="flex items-center flex-grow min-w-0">
                     <Input
@@ -454,3 +459,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
+    
