@@ -73,7 +73,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const INDENT_WIDTH = 12; // Increased indent width
+  const INDENT_WIDTH = 6;
   
   const isDone = task.title.startsWith('[v]');
   const taskText = task.title.substring(task.title.indexOf(']') + 2);
@@ -247,12 +247,14 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isPrint || isDone) return;
+    if (isPrint || isDone || isEditing) return;
     touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     longPressTimeout.current = setTimeout(() => {
       e.preventDefault(); // Prevent click event on long press
       setIsEditing(true);
+      onSelectTask(task.id);
       longPressTimeout.current = null;
+      touchStartPos.current = null;
     }, 500); // 500ms for long press
   };
 
@@ -263,6 +265,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (deltaX > touchMoveThreshold || deltaY > touchMoveThreshold) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
+      touchStartPos.current = null;
     }
   };
 
