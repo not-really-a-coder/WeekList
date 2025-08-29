@@ -73,20 +73,45 @@ export default function Home() {
     if (!hideClosedTasks) {
       return allWeeklyTasks;
     }
-    
-    const closedParentIds = new Set(allWeeklyTasks.filter(t => t.title.startsWith('[v]')).map(t => t.id));
-    const taskMap = new Map(allWeeklyTasks.map(t => [t.id, t]));
-    const memo: Record<string, boolean> = {};
 
-    const isChildOfClosed = (task: Task): boolean => {
-      if (memo.hasOwnProperty(task.id)) return memo[task.id];
-      if (!task.parentId) return (memo[task.id] = false);
-      if (closedParentIds.has(task.parentId)) return (memo[task.id] = true);
-      const parent = taskMap.get(task.parentId);
-      return (memo[task.id] = parent ? isChildOfClosed(parent) : false);
-    };
-    
-    return allWeeklyTasks.filter(t => !t.title.startsWith('[v]') && !isChildOfClosed(t));
+    const taskMap = new Map(allWeeklyTasks.map(t => [t.id, t]));
+    const closedParentIds = new Set(allWeeklyTasks.filter(t => t.title.startsWith('[v]')).map(t => t.id));
+    const isProxyClosed: Record<string, boolean> = {};
+
+    // Pre-calculate the closed status for all tasks in an iterative way to avoid recursion.
+    for (const task of allWeeklyTasks) {
+        if (isProxyClosed[task.id] !== undefined) continue;
+
+        let isClosed = false;
+        let currentTask: Task | undefined = task;
+        const path = new Set<string>(); // To detect cycles
+
+        while(currentTask) {
+            if (path.has(currentTask.id)) { // Cycle detected
+                isClosed = false;
+                break;
+            }
+            path.add(currentTask.id);
+
+            if (isProxyClosed[currentTask.id] !== undefined) {
+                isClosed = isProxyClosed[currentTask.id]!;
+                break;
+            }
+            if (closedParentIds.has(currentTask.id)) {
+                isClosed = true;
+                break;
+            }
+            currentTask = currentTask.parentId ? taskMap.get(currentTask.parentId) : undefined;
+        }
+
+        // Backfill the results for the path traversed
+        for(const taskId of path) {
+            isProxyClosed[taskId] = isClosed;
+        }
+        isProxyClosed[task.id] = isClosed;
+    }
+
+    return allWeeklyTasks.filter(t => !isProxyClosed[t.id]);
     
   }, [tasks, currentWeekKey, hideClosedTasks]);
 
@@ -239,11 +264,9 @@ export default function Home() {
             const parentChildren = newTasks.filter(t => t.parentId === parentId);
             let targetIndex;
             if (parentChildren.length > 0) {
-                // If the parent already has children, find the last one
                 const lastChildId = parentChildren[parentChildren.length - 1].id;
                 targetIndex = newTasks.findIndex(t => t.id === lastChildId);
             } else {
-                // If no children, place it right after the parent
                 targetIndex = newTasks.findIndex(t => t.id === parentId);
             }
             
