@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useTransition, useRef } from 'react';
@@ -222,9 +223,17 @@ export default function Home() {
           handleSetTaskParent(selectedTaskId, null);
         } else {
           if (selectedTaskIndex > 0) {
-            const potentialParent = weeklyTasks[selectedTaskIndex - 1];
-            if (!potentialParent.parentId && !tasks.some(t => t.parentId === selectedTaskId)) {
-              handleSetTaskParent(selectedTaskId, potentialParent.id);
+            const taskAbove = weeklyTasks[selectedTaskIndex - 1];
+            // A task cannot be a parent to itself.
+            // A task that is already a parent cannot be indented.
+            if (taskAbove && !tasks.some(t => t.parentId === selectedTaskId)) {
+              if (taskAbove.parentId) {
+                // If the task above is a child, become a child of the same parent.
+                handleSetTaskParent(selectedTaskId, taskAbove.parentId);
+              } else {
+                // If the task above is a root task, become its child.
+                handleSetTaskParent(selectedTaskId, taskAbove.id);
+              }
             }
           }
         }
