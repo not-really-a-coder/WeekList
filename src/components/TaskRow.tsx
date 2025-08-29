@@ -91,11 +91,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const taskAbove = index > 0 ? tasks[index - 1] : null;
   const canIndent = !isParent && index > 0 && taskAbove;
 
-  const [isLongPress, setIsLongPress] = useState(false);
-  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
-  const touchMoveThreshold = 10; // pixels
-  const touchStartPos = useRef<{ x: number, y: number } | null>(null);
-
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
     accept: ItemTypes.TASK,
@@ -240,12 +235,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     e.stopPropagation();
     if (isDone || isPrint) return;
 
-    if (isMobile) {
-        onSelectTask(task.id);
-    } else {
-        setIsEditing(true);
-        onSelectTask(task.id);
-    }
+    setIsEditing(true);
+    onSelectTask(task.id);
   };
   
   const handleRowClick = (e: React.MouseEvent) => {
@@ -253,47 +244,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     e.stopPropagation();
     onSelectTask(task.id);
   };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isPrint || isEditing) return;
-    
-    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    setIsLongPress(false);
-
-    longPressTimeout.current = setTimeout(() => {
-      if (isDone) return;
-      setIsEditing(true);
-      onSelectTask(task.id);
-      setIsLongPress(true);
-      longPressTimeout.current = null;
-    }, 500);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!longPressTimeout.current || !touchStartPos.current) return;
-    
-    const deltaX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
-    const deltaY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
-
-    if (deltaX > touchMoveThreshold || deltaY > touchMoveThreshold) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (longPressTimeout.current) {
-        clearTimeout(longPressTimeout.current);
-        longPressTimeout.current = null;
-    }
-    
-    if (!isLongPress && !isEditing) {
-        onSelectTask(task.id);
-    }
-
-    touchStartPos.current = null;
-  };
-
 
   const handleBreakdownClick = async (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -324,9 +274,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
         )}
       onClick={handleRowClick}
-      onTouchStart={isMobile ? handleTouchStart : undefined}
-      onTouchMove={isMobile ? handleTouchMove : undefined}
-      onTouchEnd={isMobile ? handleTouchEnd : undefined}
     >
       {!isPrint && (
         <button
@@ -379,7 +326,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 ) : (
                 <div
                     className="flex items-center flex-grow min-w-0 select-none"
-                    onClick={isMobile ? undefined : handleTitleClick}
+                    onClick={handleTitleClick}
                 >
                     <p
                     className={cn(
@@ -430,7 +377,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                             Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
+                        <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDone}>
+                        <CheckCircle2 className="mr-2 size-4" />
+                        <span>Edit task</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
                         <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
                         <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
                         </DropdownMenuItem>
@@ -509,3 +460,4 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
