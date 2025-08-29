@@ -23,6 +23,7 @@ const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 const ID_LENGTH = 4;
 const LOCAL_STORAGE_KEY = 'weeklist-tasks';
 const SHOW_WEEKENDS_KEY = 'weeklist-show-weekends';
+const HIDE_CLOSED_TASKS_KEY = 'weeklist-hide-closed-tasks';
 
 
 async function generateTaskId(existingIds: string[]): Promise<string> {
@@ -58,8 +59,50 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showWeekends, setShowWeekends] = useState(true);
+  const [hideClosedTasks, setHideClosedTasks] = useState(false);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
+  const currentYear = getYear(currentDate);
+  const currentWeekKey = `${currentYear}-${currentWeek}`;
+
+  const weeklyTasks = useMemo(() => {
+    const allWeeklyTasks = tasks.filter(t => t.week === currentWeekKey);
+    
+    if (!hideClosedTasks) {
+      return allWeeklyTasks;
+    }
+    
+    const closedParentIds = new Set(allWeeklyTasks.filter(t => t.title.startsWith('[v]')).map(t => t.id));
+    const isChildOfClosed = (task: Task): boolean => {
+      if (!task.parentId) return false;
+      if (closedParentIds.has(task.parentId)) return true;
+      const parent = allWeeklyTasks.find(t => t.id === task.parentId);
+      return parent ? isChildOfClosed(parent) : false;
+    };
+    
+    return allWeeklyTasks.filter(t => !t.title.startsWith('[v]') && !isChildOfClosed(t));
+    
+  }, [tasks, currentWeekKey, hideClosedTasks]);
+
+  const visibleTasks = useMemo(() => {
+    const taskMap = new Map(weeklyTasks.map(t => [t.id, t]));
+    const topLevelTasks = weeklyTasks.filter(t => !t.parentId || !taskMap.has(t.parentId));
+    
+    const orderedTasks: Task[] = [];
+    
+    function addTaskAndChildren(task: Task) {
+      orderedTasks.push(task);
+      const children = weeklyTasks.filter(t => t.parentId === task.id);
+      children.forEach(addTaskAndChildren);
+    }
+    
+    topLevelTasks.forEach(addTaskAndChildren);
+    
+    return orderedTasks;
+
+  }, [weeklyTasks]);
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -74,6 +117,10 @@ export default function Home() {
       const storedShowWeekends = localStorage.getItem(SHOW_WEEKENDS_KEY);
       if (storedShowWeekends) {
         setShowWeekends(JSON.parse(storedShowWeekends));
+      }
+      const storedHideClosed = localStorage.getItem(HIDE_CLOSED_TASKS_KEY);
+      if (storedHideClosed) {
+        setHideClosedTasks(JSON.parse(storedHideClosed));
       }
 
     } catch (error) {
@@ -121,6 +168,13 @@ export default function Home() {
     });
   }
 
+  const handleToggleClosedTasks = () => {
+    setHideClosedTasks(current => {
+      const newValue = !current;
+      localStorage.setItem(HIDE_CLOSED_TASKS_KEY, JSON.stringify(newValue));
+      return newValue;
+    });
+  };
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
       updateAndSaveTasks(currentTasks => {
@@ -196,14 +250,6 @@ export default function Home() {
     });
 }, [updateAndSaveTasks, toast]);
 
-const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
-const currentYear = getYear(currentDate);
-const currentWeekKey = `${currentYear}-${currentWeek}`;
-
-const weeklyTasks = useMemo(() => {
-  return tasks.filter(t => t.week === currentWeekKey);
-}, [tasks, currentWeekKey]);
-
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,18 +262,17 @@ const weeklyTasks = useMemo(() => {
       const selectedTask = tasks.find(t => t.id === selectedTaskId);
       if (!selectedTask) return;
       
-      const visibleWeeklyTasks = weeklyTasks.slice();
-      const selectedTaskIndex = visibleWeeklyTasks.findIndex(t => t.id === selectedTaskId);
+      const selectedTaskIndex = visibleTasks.findIndex(t => t.id === selectedTaskId);
 
       if (e.key === 'ArrowUp' && !e.ctrlKey) {
         e.preventDefault();
         if (selectedTaskIndex > 0) {
-          setSelectedTaskId(visibleWeeklyTasks[selectedTaskIndex - 1].id);
+          setSelectedTaskId(visibleTasks[selectedTaskIndex - 1].id);
         }
       } else if (e.key === 'ArrowDown' && !e.ctrlKey) {
         e.preventDefault();
-        if (selectedTaskIndex < visibleWeeklyTasks.length - 1) {
-          setSelectedTaskId(visibleWeeklyTasks[selectedTaskIndex + 1].id);
+        if (selectedTaskIndex < visibleTasks.length - 1) {
+          setSelectedTaskId(visibleTasks[selectedTaskIndex + 1].id);
         }
       } else if (e.key === 'ArrowUp' && e.ctrlKey) {
         e.preventDefault();
@@ -241,7 +286,7 @@ const weeklyTasks = useMemo(() => {
           handleSetTaskParent(selectedTaskId, null);
         } else {
           if (selectedTaskIndex > 0) {
-            const taskAbove = visibleWeeklyTasks[selectedTaskIndex - 1];
+            const taskAbove = visibleTasks[selectedTaskIndex - 1];
             if (taskAbove) {
               if (taskAbove.parentId) {
                 handleSetTaskParent(selectedTaskId, taskAbove.parentId);
@@ -263,7 +308,7 @@ const weeklyTasks = useMemo(() => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent, currentDate, weeklyTasks]);
+  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent, currentDate, visibleTasks]);
 
 
   const getTaskById = useCallback((taskId: string) => {
@@ -634,7 +679,7 @@ const weeklyTasks = useMemo(() => {
             </div>
             <div className="px-2 sm:px-0">
               <TaskGrid
-                tasks={weeklyTasks}
+                tasks={visibleTasks}
                 selectedTaskId={selectedTaskId}
                 onStatusChange={handleStatusChange}
                 onUpdateTask={handleUpdateTask}
@@ -653,6 +698,8 @@ const weeklyTasks = useMemo(() => {
                 allTasks={tasks}
                 showWeekends={showWeekends}
                 onToggleWeekends={handleToggleWeekends}
+                hideClosedTasks={hideClosedTasks}
+                onToggleClosedTasks={handleToggleClosedTasks}
                 weeklyTasksCount={weeklyTasks.length}
                 today={today}
               />
@@ -694,3 +741,7 @@ const weeklyTasks = useMemo(() => {
     </DndProvider>
   );
 }
+
+    
+
+    
