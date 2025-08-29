@@ -147,44 +147,54 @@ export default function Home() {
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
     updateAndSaveTasks(currentTasks => {
-      const childTask = currentTasks.find(t => t.id === childId);
-      if (!childTask) return currentTasks;
+        const childTask = currentTasks.find(t => t.id === childId);
+        if (!childTask) return currentTasks;
 
-      const hasChildren = currentTasks.some(t => t.parentId === childId);
-      if (parentId && hasChildren) {
-        toast({
-          variant: 'destructive',
-          title: 'Nesting failed',
-          description: 'Cannot indent a task that already has sub-tasks.',
-        });
-        return currentTasks;
-      }
-
-      if (parentId) {
-        const parentTask = currentTasks.find(t => t.id === parentId);
-        if (parentTask?.parentId) {
-          toast({
-            variant: 'destructive',
-            title: 'Nesting failed',
-            description: 'Cannot nest a task more than one level deep.',
-          });
-          return currentTasks;
+        const hasChildren = currentTasks.some(t => t.parentId === childId);
+        if (parentId && hasChildren) {
+            toast({
+                variant: 'destructive',
+                title: 'Nesting failed',
+                description: 'Cannot indent a task that already has sub-tasks.',
+            });
+            return currentTasks;
         }
-      }
 
-      let newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
+        if (parentId) {
+            const parentTask = currentTasks.find(t => t.id === parentId);
+            if (parentTask?.parentId) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Nesting failed',
+                    description: 'Cannot nest a task more than one level deep.',
+                });
+                return currentTasks;
+            }
+        }
 
-      if (parentId) {
-        const childIndex = newTasks.findIndex(t => t.id === childId);
-        const [movedChild] = newTasks.splice(childIndex, 1);
-        
-        const parentIndex = newTasks.findIndex(t => t.id === parentId);
-        newTasks.splice(parentIndex + 1, 0, movedChild);
-      }
+        let newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
 
-      return newTasks;
+        if (parentId) {
+            const childIndex = newTasks.findIndex(t => t.id === childId);
+            const [movedChild] = newTasks.splice(childIndex, 1);
+
+            const parentChildren = newTasks.filter(t => t.parentId === parentId);
+            let targetIndex;
+            if (parentChildren.length > 0) {
+                // If the parent already has children, find the last one
+                const lastChildId = parentChildren[parentChildren.length - 1].id;
+                targetIndex = newTasks.findIndex(t => t.id === lastChildId);
+            } else {
+                // If no children, place it right after the parent
+                targetIndex = newTasks.findIndex(t => t.id === parentId);
+            }
+            
+            newTasks.splice(targetIndex + 1, 0, movedChild);
+        }
+
+        return newTasks;
     });
-  }, [updateAndSaveTasks, toast]);
+}, [updateAndSaveTasks, toast]);
 
 
   useEffect(() => {
@@ -224,14 +234,10 @@ export default function Home() {
         } else {
           if (selectedTaskIndex > 0) {
             const taskAbove = weeklyTasks[selectedTaskIndex - 1];
-            // A task cannot be a parent to itself.
-            // A task that is already a parent cannot be indented.
-            if (taskAbove && !tasks.some(t => t.parentId === selectedTaskId)) {
+            if (taskAbove) {
               if (taskAbove.parentId) {
-                // If the task above is a child, become a child of the same parent.
                 handleSetTaskParent(selectedTaskId, taskAbove.parentId);
               } else {
-                // If the task above is a root task, become its child.
                 handleSetTaskParent(selectedTaskId, taskAbove.id);
               }
             }

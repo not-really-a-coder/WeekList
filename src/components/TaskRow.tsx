@@ -89,7 +89,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const canUnindent = !!task.parentId;
   
   const taskAbove = index > 0 ? tasks[index - 1] : null;
-  const canIndent = !isParent && index > 0 && taskAbove && !taskAbove.parentId;
+  const canIndent = !isParent && index > 0 && taskAbove;
 
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
   const touchMoveThreshold = 10; // pixels
@@ -439,9 +439,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                         <DropdownMenuItem 
                         onClick={() => {
                             if (canUnindent) {
-                            onSetParent(task.id, null);
+                                onSetParent(task.id, null);
                             } else if (canIndent && taskAbove) {
-                            onSetParent(task.id, taskAbove.id);
+                                if (taskAbove.parentId) {
+                                    onSetParent(task.id, taskAbove.parentId);
+                                } else {
+                                    onSetParent(task.id, taskAbove.id);
+                                }
                             }
                         }} 
                         disabled={!canIndent && !canUnindent}
