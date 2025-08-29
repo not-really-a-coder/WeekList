@@ -125,6 +125,7 @@ export default function PrintPage() {
                 onSelectTask={() => {}}
                 allTasks={tasks}
                 showWeekends={showWeekends}
+                onToggleWeekends={() => {}}
                 weeklyTasksCount={weeklyTasks.length}
                 today={today}
                 />

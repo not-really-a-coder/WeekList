@@ -6,9 +6,15 @@ import type { Task, TaskStatus } from '@/lib/types';
 import { StatusCell } from './StatusCell';
 import { TaskRow } from './TaskRow';
 import { Button } from './ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isSameDay } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface TaskGridProps {
   tasks: Task[];
@@ -29,6 +35,7 @@ interface TaskGridProps {
   onMoveTaskUpDown: (taskId: string, direction: 'up' | 'down') => void;
   onSelectTask: (taskId: string | null) => void;
   showWeekends: boolean;
+  onToggleWeekends: () => void;
   weeklyTasksCount: number;
   today: Date;
   isPrint?: boolean;
@@ -56,6 +63,7 @@ export function TaskGrid({
   onMoveTaskUpDown,
   onSelectTask,
   showWeekends,
+  onToggleWeekends,
   weeklyTasksCount,
   today,
   isPrint = false,
@@ -158,7 +166,28 @@ export function TaskGrid({
           taskHeaderSpan,
           !isPrint && "sticky top-14 z-10"
         )}>
-        <span className="text-sm">Task</span>
+        <div className='flex items-center gap-2'>
+          <span className="text-sm">Task</span>
+          {!isPrint && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <SlidersHorizontal className="size-4" />
+                  <span className="sr-only">View options</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                 <DropdownMenuCheckboxItem
+                  checked={showWeekends}
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={onToggleWeekends}
+                >
+                  Show Weekends
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
         {!isPrint && (
             <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
                 <Plus className="size-4" />

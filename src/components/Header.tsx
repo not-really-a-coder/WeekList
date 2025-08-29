@@ -12,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
 import {
@@ -30,11 +29,9 @@ interface HeaderProps {
   isSaving: boolean;
   onDownload: () => void;
   onUpload: () => void;
-  showWeekends: boolean;
-  onToggleWeekends: () => void;
 }
 
-export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleWeekends }: HeaderProps) {
+export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [showPrintDialog, setShowPrintDialog] = useState(false);
 
@@ -81,14 +78,6 @@ export function Header({ isSaving, onDownload, onUpload, showWeekends, onToggleW
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuCheckboxItem
-                  checked={showWeekends}
-                  onSelect={(e) => e.preventDefault()} // prevent menu from closing
-                  onClick={onToggleWeekends}
-                >
-                  Show Weekends
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onUpload}>
                   <Upload className="mr-2" />
                   Import (.md)

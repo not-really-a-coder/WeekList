@@ -590,8 +590,6 @@ export default function Home() {
           isSaving={isPending} 
           onDownload={handleDownload}
           onUpload={handleUploadClick}
-          showWeekends={showWeekends}
-          onToggleWeekends={handleToggleWeekends}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="w-full px-2 max-w-7xl">
@@ -639,6 +637,7 @@ export default function Home() {
                 onSelectTask={handleSelectTask}
                 allTasks={tasks}
                 showWeekends={showWeekends}
+                onToggleWeekends={handleToggleWeekends}
                 weeklyTasksCount={weeklyTasks.length}
                 today={today}
               />
