@@ -68,12 +68,32 @@ export default function Home() {
   const currentWeekKey = `${currentYear}-${currentWeek}`;
 
   const weeklyTasks = useMemo(() => {
-    const allWeeklyTasks = tasks.filter(t => t.week === currentWeekKey);
+    return tasks.filter(t => t.week === currentWeekKey);
+  }, [tasks, currentWeekKey]);
+  
+  const navigableTasks = useMemo(() => {
+    const taskMap = new Map(weeklyTasks.map(t => [t.id, t]));
+    const topLevelTasks = weeklyTasks.filter(t => !t.parentId || !taskMap.has(t.parentId));
     
-    if (!hideClosedTasks) {
-      return allWeeklyTasks;
+    const orderedTasks: Task[] = [];
+    
+    function addTaskAndChildren(task: Task) {
+      orderedTasks.push(task);
+      const children = weeklyTasks.filter(t => t.parentId === task.id);
+      children.forEach(addTaskAndChildren);
     }
+    
+    topLevelTasks.forEach(addTaskAndChildren);
+    
+    return orderedTasks;
+  }, [weeklyTasks]);
 
+  const visibleTasks = useMemo(() => {
+    if (!hideClosedTasks) {
+      return navigableTasks;
+    }
+    
+    const allWeeklyTasks = weeklyTasks;
     const taskMap = new Map(allWeeklyTasks.map(t => [t.id, t]));
     const closedParentIds = new Set(allWeeklyTasks.filter(t => t.title.startsWith('[v]')).map(t => t.id));
     const isProxyClosed: Record<string, boolean> = {};
@@ -111,27 +131,11 @@ export default function Home() {
         isProxyClosed[task.id] = isClosed;
     }
 
-    return allWeeklyTasks.filter(t => !isProxyClosed[t.id]);
+    const filtered = navigableTasks.filter(t => !isProxyClosed[t.id]);
+    return filtered;
     
-  }, [tasks, currentWeekKey, hideClosedTasks]);
+  }, [hideClosedTasks, weeklyTasks, navigableTasks]);
 
-  const visibleTasks = useMemo(() => {
-    const taskMap = new Map(weeklyTasks.map(t => [t.id, t]));
-    const topLevelTasks = weeklyTasks.filter(t => !t.parentId || !taskMap.has(t.parentId));
-    
-    const orderedTasks: Task[] = [];
-    
-    function addTaskAndChildren(task: Task) {
-      orderedTasks.push(task);
-      const children = weeklyTasks.filter(t => t.parentId === task.id);
-      children.forEach(addTaskAndChildren);
-    }
-    
-    topLevelTasks.forEach(addTaskAndChildren);
-    
-    return orderedTasks;
-
-  }, [weeklyTasks]);
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -289,17 +293,17 @@ export default function Home() {
       const selectedTask = tasks.find(t => t.id === selectedTaskId);
       if (!selectedTask) return;
       
-      const selectedTaskIndex = visibleTasks.findIndex(t => t.id === selectedTaskId);
+      const selectedTaskIndex = navigableTasks.findIndex(t => t.id === selectedTaskId);
 
       if (e.key === 'ArrowUp' && !e.ctrlKey) {
         e.preventDefault();
         if (selectedTaskIndex > 0) {
-          setSelectedTaskId(visibleTasks[selectedTaskIndex - 1].id);
+          setSelectedTaskId(navigableTasks[selectedTaskIndex - 1].id);
         }
       } else if (e.key === 'ArrowDown' && !e.ctrlKey) {
         e.preventDefault();
-        if (selectedTaskIndex < visibleTasks.length - 1) {
-          setSelectedTaskId(visibleTasks[selectedTaskIndex + 1].id);
+        if (selectedTaskIndex < navigableTasks.length - 1) {
+          setSelectedTaskId(navigableTasks[selectedTaskIndex + 1].id);
         }
       } else if (e.key === 'ArrowUp' && e.ctrlKey) {
         e.preventDefault();
@@ -313,7 +317,7 @@ export default function Home() {
           handleSetTaskParent(selectedTaskId, null);
         } else {
           if (selectedTaskIndex > 0) {
-            const taskAbove = visibleTasks[selectedTaskIndex - 1];
+            const taskAbove = navigableTasks[selectedTaskIndex - 1];
             if (taskAbove) {
               if (taskAbove.parentId) {
                 handleSetTaskParent(selectedTaskId, taskAbove.parentId);
@@ -335,7 +339,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, currentDate, visibleTasks]);
+  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, currentDate, navigableTasks]);
 
 
   const getTaskById = useCallback((taskId: string) => {
@@ -772,3 +776,4 @@ export default function Home() {
     
 
     
+
