@@ -70,6 +70,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [editableTitle, setEditableTitle] = useState(task.title.substring(task.title.indexOf(']') + 2));
   const [isBreakingDown, setIsBreakingDown] = useState(false);
+  const [isLongPress, setIsLongPress] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -249,40 +250,44 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isPrint || isEditing) return;
     e.stopPropagation();
+    
+    setIsLongPress(false);
     touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+
     longPressTimeout.current = setTimeout(() => {
       if (isDone) return;
-      // Don't prevent default, as that can stop other events like context menus
+      setIsLongPress(true);
       setIsEditing(true);
       onSelectTask(task.id);
       longPressTimeout.current = null;
-      touchStartPos.current = null;
-    }, 500); // 500ms for long press
+    }, 500);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!longPressTimeout.current || !touchStartPos.current) return;
+    
     const deltaX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
     const deltaY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+
     if (deltaX > touchMoveThreshold || deltaY > touchMoveThreshold) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
-      touchStartPos.current = null;
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
     if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-      if (touchStartPos.current && ref.current) {
-        // This was a short tap, not a long press.
-        // We programmatically click the element to trigger the standard onClick handler.
-        ref.current.click();
-      }
+        clearTimeout(longPressTimeout.current);
+        longPressTimeout.current = null;
+        if (!isLongPress) {
+            onSelectTask(task.id);
+        }
     }
+    // Reset for next interaction
     touchStartPos.current = null;
   };
+
 
   const handleBreakdownClick = async (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -312,7 +317,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         "w-full relative", 
         !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
         )}
-      onClick={handleRowClick}
+      onClick={isMobile ? undefined : handleRowClick}
       onTouchStart={isMobile ? handleTouchStart : undefined}
       onTouchMove={isMobile ? handleTouchMove : undefined}
       onTouchEnd={isMobile ? handleTouchEnd : undefined}
@@ -368,7 +373,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 ) : (
                 <div
                     className="flex items-center flex-grow min-w-0 select-none"
-                    onClick={handleTitleClick}
+                    onClick={isMobile ? undefined : handleTitleClick}
                 >
                     <p
                     className={cn(
@@ -494,5 +499,3 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
-
-    
