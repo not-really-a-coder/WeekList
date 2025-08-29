@@ -119,34 +119,28 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         if (!clientOffset || !initialClientOffset) return;
 
         const deltaX = clientOffset.x - initialClientOffset.x;
-        const isIndenting = deltaX > INDENT_WIDTH * 4;
         
         const dragItem = getTaskById(dragId);
         if (!dragItem) return;
         
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
         
-        if (dragId === hoverId && isIndenting) {
+        const isIndenting = deltaX > INDENT_WIDTH * 4;
+        if (isIndenting && canDragItemBeChild) {
           const taskAbove = tasks[index -1];
-          if (taskAbove && canDragItemBeChild) {
-            onSetParent(dragId, taskAbove.parentId ? taskAbove.parentId : taskAbove.id);
+          if (dragId === hoverId && taskAbove) {
+              onSetParent(dragId, taskAbove.parentId ? taskAbove.parentId : taskAbove.id);
+              return;
+          }
+
+          const hoverItem = getTaskById(hoverId);
+          if (!hoverItem) return;
+          if (hoverItem.parentId) {
+              onSetParent(dragId, hoverItem.parentId);
+          } else {
+              onSetParent(dragId, hoverId);
           }
           return;
-        }
-
-        if (dragId === hoverId) return;
-
-        const hoverItem = getTaskById(hoverId);
-        if (!hoverItem) return;
-
-        if (isIndenting && canDragItemBeChild) {
-            if (hoverItem.parentId) {
-                onSetParent(dragId, hoverItem.parentId);
-            } 
-            else if (!hoverItem.parentId) {
-                onSetParent(dragId, hoverId);
-            }
-            return;
         }
         
         const isUnindenting = deltaX < -(INDENT_WIDTH * 4);
@@ -155,8 +149,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             onSetParent(dragId, null);
             return;
         }
-
-        onMove(dragId, hoverId);
+        
+        if (dragId !== hoverId) {
+          onMove(dragId, hoverId);
+        }
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!ref.current || isPrint) return;
@@ -285,14 +281,16 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
+        clearTimeout(longPressTimeout.current);
+        longPressTimeout.current = null;
     }
+    
     if (!isLongPress && !isEditing) {
         onSelectTask(task.id);
     }
+
     touchStartPos.current = null;
   };
 
@@ -511,5 +509,3 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
-
-
