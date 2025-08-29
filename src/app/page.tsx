@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useTransition, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useRef, useMemo } from 'react';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -196,6 +196,14 @@ export default function Home() {
     });
 }, [updateAndSaveTasks, toast]);
 
+const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
+const currentYear = getYear(currentDate);
+const currentWeekKey = `${currentYear}-${currentWeek}`;
+
+const weeklyTasks = useMemo(() => {
+  return tasks.filter(t => t.week === currentWeekKey);
+}, [tasks, currentWeekKey]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -208,18 +216,18 @@ export default function Home() {
       const selectedTask = tasks.find(t => t.id === selectedTaskId);
       if (!selectedTask) return;
       
-      const weeklyTasks = tasks.filter(t => t.week === `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`);
-      const selectedTaskIndex = weeklyTasks.findIndex(t => t.id === selectedTaskId);
+      const visibleWeeklyTasks = weeklyTasks.slice();
+      const selectedTaskIndex = visibleWeeklyTasks.findIndex(t => t.id === selectedTaskId);
 
       if (e.key === 'ArrowUp' && !e.ctrlKey) {
         e.preventDefault();
         if (selectedTaskIndex > 0) {
-          setSelectedTaskId(weeklyTasks[selectedTaskIndex - 1].id);
+          setSelectedTaskId(visibleWeeklyTasks[selectedTaskIndex - 1].id);
         }
       } else if (e.key === 'ArrowDown' && !e.ctrlKey) {
         e.preventDefault();
-        if (selectedTaskIndex < weeklyTasks.length - 1) {
-          setSelectedTaskId(weeklyTasks[selectedTaskIndex + 1].id);
+        if (selectedTaskIndex < visibleWeeklyTasks.length - 1) {
+          setSelectedTaskId(visibleWeeklyTasks[selectedTaskIndex + 1].id);
         }
       } else if (e.key === 'ArrowUp' && e.ctrlKey) {
         e.preventDefault();
@@ -233,7 +241,7 @@ export default function Home() {
           handleSetTaskParent(selectedTaskId, null);
         } else {
           if (selectedTaskIndex > 0) {
-            const taskAbove = weeklyTasks[selectedTaskIndex - 1];
+            const taskAbove = visibleWeeklyTasks[selectedTaskIndex - 1];
             if (taskAbove) {
               if (taskAbove.parentId) {
                 handleSetTaskParent(selectedTaskId, taskAbove.parentId);
@@ -255,7 +263,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent, currentDate]);
+  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent, currentDate, weeklyTasks]);
 
 
   const getTaskById = useCallback((taskId: string) => {
@@ -286,8 +294,6 @@ export default function Home() {
   };
   
   const handleAddTask = async () => {
-    const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
-    const currentYear = getYear(currentDate);
     const newTaskId = await generateTaskId(tasks.map(t => t.id));
     const newTask: Task = {
       id: newTaskId,
@@ -303,7 +309,7 @@ export default function Home() {
         saturday: 'default',
         sunday: 'default',
       },
-      week: `${currentYear}-${currentWeek}`,
+      week: currentWeekKey,
       isNew: true,
     };
     updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
@@ -575,12 +581,6 @@ export default function Home() {
   const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
 
-  const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
-  const currentYear = getYear(currentDate);
-  const currentWeekKey = `${currentYear}-${currentWeek}`;
-
-  const weeklyTasks = tasks.filter(t => t.week === currentWeekKey);
-  
   const weekDisplay = (
     <>
       Week of {format(startOfWeekDate, 'MMMM')} {getDayWithSuffix(startOfWeekDate)}, {format(startOfWeekDate, 'yyyy')}
