@@ -128,10 +128,16 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         if (!dragItem || !hoverItem) return;
         
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
-        const canHoverItemBeParent = !hoverItem.parentId;
         
-        if (isIndenting && canDragItemBeChild && canHoverItemBeParent) {
-            onSetParent(dragId, hoverId);
+        if (isIndenting && canDragItemBeChild) {
+            // If the item we're dropping on has a parent, adopt that parent.
+            if (hoverItem.parentId) {
+                onSetParent(dragId, hoverItem.parentId);
+            } 
+            // Otherwise, if the item we're dropping on is a parent itself, become its child.
+            else if (!hoverItem.parentId) {
+                onSetParent(dragId, hoverId);
+            }
             return;
         }
         
@@ -273,10 +279,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
-      // This was a short tap, so we let the onClick event handle it.
-    } else {
-      // This was a long press, so prevent the click event from firing.
-      e.preventDefault();
     }
     touchStartPos.current = null;
   };
@@ -495,3 +497,4 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
