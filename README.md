@@ -1,6 +1,6 @@
-# FlowDo: Your Weekly Task Manager
+# WeekList: Your Weekly Task Manager
 
-FlowDo is a modern, intuitive task management application designed to help you organize your week with clarity and focus. Built with Next.js, it provides a seamless and responsive experience for managing your personal and professional to-do lists.
+WeekList is a modern, intuitive task management application designed to help you organize your week with clarity and focus. Built with Next.js, it provides a seamless and responsive experience for managing your personal and professional to-do lists.
 
 ## Key Features
 
