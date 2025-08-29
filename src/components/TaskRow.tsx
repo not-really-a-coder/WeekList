@@ -91,6 +91,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const taskAbove = index > 0 ? tasks[index - 1] : null;
   const canIndent = !isParent && index > 0 && taskAbove;
 
+  const [isLongPress, setIsLongPress] = useState(false);
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
   const touchMoveThreshold = 10; // pixels
   const touchStartPos = useRef<{ x: number, y: number } | null>(null);
@@ -105,7 +106,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     },
     canDrop(item, monitor) {
       if (!ref.current || isPrint) return false;
-      return item.id !== task.id;
+      return true;
     },
     drop(item: DragItem, monitor: DropTargetMonitor) {
         if (!ref.current || isPrint) return;
@@ -113,8 +114,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         const dragId = item.id;
         const hoverId = task.id;
 
-        if (dragId === hoverId) return;
-        
         const clientOffset = monitor.getClientOffset();
         const initialClientOffset = monitor.getInitialClientOffset();
         if (!clientOffset || !initialClientOffset) return;
@@ -123,18 +122,27 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         const isIndenting = deltaX > INDENT_WIDTH * 4;
         
         const dragItem = getTaskById(dragId);
-        const hoverItem = getTaskById(hoverId);
-
-        if (!dragItem || !hoverItem) return;
+        if (!dragItem) return;
         
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
         
+        if (dragId === hoverId && isIndenting) {
+          const taskAbove = tasks[index -1];
+          if (taskAbove && canDragItemBeChild) {
+            onSetParent(dragId, taskAbove.parentId ? taskAbove.parentId : taskAbove.id);
+          }
+          return;
+        }
+
+        if (dragId === hoverId) return;
+
+        const hoverItem = getTaskById(hoverId);
+        if (!hoverItem) return;
+
         if (isIndenting && canDragItemBeChild) {
-            // If the item we're dropping on has a parent, adopt that parent.
             if (hoverItem.parentId) {
                 onSetParent(dragId, hoverItem.parentId);
             } 
-            // Otherwise, if the item we're dropping on is a parent itself, become its child.
             else if (!hoverItem.parentId) {
                 onSetParent(dragId, hoverId);
             }
@@ -237,7 +245,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (isDone || isPrint) return;
 
     if (isMobile) {
-      onSelectTask(task.id);
+        onSelectTask(task.id);
     } else {
         setIsEditing(true);
         onSelectTask(task.id);
@@ -254,11 +262,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (isPrint || isEditing) return;
     
     touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    setIsLongPress(false);
 
     longPressTimeout.current = setTimeout(() => {
       if (isDone) return;
       setIsEditing(true);
       onSelectTask(task.id);
+      setIsLongPress(true);
       longPressTimeout.current = null;
     }, 500);
   };
@@ -280,8 +290,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
     }
+    if (!isLongPress && !isEditing) {
+        onSelectTask(task.id);
+    }
     touchStartPos.current = null;
   };
+
 
   const handleBreakdownClick = async (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -497,4 +511,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
 
