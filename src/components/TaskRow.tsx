@@ -82,7 +82,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const isParent = tasks.some(t => t.parentId === task.id);
   
   const isMobile = useIsMobile();
-  const longPressTimer = useRef<NodeJS.Timeout>();
   
   const siblings = tasks.filter(t => t.parentId === task.parentId);
   const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
@@ -315,7 +314,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     onChange={(e) => setEditableTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onBlur={handleSave}
-                    className="h-8 flex-grow mr-2 bg-background rounded-none"
+                    className="h-8 flex-grow mr-2 bg-background"
                     />
                     <Button size="icon" variant="ghost" onClick={handleSave} className="shrink-0">
                     <Save className="size-4" />
