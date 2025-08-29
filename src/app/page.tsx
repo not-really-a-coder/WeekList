@@ -75,11 +75,15 @@ export default function Home() {
     }
     
     const closedParentIds = new Set(allWeeklyTasks.filter(t => t.title.startsWith('[v]')).map(t => t.id));
+    const taskMap = new Map(allWeeklyTasks.map(t => [t.id, t]));
+    const memo: Record<string, boolean> = {};
+
     const isChildOfClosed = (task: Task): boolean => {
-      if (!task.parentId) return false;
-      if (closedParentIds.has(task.parentId)) return true;
-      const parent = allWeeklyTasks.find(t => t.id === task.parentId);
-      return parent ? isChildOfClosed(parent) : false;
+      if (memo.hasOwnProperty(task.id)) return memo[task.id];
+      if (!task.parentId) return (memo[task.id] = false);
+      if (closedParentIds.has(task.parentId)) return (memo[task.id] = true);
+      const parent = taskMap.get(task.parentId);
+      return (memo[task.id] = parent ? isChildOfClosed(parent) : false);
     };
     
     return allWeeklyTasks.filter(t => !t.title.startsWith('[v]') && !isChildOfClosed(t));
@@ -253,7 +257,7 @@ export default function Home() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isMobile || !selectedTaskId) return;
+      if (!selectedTaskId) return;
 
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
@@ -308,7 +312,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, isMobile, handleMoveTaskUpDown, handleSetTaskParent, currentDate, visibleTasks]);
+  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, currentDate, visibleTasks]);
 
 
   const getTaskById = useCallback((taskId: string) => {
