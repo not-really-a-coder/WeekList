@@ -248,9 +248,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isPrint || isDone || isEditing) return;
+    e.stopPropagation();
     touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     longPressTimeout.current = setTimeout(() => {
-      e.preventDefault(); // Prevent click event on long press
+      // Don't prevent default, as that can stop other events like context menus
       setIsEditing(true);
       onSelectTask(task.id);
       longPressTimeout.current = null;
@@ -273,12 +274,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
-      // This logic ensures that a short tap is also handled correctly
-      if (touchStartPos.current) {
-        onSelectTask(task.id); // It's a short tap, so select it
-        touchStartPos.current = null;
+      if (touchStartPos.current && ref.current) {
+        // This was a short tap, not a long press.
+        // We programmatically click the element to trigger the standard onClick handler.
+        ref.current.click();
       }
     }
+    touchStartPos.current = null;
   };
 
   const handleBreakdownClick = async (e: React.MouseEvent) => {
@@ -491,3 +493,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
+
+    
