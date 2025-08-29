@@ -93,7 +93,7 @@ export function TaskGrid({
               <div key={day} className={cn(
                   "bg-card transition-colors flex items-center justify-center relative",
                   "group-data-[state=selected]/row:bg-accent/10",
-                  isLastTask && dayIndex === 0 && "md:rounded-bl-lg"
+                  isLastTask && dayIndex === 0 && "rounded-bl-lg"
                 )}>
                 <StatusCell
                   task={task}
@@ -107,7 +107,7 @@ export function TaskGrid({
             <div className={cn("bg-card flex items-center transition-colors relative", 
                 taskColumnSpan, 
                 "group-data-[state=selected]/row:bg-accent/10",
-                isLastTask && "md:rounded-br-lg"
+                isLastTask && "rounded-br-lg"
               )}>
               <TaskRow
                 isPrint={isPrint}
@@ -137,7 +137,7 @@ export function TaskGrid({
 
 
   return (
-    <div className={cn("grid gap-px bg-border border md:rounded-lg shadow-lg relative", gridColsClass)} onClick={(e) => e.stopPropagation()}>
+    <div className={cn("grid gap-px bg-border border rounded-lg shadow-lg relative", gridColsClass)} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
         const isToday = isSameDay(weekDates[index], today);
@@ -145,7 +145,7 @@ export function TaskGrid({
           <div key={index} className={cn(
             "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base",
             !isPrint && "sticky top-14 z-10",
-            index === 0 && "md:rounded-tl-lg",
+            index === 0 && "rounded-tl-lg",
             isToday && !isPrint && "border-b-2 border-primary"
           )}>
             <span className="text-sm">{day}</span>
@@ -154,7 +154,7 @@ export function TaskGrid({
         )
       })}
       <div className={cn(
-          "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between md:rounded-tr-lg", 
+          "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between rounded-tr-lg", 
           taskHeaderSpan,
           !isPrint && "sticky top-14 z-10"
         )}>
@@ -170,7 +170,7 @@ export function TaskGrid({
       {tasks.length > 0 ? (
         taskTree.map((task, index) => renderTask(task, tasks.findIndex(t => t.id === task.id)))
       ) : (
-        <div className={cn("bg-card text-center p-12 text-muted-foreground md:rounded-b-lg", showWeekends ? "col-span-8" : "col-span-6")}>
+        <div className={cn("bg-card text-center p-12 text-muted-foreground rounded-b-lg", showWeekends ? "col-span-8" : "col-span-6")}>
           No tasks for this week. Add one or move to a different week.
         </div>
       )}

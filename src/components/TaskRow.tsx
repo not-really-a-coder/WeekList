@@ -273,6 +273,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
       longPressTimeout.current = null;
+      // This logic ensures that a short tap is also handled correctly
+      if (touchStartPos.current) {
+        onSelectTask(task.id); // It's a short tap, so select it
+        touchStartPos.current = null;
+      }
     }
   };
 
@@ -411,9 +416,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                             Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDone}>
-                            Edit
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onToggleDone(task.id)} className="md:hidden">
                         <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
                         <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
