@@ -247,10 +247,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isPrint || isDone || isEditing) return;
+    if (isPrint || isEditing) return;
     e.stopPropagation();
     touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     longPressTimeout.current = setTimeout(() => {
+      if (isDone) return;
       // Don't prevent default, as that can stop other events like context menus
       setIsEditing(true);
       onSelectTask(task.id);
@@ -358,7 +359,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     onChange={(e) => setEditableTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onBlur={handleSave}
-                    className="h-8 flex-grow mr-2 bg-background"
+                    className="h-8 flex-grow mr-2 bg-background rounded-md border"
                     />
                     <Button size="icon" variant="ghost" onClick={handleSave} className="shrink-0">
                     <Save className="size-4" />
@@ -475,7 +476,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the
+                        This will permanently delete the
                         task "{displayTitle}" and all its sub-tasks.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
