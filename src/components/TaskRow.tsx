@@ -91,6 +91,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const taskAbove = index > 0 ? tasks[index - 1] : null;
   const canIndent = !isParent && index > 0 && taskAbove && !taskAbove.parentId;
 
+  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
+  const touchMoveThreshold = 10; // pixels
+  const touchStartPos = useRef<{ x: number, y: number } | null>(null);
+
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
     accept: ItemTypes.TASK,
@@ -242,6 +246,33 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     onSelectTask(task.id);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isPrint || isDone) return;
+    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    longPressTimeout.current = setTimeout(() => {
+      e.preventDefault(); // Prevent click event on long press
+      setIsEditing(true);
+      longPressTimeout.current = null;
+    }, 500); // 500ms for long press
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!longPressTimeout.current || !touchStartPos.current) return;
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+    if (deltaX > touchMoveThreshold || deltaY > touchMoveThreshold) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+  };
+
   const handleBreakdownClick = async (e: React.MouseEvent) => {
       e.stopPropagation();
       setIsBreakingDown(true);
@@ -271,6 +302,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
         )}
       onClick={handleRowClick}
+      onTouchStart={isMobile ? handleTouchStart : undefined}
+      onTouchMove={isMobile ? handleTouchMove : undefined}
+      onTouchEnd={isMobile ? handleTouchEnd : undefined}
     >
       {!isPrint && (
         <button
@@ -452,5 +486,3 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     </div>
   );
 }
-
-    
