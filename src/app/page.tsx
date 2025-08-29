@@ -23,7 +23,6 @@ const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 const ID_LENGTH = 4;
 const LOCAL_STORAGE_KEY = 'weeklist-tasks';
 const SHOW_WEEKENDS_KEY = 'weeklist-show-weekends';
-const HIDE_CLOSED_TASKS_KEY = 'weeklist-hide-closed-tasks';
 
 
 async function generateTaskId(existingIds: string[]): Promise<string> {
@@ -59,7 +58,6 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showWeekends, setShowWeekends] = useState(true);
-  const [hideClosedTasks, setHideClosedTasks] = useState(false);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -88,54 +86,6 @@ export default function Home() {
     return orderedTasks;
   }, [weeklyTasks]);
 
-  const visibleTasks = useMemo(() => {
-    if (!hideClosedTasks) {
-      return navigableTasks;
-    }
-    
-    const allWeeklyTasks = weeklyTasks;
-    const taskMap = new Map(allWeeklyTasks.map(t => [t.id, t]));
-    const closedParentIds = new Set(allWeeklyTasks.filter(t => t.title.startsWith('[v]')).map(t => t.id));
-    const isProxyClosed: Record<string, boolean> = {};
-
-    // Pre-calculate the closed status for all tasks in an iterative way to avoid recursion.
-    for (const task of allWeeklyTasks) {
-        if (isProxyClosed[task.id] !== undefined) continue;
-
-        let isClosed = false;
-        let currentTask: Task | undefined = task;
-        const path = new Set<string>(); // To detect cycles
-
-        while(currentTask) {
-            if (path.has(currentTask.id)) { // Cycle detected
-                isClosed = false;
-                break;
-            }
-            path.add(currentTask.id);
-
-            if (isProxyClosed[currentTask.id] !== undefined) {
-                isClosed = isProxyClosed[currentTask.id]!;
-                break;
-            }
-            if (closedParentIds.has(currentTask.id)) {
-                isClosed = true;
-                break;
-            }
-            currentTask = currentTask.parentId ? taskMap.get(currentTask.parentId) : undefined;
-        }
-
-        // Backfill the results for the path traversed
-        for(const taskId of path) {
-            isProxyClosed[taskId] = isClosed;
-        }
-        isProxyClosed[task.id] = isClosed;
-    }
-
-    const filtered = navigableTasks.filter(t => !isProxyClosed[t.id]);
-    return filtered;
-    
-  }, [hideClosedTasks, weeklyTasks, navigableTasks]);
-
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -151,11 +101,6 @@ export default function Home() {
       if (storedShowWeekends) {
         setShowWeekends(JSON.parse(storedShowWeekends));
       }
-      const storedHideClosed = localStorage.getItem(HIDE_CLOSED_TASKS_KEY);
-      if (storedHideClosed) {
-        setHideClosedTasks(JSON.parse(storedHideClosed));
-      }
-
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -200,14 +145,6 @@ export default function Home() {
       return newValue;
     });
   }
-
-  const handleToggleClosedTasks = () => {
-    setHideClosedTasks(current => {
-      const newValue = !current;
-      localStorage.setItem(HIDE_CLOSED_TASKS_KEY, JSON.stringify(newValue));
-      return newValue;
-    });
-  };
 
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
       updateAndSaveTasks(currentTasks => {
@@ -710,7 +647,7 @@ export default function Home() {
             </div>
             <div className="px-2 sm:px-0">
               <TaskGrid
-                tasks={visibleTasks}
+                tasks={navigableTasks}
                 selectedTaskId={selectedTaskId}
                 onStatusChange={handleStatusChange}
                 onUpdateTask={handleUpdateTask}
@@ -729,8 +666,6 @@ export default function Home() {
                 allTasks={tasks}
                 showWeekends={showWeekends}
                 onToggleWeekends={handleToggleWeekends}
-                hideClosedTasks={hideClosedTasks}
-                onToggleClosedTasks={handleToggleClosedTasks}
                 weeklyTasksCount={weeklyTasks.length}
                 today={today}
               />
@@ -777,3 +712,6 @@ export default function Home() {
 
     
 
+
+
+    
