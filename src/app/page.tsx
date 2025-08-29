@@ -77,7 +77,11 @@ export default function Home() {
     
     function addTaskAndChildren(task: Task) {
       orderedTasks.push(task);
-      const children = weeklyTasks.filter(t => t.parentId === task.id);
+      const children = weeklyTasks.filter(t => t.parentId === task.id).sort((a, b) => {
+        const aIndex = weeklyTasks.findIndex(task => task.id === a.id);
+        const bIndex = weeklyTasks.findIndex(task => task.id === b.id);
+        return aIndex - bIndex;
+      });
       children.forEach(addTaskAndChildren);
     }
     
@@ -201,14 +205,15 @@ export default function Home() {
         if (parentId) {
             const childIndex = newTasks.findIndex(t => t.id === childId);
             const [movedChild] = newTasks.splice(childIndex, 1);
-
+            
             const parentChildren = newTasks.filter(t => t.parentId === parentId);
             let targetIndex;
+
             if (parentChildren.length > 0) {
-                const lastChildId = parentChildren[parentChildren.length - 1].id;
-                targetIndex = newTasks.findIndex(t => t.id === lastChildId);
+              const lastChild = parentChildren[parentChildren.length - 1];
+              targetIndex = newTasks.findIndex(t => t.id === lastChild.id);
             } else {
-                targetIndex = newTasks.findIndex(t => t.id === parentId);
+              targetIndex = newTasks.findIndex(t => t.id === parentId);
             }
             
             newTasks.splice(targetIndex + 1, 0, movedChild);
@@ -248,23 +253,17 @@ export default function Home() {
       } else if (e.key === 'ArrowDown' && e.ctrlKey) {
         e.preventDefault();
         handleMoveTaskUpDown(selectedTaskId, 'down');
-      } else if (e.key === 'Tab') {
+      } else if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
-        if (selectedTask.parentId) {
-          handleSetTaskParent(selectedTaskId, null);
-        } else {
-          if (selectedTaskIndex > 0) {
-            const taskAbove = navigableTasks[selectedTaskIndex - 1];
-            if (taskAbove) {
-              if (taskAbove.parentId) {
-                handleSetTaskParent(selectedTaskId, taskAbove.parentId);
-              } else {
-                handleSetTaskParent(selectedTaskId, taskAbove.id);
-              }
-            }
+        if (selectedTaskIndex > 0) {
+          const taskAbove = navigableTasks[selectedTaskIndex - 1];
+          if (taskAbove.parentId) {
+            handleSetTaskParent(selectedTaskId, taskAbove.parentId);
+          } else {
+            handleSetTaskParent(selectedTaskId, taskAbove.id);
           }
         }
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
         if (selectedTask.parentId) {
           handleSetTaskParent(selectedTaskId, null);
@@ -276,7 +275,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, currentDate, navigableTasks]);
+  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks]);
 
 
   const getTaskById = useCallback((taskId: string) => {
@@ -707,11 +706,5 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
-
-    
-
-
 
     

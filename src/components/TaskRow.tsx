@@ -83,13 +83,13 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   
   const isMobile = useIsMobile();
   
-  const siblings = tasks.filter(t => t.parentId === task.parentId);
-  const mySiblingIndex = siblings.findIndex(t => t.id === task.id);
+  const allWeeklyTasks = tasks.filter(t => t.week === task.week);
+  const myNavigableIndex = allWeeklyTasks.findIndex(t => t.id === task.id);
   
   const canUnindent = !!task.parentId;
   
-  const taskAbove = index > 0 ? tasks[index - 1] : null;
-  const canIndent = !isParent && index > 0 && taskAbove;
+  const taskAbove = myNavigableIndex > 0 ? allWeeklyTasks[myNavigableIndex - 1] : null;
+  const canIndent = !isParent && myNavigableIndex > 0 && taskAbove;
 
 
   const [{ handlerId }, drop] = useDrop<DragItem, void, { handlerId: Identifier | null }>({
@@ -121,19 +121,22 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         const canDragItemBeChild = !tasks.some(t => t.parentId === dragId);
         
         const isIndenting = deltaX > INDENT_WIDTH * 4;
-        if (isIndenting && canDragItemBeChild) {
-          const taskAbove = tasks[index -1];
-          if (dragId === hoverId && taskAbove) {
-              onSetParent(dragId, taskAbove.parentId ? taskAbove.parentId : taskAbove.id);
-              return;
-          }
 
+        if (isIndenting && canDragItemBeChild && myNavigableIndex > 0) {
+          const taskToIndentUnder = allWeeklyTasks[myNavigableIndex-1];
+
+          if (dragId === hoverId && taskToIndentUnder) {
+            onSetParent(dragId, taskToIndentUnder.parentId ? taskToIndentUnder.parentId : taskToIndentUnder.id);
+            return;
+          }
+          
           const hoverItem = getTaskById(hoverId);
           if (!hoverItem) return;
+
           if (hoverItem.parentId) {
-              onSetParent(dragId, hoverItem.parentId);
+            onSetParent(dragId, hoverItem.parentId);
           } else {
-              onSetParent(dragId, hoverId);
+             onSetParent(dragId, hoverId);
           }
           return;
         }
@@ -167,8 +170,8 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       
-      const dragIndex = tasks.findIndex(t => t.id === dragId);
-      const hoverIndex = tasks.findIndex(t => t.id === hoverId);
+      const dragIndex = allWeeklyTasks.findIndex(t => t.id === dragId);
+      const hoverIndex = allWeeklyTasks.findIndex(t => t.id === hoverId);
       
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
@@ -390,12 +393,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                         <span>Break down task</span>
                         </DropdownMenuItem>
                         
-                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={mySiblingIndex === 0 && !task.parentId && index === 0}>
+                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={myNavigableIndex === 0}>
                             <ArrowUp className="mr-2 size-4" />
                             <span>Move Up</span>
                             <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={index === tasks.length - 1}>
+                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={myNavigableIndex === allWeeklyTasks.length - 1}>
                             <ArrowDown className="mr-2 size-4" />
                             <span>Move Down</span>
                             <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
@@ -461,3 +464,6 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   );
 }
 
+
+
+    
