@@ -379,14 +379,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                         Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDone}>
-                    <CheckCircle2 className="mr-2 size-4" />
-                    <span>Edit task</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
-                    <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-                    <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
-                    </DropdownMenuItem>
+                    {isMobile && (
+                      <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
+                        <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                        <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
                     <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
                     <span>Break down task</span>
@@ -419,7 +417,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     >
                         {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
                         <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
-                        <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
+                        <DropdownMenuShortcut>{canUnindent ? "Shift+Tab" : "Tab"}</DropdownMenuShortcut>
                     </DropdownMenuItem>
 
 
@@ -449,3 +447,4 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
 
     
+
