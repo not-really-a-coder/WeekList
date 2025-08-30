@@ -231,6 +231,17 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       if(task.isNew){
         onDelete(task.id);
       }
+    } else if (e.key === 'Tab' && !isMobile) {
+      e.preventDefault();
+      if (canUnindent) {
+        onSetParent(task.id, null);
+      } else if (canIndent && taskAbove) {
+        if (taskAbove.parentId) {
+          onSetParent(task.id, taskAbove.parentId);
+        } else {
+          onSetParent(task.id, taskAbove.id);
+        }
+      }
     }
   };
   
@@ -344,7 +355,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 )}
             </div>
             
-          {!task.isNew && !isPrint && (
+          {!task.isNew && !isPrint && !isMobile && (
             <div className="flex items-center shrink-0">
                 <Button 
                 size="icon" 
@@ -393,12 +404,12 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={myNavigableIndex === 0}>
                         <ArrowUp className="mr-2 size-4" />
                         <span>Move Up</span>
-                        <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
+                        {!isMobile && <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={myNavigableIndex === allWeeklyTasks.length - 1}>
                         <ArrowDown className="mr-2 size-4" />
                         <span>Move Down</span>
-                        <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
+                        {!isMobile && <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>}
                     </DropdownMenuItem>
                     
                     <DropdownMenuItem 
@@ -417,7 +428,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     >
                         {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
                         <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
-                        <DropdownMenuShortcut>{canUnindent ? "Shift+Tab" : "Tab"}</DropdownMenuShortcut>
+                        {!isMobile && <DropdownMenuShortcut>{canUnindent ? "Shift+Tab" : "Tab"}</DropdownMenuShortcut>}
                     </DropdownMenuItem>
 
 
@@ -433,7 +444,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(task.id)}>
                         <Trash2 className="mr-2 size-4" />
                         <span>Delete task</span>
-                        <DropdownMenuShortcut>Del</DropdownMenuShortcut>
+                        {!isMobile && <DropdownMenuShortcut>Del</DropdownMenuShortcut>}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
                 </DropdownMenu>
@@ -447,4 +458,5 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
 
     
+
 
