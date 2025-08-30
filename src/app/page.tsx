@@ -60,6 +60,8 @@ export default function Home() {
   const [showWeekends, setShowWeekends] = useState(true);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   
   const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
   const currentYear = getYear(currentDate);
@@ -338,6 +340,18 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
         handleAddTaskSmart(selectedTaskId);
         return;
       }
+
+      if (e.key === 'Delete') {
+        if (selectedTaskId) {
+            e.preventDefault();
+            const task = tasks.find(t => t.id === selectedTaskId);
+            if (task) {
+                setTaskToDelete(task);
+                setIsDeleteAlertOpen(true);
+            }
+        }
+        return;
+      }
       
       if (!selectedTaskId) return;
 
@@ -464,7 +478,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
       newTasks.splice(afterIndex + 1, 0, newTask);
       return newTasks;
     });
-    setSelectedTaskId(newTask.id);
+    setSelectedTaskId(newTaskId);
   };
 
   const handleAddSubTasks = useCallback(async (parentId: string, subTaskTitles: string[]) => {
@@ -515,6 +529,22 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
     setSelectedTaskId(null);
   };
   
+  const handleConfirmDelete = () => {
+    if (taskToDelete) {
+        handleDeleteTask(taskToDelete.id);
+    }
+    setIsDeleteAlertOpen(false);
+    setTaskToDelete(null);
+  };
+  
+  const handleTriggerDelete = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if(task) {
+        setTaskToDelete(task);
+        setIsDeleteAlertOpen(true);
+    }
+  };
+
   const handleToggleDone = (taskId: string) => {
     updateAndSaveTasks(currentTasks =>
       currentTasks.map(task => {
@@ -759,7 +789,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
                 selectedTaskId={selectedTaskId}
                 onStatusChange={handleStatusChange}
                 onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
+                onDeleteTask={handleTriggerDelete}
                 onToggleDone={handleToggleDone}
                 onAddTask={handleAddTask}
                 onAddTaskAfter={handleAddTaskAfter}
@@ -811,6 +841,22 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
             )}
           </div>
         </main>
+        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete the task "{taskToDelete?.title.substring(taskToDelete.title.indexOf(']') + 2)}" and all its sub-tasks.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmDelete}>
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DndProvider>
   );

@@ -359,104 +359,86 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
           {!isPrint && (
             <div className="flex items-center shrink-0">
-                <AlertDialog>
-                    <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectTask(task.id)
-                        }}
-                        className="transition-opacity md:opacity-0 group-hover/row-hover:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8"
-                        aria-label="More options"
-                        >
-                        <MoreHorizontal className="size-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenuLabel className="font-normal text-muted-foreground">
-                            Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDone}>
-                        <CheckCircle2 className="mr-2 size-4" />
-                        <span>Edit task</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
-                        <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
-                        <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
-                        <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
-                        <span>Break down task</span>
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={myNavigableIndex === 0}>
-                            <ArrowUp className="mr-2 size-4" />
-                            <span>Move Up</span>
-                            <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={myNavigableIndex === allWeeklyTasks.length - 1}>
-                            <ArrowDown className="mr-2 size-4" />
-                            <span>Move Down</span>
-                            <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuItem 
-                        onClick={() => {
-                            if (canUnindent) {
-                                onSetParent(task.id, null);
-                            } else if (canIndent && taskAbove) {
-                                if (taskAbove.parentId) {
-                                    onSetParent(task.id, taskAbove.parentId);
-                                } else {
-                                    onSetParent(task.id, taskAbove.id);
-                                }
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTask(task.id)
+                    }}
+                    className="transition-opacity md:opacity-0 group-hover/row-hover:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8"
+                    aria-label="More options"
+                    >
+                    <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuLabel className="font-normal text-muted-foreground">
+                        Created: {format(new Date(task.createdAt), 'dd.MM.yyyy')}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDone}>
+                    <CheckCircle2 className="mr-2 size-4" />
+                    <span>Edit task</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onToggleDone(task.id)}>
+                    <CheckCircle2 className={cn("mr-2 size-4", isDone ? 'text-green-500' : 'text-muted-foreground')} />
+                    <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
+                    <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
+                    <span>Break down task</span>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'up')} disabled={myNavigableIndex === 0}>
+                        <ArrowUp className="mr-2 size-4" />
+                        <span>Move Up</span>
+                        <DropdownMenuShortcut>Ctrl+↑</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onMoveTaskUpDown(task.id, 'down')} disabled={myNavigableIndex === allWeeklyTasks.length - 1}>
+                        <ArrowDown className="mr-2 size-4" />
+                        <span>Move Down</span>
+                        <DropdownMenuShortcut>Ctrl+↓</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem 
+                    onClick={() => {
+                        if (canUnindent) {
+                            onSetParent(task.id, null);
+                        } else if (canIndent && taskAbove) {
+                            if (taskAbove.parentId) {
+                                onSetParent(task.id, taskAbove.parentId);
+                            } else {
+                                onSetParent(task.id, taskAbove.id);
                             }
-                        }} 
-                        disabled={!canIndent && !canUnindent}
-                        >
-                            {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
-                            <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
-                            <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
-                        </DropdownMenuItem>
+                        }
+                    }} 
+                    disabled={!canIndent && !canUnindent}
+                    >
+                        {canUnindent ? <Outdent className="mr-2 size-4" /> : <Indent className="mr-2 size-4" />}
+                        <span>{canUnindent ? 'Un-indent' : 'Indent'}</span>
+                        <DropdownMenuShortcut>Tab</DropdownMenuShortcut>
+                    </DropdownMenuItem>
 
 
-                        <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
-                        <ArrowRight className="mr-2 size-4" />
-                        <span>Move to next week</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
-                        <ArrowLeft className="mr-2 size-4" />
-                        <span>Move to previous week</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 size-4" />
-                            <span>Delete task</span>
-                        </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                    </DropdownMenu>
-                    <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                        This will permanently delete the
-                        task "{displayTitle}" and all its sub-tasks.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(task.id)}>
-                        Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                    <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'next')}>
+                    <ArrowRight className="mr-2 size-4" />
+                    <span>Move to next week</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onMoveToWeek(task.id, 'previous')}>
+                    <ArrowLeft className="mr-2 size-4" />
+                    <span>Move to previous week</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(task.id)}>
+                        <Trash2 className="mr-2 size-4" />
+                        <span>Delete task</span>
+                        <DropdownMenuShortcut>Del</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+                </DropdownMenu>
             </div>
           )}
         </div>
