@@ -71,22 +71,39 @@ export default function Home() {
   
   const navigableTasks = useMemo(() => {
     const taskMap = new Map(weeklyTasks.map(t => [t.id, t]));
+    
+    // Create a list of top-level tasks in their current order
     const topLevelTasks = weeklyTasks.filter(t => !t.parentId || !taskMap.has(t.parentId));
     
     const orderedTasks: Task[] = [];
-    
+    const processedIds = new Set<string>();
+
     function addTaskAndChildren(task: Task) {
+      if (processedIds.has(task.id)) return;
       orderedTasks.push(task);
-      const children = weeklyTasks.filter(t => t.parentId === task.id).sort((a, b) => {
-        const aIndex = weeklyTasks.findIndex(task => task.id === a.id);
-        const bIndex = weeklyTasks.findIndex(task => task.id === b.id);
-        return aIndex - bIndex;
-      });
+      processedIds.add(task.id);
+      
+      const children = weeklyTasks
+        .filter(t => t.parentId === task.id)
+        .sort((a, b) => {
+            const aIndex = weeklyTasks.findIndex(task => task.id === a.id);
+            const bIndex = weeklyTasks.findIndex(task => task.id === b.id);
+            return aIndex - bIndex;
+        });
+
       children.forEach(addTaskAndChildren);
     }
     
     topLevelTasks.forEach(addTaskAndChildren);
     
+    // Add any orphans that might have been missed
+    weeklyTasks.forEach(task => {
+        if (!processedIds.has(task.id)) {
+            orderedTasks.push(task);
+            processedIds.add(task.id);
+        }
+    });
+
     return orderedTasks;
   }, [weeklyTasks]);
 
@@ -223,14 +240,84 @@ export default function Home() {
     });
 }, [updateAndSaveTasks, toast]);
 
+const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => {
+    const allIds = tasks.map(t => t.id);
+    const newTaskId = await generateTaskId(allIds);
+
+    if (!selectedTaskId) {
+        // No task is selected, add a new task at the very top.
+        const newTask: Task = {
+            id: newTaskId,
+            title: '[ ] New Task',
+            createdAt: new Date().toISOString(),
+            parentId: null,
+            statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+            week: currentWeekKey,
+            isNew: true,
+        };
+        updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
+        setSelectedTaskId(newTask.id);
+        return;
+    }
+
+    const selectedTask = tasks.find(t => t.id === selectedTaskId);
+    if (!selectedTask) return;
+
+    const isParent = tasks.some(t => t.parentId === selectedTaskId);
+
+    if (isParent) {
+        // Selected task is a parent, add new task as the first child.
+        const newTask: Task = {
+            id: newTaskId,
+            title: '[ ] New Task',
+            createdAt: new Date().toISOString(),
+            parentId: selectedTaskId,
+            statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+            week: selectedTask.week,
+            isNew: true,
+        };
+        updateAndSaveTasks(currentTasks => {
+            const parentIndex = currentTasks.findIndex(t => t.id === selectedTaskId);
+            const newTasks = [...currentTasks];
+            newTasks.splice(parentIndex + 1, 0, newTask);
+            return newTasks;
+        });
+        setSelectedTaskId(newTaskId);
+    } else {
+        // Selected task is a child or a regular task, add new task after it.
+        const newTask: Task = {
+            id: newTaskId,
+            title: '[ ] New Task',
+            createdAt: new Date().toISOString(),
+            parentId: selectedTask.parentId, // Inherit parentage
+            statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+            week: selectedTask.week,
+            isNew: true,
+        };
+        updateAndSaveTasks(currentTasks => {
+            const afterIndex = currentTasks.findIndex(t => t.id === selectedTaskId);
+            const newTasks = [...currentTasks];
+            newTasks.splice(afterIndex + 1, 0, newTask);
+            return newTasks;
+        });
+        setSelectedTaskId(newTaskId);
+    }
+}, [tasks, currentWeekKey, updateAndSaveTasks]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedTaskId) return;
-
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
+
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        handleAddTaskSmart(selectedTaskId);
+        return;
+      }
+      
+      if (!selectedTaskId) return;
 
       const selectedTask = tasks.find(t => t.id === selectedTaskId);
       if (!selectedTask) return;
@@ -275,7 +362,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks]);
+  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks, handleAddTaskSmart]);
 
 
   const getTaskById = useCallback((taskId: string) => {
@@ -706,5 +793,3 @@ export default function Home() {
     </DndProvider>
   );
 }
-
-    
