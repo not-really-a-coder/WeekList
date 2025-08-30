@@ -194,18 +194,21 @@ export default function Home() {
     updateAndSaveTasks(currentTasks => {
         const childTask = currentTasks.find(t => t.id === childId);
         if (!childTask) return currentTasks;
+        
+        const oldParentId = childTask.parentId;
 
-        const hasChildren = currentTasks.some(t => t.parentId === childId);
-        if (parentId && hasChildren) {
-            toast({
-                variant: 'destructive',
-                title: 'Nesting failed',
-                description: 'Cannot indent a task that already has sub-tasks.',
-            });
-            return currentTasks;
-        }
-
+        // Indenting checks
         if (parentId) {
+            const hasChildren = currentTasks.some(t => t.parentId === childId);
+            if (hasChildren) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Nesting failed',
+                    description: 'Cannot indent a task that already has sub-tasks.',
+                });
+                return currentTasks;
+            }
+
             const parentTask = currentTasks.find(t => t.id === parentId);
             if (parentTask?.parentId) {
                 toast({
@@ -217,12 +220,18 @@ export default function Home() {
             }
         }
 
-        let newTasks = currentTasks.map(t => t.id === childId ? { ...t, parentId } : t);
+        let newTasks = [...currentTasks];
+        const childIndex = newTasks.findIndex(t => t.id === childId);
+        
+        if (childIndex === -1) return newTasks;
 
-        if (parentId) {
-            const childIndex = newTasks.findIndex(t => t.id === childId);
-            const [movedChild] = newTasks.splice(childIndex, 1);
-            
+        // Update parentId
+        newTasks[childIndex] = { ...newTasks[childIndex], parentId };
+
+        // Reorder the list
+        const [movedChild] = newTasks.splice(childIndex, 1);
+        
+        if (parentId) { // Reorder logic for INDENTING
             const parentChildren = newTasks.filter(t => t.parentId === parentId);
             let targetIndex;
 
@@ -234,8 +243,21 @@ export default function Home() {
             }
             
             newTasks.splice(targetIndex + 1, 0, movedChild);
+        } else { // Reorder logic for UN-INDENTING
+            if(oldParentId) {
+                const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
+                if (oldParentIndex !== -1) {
+                    newTasks.splice(oldParentIndex + 1, 0, movedChild);
+                } else {
+                    // old parent not found, just put it at the end
+                    newTasks.push(movedChild); 
+                }
+            } else {
+                // Was not a child before, something is wrong, put it back
+                 newTasks.splice(childIndex, 0, movedChild);
+            }
         }
-
+        
         return newTasks;
     });
 }, [updateAndSaveTasks, toast]);
