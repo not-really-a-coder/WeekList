@@ -1,10 +1,10 @@
-# FlowDo Technical Specification
+# WeekList Technical Specification
 
-This document provides a technical overview of the FlowDo application, a modern weekly task manager. Its purpose is to help developers understand the project's architecture, code structure, and key implementation details.
+This document provides a technical overview of the WeekList application, a modern weekly task manager. Its purpose is to help developers understand the project's architecture, code structure, and key implementation details.
 
 ## 1. Tech Stack
 
-FlowDo is built on a modern, robust technology stack:
+WeekList is built on a modern, robust technology stack:
 
 - **Framework**: [Next.js](https://nextjs.org/) (with App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
