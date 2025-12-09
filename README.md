@@ -1,33 +1,55 @@
-# WeekList: Your Weekly Task Manager (v0.1)
+# WeekList
 
-WeekList is a modern, intuitive task management application designed to help you organize your week with clarity and focus. It brings the effectiveness of the "Running To-do List"—a method traditionally used in paper notebooks—to a powerful digital format. By providing a weekly, high-level view of your tasks, WeekList helps you track progress, manage recurring work, and maintain focus on what matters most.
+**Your Weekly Task Manager for Deep Focus.**
 
-Built with Next.js, it provides a seamless and responsive experience for managing your personal and professional to-do lists. While the application is optimized for mobile devices, the user experience is most powerful on desktop, where the full weekly grid can be leveraged for deep work and planning.
+![WeekList Desktop View](docs/assets/desktop-view.png)
 
-## Key Features
+WeekList transforms the traditional "Running To-do List" into a powerful digital experience. Designed for clarity, it gives you a high-level view of your entire week, helping you manage priorities, track progress, and stay focused on what matters.
 
-*   **Weekly Grid View:** See your entire week at a glance. Track task statuses across each day to get a helicopter view of your workload and progress.
-*   **Parent/Child Tasks:** Break down large projects into smaller, manageable steps with nested sub-tasks.
-*   **Multiple Statuses:** Go beyond simple "done" or "not done." Track the state of each task with statuses like Planned, Completed, Rescheduled, or Cancelled.
-*   **Drag-and-Drop Reordering:** Effortlessly prioritize your tasks by dragging and dropping them into the desired order.
-*   **AI Task Breakdown:** Use the power of AI to automatically break down large, complex tasks into smaller, more manageable sub-tasks.
-*   **Light & Dark Modes:** Switch between light and dark themes for a comfortable viewing experience at any time of day.
-*   **Data Portability:** Easily import and export your task lists in Markdown (`.md`) format, giving you full control over your data.
-*   **Keyboard Navigation:** Efficiently manage tasks using hotkeys for adding, deleting, reordering, and indenting.
+## ✨ Key Features
 
-## Plans for the Future
+*   **📅 Weekly Grid View**: Visualize your workload. See your week at a glance and move tasks across days effortlessly.
+*   **🤖 AI Task Breakdown** *(New)*: Overwhelmed by a big task? Let our AI break it down into manageable sub-tasks for you. *(Requires API Key)*.
+*   **👁️ Focus Mode** *(New)*: Toggle "Hide Completed" to clear the clutter and focus only on what's left to do.
+*   **✅ Rich Statuses**: Go beyond "done". Track tasks as Planned, Completed, Rescheduled, or Cancelled.
+*   **🪜 Sub-tasks**: Organize complex projects with nested steps.
+*   **🖱️ Drag & Drop**: Intuitive reordering and rescheduling.
 
-WeekList is under active development. Here are some of the features on our roadmap:
+## 🚀 Getting Started
 
-*   **User Authentication:** Secure your task lists with user accounts.
-*   **Database Support:** Move beyond local storage to a persistent cloud database, allowing you to sync your tasks across multiple devices.
-*   **Cloud Hosting:** Deploying the application to a scalable hosting platform for reliable access anywhere.
+WeekList is built with **Next.js** and designed to be easy to set up.
 
-## Getting Started
+### Prerequisites
 
-This project is a starter Next.js application. To get it running locally:
+-   Node.js 18+
+-   Google AI API Key (optional, for AI features) - [Get one here](https://aistudio.google.com/)
 
-1.  Install dependencies: `npm install`
-2.  Run the development server: `npm run dev`
+### Installation
 
-Open [http://localhost:9002](http://localhost:9002) with your browser to see the result. You can start editing the main page by modifying `src/app/page.tsx`.
+1.  **Clone the repository** and install dependencies:
+    ```bash
+    npm install
+    ```
+
+2.  **Configure Environment**:
+    Create a `.env` file in the root directory:
+    ```env
+    GOOGLE_GENAI_API_KEY=your_api_key_here
+    ```
+
+3.  **Run Locally**:
+    ```bash
+    npm run dev
+    ```
+
+4.  Open [http://localhost:9002](http://localhost:9002) to start organizing your week!
+
+## 🔮 Roadmap
+
+-   [ ] User Authentication & Cloud Sync
+-   [ ] Database Support (PostgreSQL/Supabase)
+-   [ ] Mobile App (React Native)
+
+---
+
+*Built with ❤️ using Next.js, Tailwind CSS, and Shadcn UI.*

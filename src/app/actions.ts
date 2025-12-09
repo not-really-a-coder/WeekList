@@ -164,6 +164,11 @@ weekTasks.push(longTask);
     return shuffleArray(weekTasks);
 };
 
+
+export async function getAIFeatureStatus(): Promise<boolean> {
+  return !!process.env.GOOGLE_GENAI_API_KEY;
+}
+
 export async function handleBreakDownTask(taskTitle: string): Promise<string[]> {
   try {
     const result = await breakDownTask({
@@ -175,6 +180,7 @@ export async function handleBreakDownTask(taskTitle: string): Promise<string[]> 
     return [];
   }
 }
+
 
 export async function getTasks(): Promise<Task[]> {
     const today = new Date();

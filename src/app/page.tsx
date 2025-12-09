@@ -16,7 +16,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse, getDate } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
-import { getTasks, getTasksMarkdown, parseTasksMarkdown } from './actions';
+import { getTasks, getTasksMarkdown, parseTasksMarkdown, getAIFeatureStatus } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -38,12 +38,12 @@ async function generateTaskId(existingIds: string[]): Promise<string> {
 
 
 const getDayWithSuffix = (date: Date) => {
-    const day = getDate(date);
-    let suffix = 'th';
-    if (day % 10 === 1 && day !== 11) suffix = 'st';
-    if (day % 10 === 2 && day !== 12) suffix = 'nd';
-    if (day % 10 === 3 && day !== 13) suffix = 'rd';
-    return <>{day}<sup>{suffix}</sup></>;
+  const day = getDate(date);
+  let suffix = 'th';
+  if (day % 10 === 1 && day !== 11) suffix = 'st';
+  if (day % 10 === 2 && day !== 12) suffix = 'nd';
+  if (day % 10 === 3 && day !== 13) suffix = 'rd';
+  return <>{day}<sup>{suffix}</sup></>;
 };
 
 export default function Home() {
@@ -54,7 +54,7 @@ export default function Home() {
   const isMobile = useIsMobile();
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   const dndOptions = isMobile ? { enableMouseEvents: false, enableTouchEvents: true } : {};
-  
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showWeekends, setShowWeekends] = useState(true);
@@ -62,7 +62,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-  
+
   const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
   const currentYear = getYear(currentDate);
   const currentWeekKey = `${currentYear}-${currentWeek}`;
@@ -70,13 +70,13 @@ export default function Home() {
   const weeklyTasks = useMemo(() => {
     return tasks.filter(t => t.week === currentWeekKey);
   }, [tasks, currentWeekKey]);
-  
+
   const navigableTasks = useMemo(() => {
     const taskMap = new Map(weeklyTasks.map(t => [t.id, t]));
-    
+
     // Create a list of top-level tasks in their current order
     const topLevelTasks = weeklyTasks.filter(t => !t.parentId || !taskMap.has(t.parentId));
-    
+
     const orderedTasks: Task[] = [];
     const processedIds = new Set<string>();
 
@@ -84,31 +84,37 @@ export default function Home() {
       if (processedIds.has(task.id)) return;
       orderedTasks.push(task);
       processedIds.add(task.id);
-      
+
       const children = weeklyTasks
         .filter(t => t.parentId === task.id)
         .sort((a, b) => {
-            const aIndex = weeklyTasks.findIndex(task => task.id === a.id);
-            const bIndex = weeklyTasks.findIndex(task => task.id === b.id);
-            return aIndex - bIndex;
+          const aIndex = weeklyTasks.findIndex(task => task.id === a.id);
+          const bIndex = weeklyTasks.findIndex(task => task.id === b.id);
+          return aIndex - bIndex;
         });
 
       children.forEach(addTaskAndChildren);
     }
-    
+
     topLevelTasks.forEach(addTaskAndChildren);
-    
+
     // Add any orphans that might have been missed
     weeklyTasks.forEach(task => {
-        if (!processedIds.has(task.id)) {
-            orderedTasks.push(task);
-            processedIds.add(task.id);
-        }
+      if (!processedIds.has(task.id)) {
+        orderedTasks.push(task);
+        processedIds.add(task.id);
+      }
     });
 
     return orderedTasks;
   }, [weeklyTasks]);
 
+
+
+  const [isAIFeatureEnabled, setIsAIFeatureEnabled] = useState(false);
+
+  const HIDE_COMPLETED_KEY = 'weeklist-hide-completed';
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -124,6 +130,13 @@ export default function Home() {
       if (storedShowWeekends) {
         setShowWeekends(JSON.parse(storedShowWeekends));
       }
+      const storedHideCompleted = localStorage.getItem(HIDE_COMPLETED_KEY);
+      if (storedHideCompleted) {
+        setHideCompleted(JSON.parse(storedHideCompleted));
+      }
+
+      const aiStatus = await getAIFeatureStatus();
+      setIsAIFeatureEnabled(aiStatus);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -137,20 +150,21 @@ export default function Home() {
       setIsLoading(false);
     }
   }, [toast]);
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       loadTasks();
       setIsClient(true);
     }
   }, [loadTasks]);
-  
+
+
   const updateAndSaveTasks = useCallback((newTasksOrFn: React.SetStateAction<Task[]>) => {
     setTasks(newTasksOrFn);
   }, []);
 
   useEffect(() => {
-    if(!isLoading) {
+    if (!isLoading) {
       startTransition(() => {
         try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
@@ -169,119 +183,128 @@ export default function Home() {
     });
   }
 
+  const handleToggleHideCompleted = () => {
+    setHideCompleted(current => {
+      const newValue = !current;
+      localStorage.setItem(HIDE_COMPLETED_KEY, JSON.stringify(newValue));
+      return newValue;
+    });
+  }
+
+
   const handleMoveTaskUpDown = useCallback((taskId: string, direction: 'up' | 'down') => {
-      updateAndSaveTasks(currentTasks => {
-        const taskIndex = currentTasks.findIndex(t => t.id === taskId);
-        if (taskIndex === -1) return currentTasks;
+    updateAndSaveTasks(currentTasks => {
+      const taskIndex = currentTasks.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) return currentTasks;
 
-        const newTasks = [...currentTasks];
-        const targetIndex = direction === 'up' ? taskIndex - 1 : taskIndex + 1;
+      const newTasks = [...currentTasks];
+      const targetIndex = direction === 'up' ? taskIndex - 1 : taskIndex + 1;
 
-        if (targetIndex < 0 || targetIndex >= newTasks.length) {
-            return currentTasks; 
-        }
-        
-        const taskToMove = newTasks[taskIndex];
-        const taskToSwapWith = newTasks[targetIndex];
-        
-        newTasks[taskIndex] = taskToSwapWith;
-        newTasks[targetIndex] = taskToMove;
+      if (targetIndex < 0 || targetIndex >= newTasks.length) {
+        return currentTasks;
+      }
 
-        return newTasks;
-      });
+      const taskToMove = newTasks[taskIndex];
+      const taskToSwapWith = newTasks[targetIndex];
+
+      newTasks[taskIndex] = taskToSwapWith;
+      newTasks[targetIndex] = taskToMove;
+
+      return newTasks;
+    });
   }, [updateAndSaveTasks]);
 
 
   const handleSetTaskParent = useCallback((childId: string, parentId: string | null) => {
     updateAndSaveTasks(currentTasks => {
-        const childTask = currentTasks.find(t => t.id === childId);
-        if (!childTask) return currentTasks;
-        
-        const oldParentId = childTask.parentId;
+      const childTask = currentTasks.find(t => t.id === childId);
+      if (!childTask) return currentTasks;
 
-        // Indenting checks
-        if (parentId) {
-            const hasChildren = currentTasks.some(t => t.parentId === childId);
-            if (hasChildren) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Nesting failed',
-                    description: 'Cannot indent a task that already has sub-tasks.',
-                });
-                return currentTasks;
-            }
+      const oldParentId = childTask.parentId;
 
-            const parentTask = currentTasks.find(t => t.id === parentId);
-            if (parentTask?.parentId) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Nesting failed',
-                    description: 'Cannot nest a task more than one level deep.',
-                });
-                return currentTasks;
-            }
+      // Indenting checks
+      if (parentId) {
+        const hasChildren = currentTasks.some(t => t.parentId === childId);
+        if (hasChildren) {
+          toast({
+            variant: 'destructive',
+            title: 'Nesting failed',
+            description: 'Cannot indent a task that already has sub-tasks.',
+          });
+          return currentTasks;
         }
 
-        let newTasks = [...currentTasks];
-        const childIndex = newTasks.findIndex(t => t.id === childId);
-        
-        if (childIndex === -1) return newTasks;
-
-        // Update parentId
-        newTasks[childIndex] = { ...newTasks[childIndex], parentId };
-
-        // Reorder the list
-        const [movedChild] = newTasks.splice(childIndex, 1);
-        
-        if (parentId) { // Reorder logic for INDENTING
-            const parentChildren = newTasks.filter(t => t.parentId === parentId);
-            let targetIndex;
-
-            if (parentChildren.length > 0) {
-              const lastChild = parentChildren[parentChildren.length - 1];
-              targetIndex = newTasks.findIndex(t => t.id === lastChild.id);
-            } else {
-              targetIndex = newTasks.findIndex(t => t.id === parentId);
-            }
-            
-            newTasks.splice(targetIndex + 1, 0, movedChild);
-        } else { // Reorder logic for UN-INDENTING
-            if(oldParentId) {
-                const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
-                if (oldParentIndex !== -1) {
-                    newTasks.splice(oldParentIndex + 1, 0, movedChild);
-                } else {
-                    // old parent not found, just put it at the end
-                    newTasks.push(movedChild); 
-                }
-            } else {
-                // Was not a child before, something is wrong, put it back
-                 newTasks.splice(childIndex, 0, movedChild);
-            }
+        const parentTask = currentTasks.find(t => t.id === parentId);
+        if (parentTask?.parentId) {
+          toast({
+            variant: 'destructive',
+            title: 'Nesting failed',
+            description: 'Cannot nest a task more than one level deep.',
+          });
+          return currentTasks;
         }
-        
-        return newTasks;
+      }
+
+      let newTasks = [...currentTasks];
+      const childIndex = newTasks.findIndex(t => t.id === childId);
+
+      if (childIndex === -1) return newTasks;
+
+      // Update parentId
+      newTasks[childIndex] = { ...newTasks[childIndex], parentId };
+
+      // Reorder the list
+      const [movedChild] = newTasks.splice(childIndex, 1);
+
+      if (parentId) { // Reorder logic for INDENTING
+        const parentChildren = newTasks.filter(t => t.parentId === parentId);
+        let targetIndex;
+
+        if (parentChildren.length > 0) {
+          const lastChild = parentChildren[parentChildren.length - 1];
+          targetIndex = newTasks.findIndex(t => t.id === lastChild.id);
+        } else {
+          targetIndex = newTasks.findIndex(t => t.id === parentId);
+        }
+
+        newTasks.splice(targetIndex + 1, 0, movedChild);
+      } else { // Reorder logic for UN-INDENTING
+        if (oldParentId) {
+          const oldParentIndex = newTasks.findIndex(t => t.id === oldParentId);
+          if (oldParentIndex !== -1) {
+            newTasks.splice(oldParentIndex + 1, 0, movedChild);
+          } else {
+            // old parent not found, just put it at the end
+            newTasks.push(movedChild);
+          }
+        } else {
+          // Was not a child before, something is wrong, put it back
+          newTasks.splice(childIndex, 0, movedChild);
+        }
+      }
+
+      return newTasks;
     });
-}, [updateAndSaveTasks, toast]);
+  }, [updateAndSaveTasks, toast]);
 
-const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => {
+  const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => {
     const allIds = tasks.map(t => t.id);
     const newTaskId = await generateTaskId(allIds);
 
     if (!selectedTaskId) {
-        // No task is selected, add a new task at the very top.
-        const newTask: Task = {
-            id: newTaskId,
-            title: '[ ] New Task',
-            createdAt: new Date().toISOString(),
-            parentId: null,
-            statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-            week: currentWeekKey,
-            isNew: true,
-        };
-        updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
-        setSelectedTaskId(newTask.id);
-        return;
+      // No task is selected, add a new task at the very top.
+      const newTask: Task = {
+        id: newTaskId,
+        title: '[ ] New Task',
+        createdAt: new Date().toISOString(),
+        parentId: null,
+        statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+        week: currentWeekKey,
+        isNew: true,
+      };
+      updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
+      setSelectedTaskId(newTask.id);
+      return;
     }
 
     const selectedTask = tasks.find(t => t.id === selectedTaskId);
@@ -290,43 +313,43 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
     const isParent = tasks.some(t => t.parentId === selectedTaskId);
 
     if (isParent) {
-        // Selected task is a parent, add new task as the first child.
-        const newTask: Task = {
-            id: newTaskId,
-            title: '[ ] New Task',
-            createdAt: new Date().toISOString(),
-            parentId: selectedTaskId,
-            statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-            week: selectedTask.week,
-            isNew: true,
-        };
-        updateAndSaveTasks(currentTasks => {
-            const parentIndex = currentTasks.findIndex(t => t.id === selectedTaskId);
-            const newTasks = [...currentTasks];
-            newTasks.splice(parentIndex + 1, 0, newTask);
-            return newTasks;
-        });
-        setSelectedTaskId(newTaskId);
+      // Selected task is a parent, add new task as the first child.
+      const newTask: Task = {
+        id: newTaskId,
+        title: '[ ] New Task',
+        createdAt: new Date().toISOString(),
+        parentId: selectedTaskId,
+        statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+        week: selectedTask.week,
+        isNew: true,
+      };
+      updateAndSaveTasks(currentTasks => {
+        const parentIndex = currentTasks.findIndex(t => t.id === selectedTaskId);
+        const newTasks = [...currentTasks];
+        newTasks.splice(parentIndex + 1, 0, newTask);
+        return newTasks;
+      });
+      setSelectedTaskId(newTaskId);
     } else {
-        // Selected task is a child or a regular task, add new task after it.
-        const newTask: Task = {
-            id: newTaskId,
-            title: '[ ] New Task',
-            createdAt: new Date().toISOString(),
-            parentId: selectedTask.parentId, // Inherit parentage
-            statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-            week: selectedTask.week,
-            isNew: true,
-        };
-        updateAndSaveTasks(currentTasks => {
-            const afterIndex = currentTasks.findIndex(t => t.id === selectedTaskId);
-            const newTasks = [...currentTasks];
-            newTasks.splice(afterIndex + 1, 0, newTask);
-            return newTasks;
-        });
-        setSelectedTaskId(newTaskId);
+      // Selected task is a child or a regular task, add new task after it.
+      const newTask: Task = {
+        id: newTaskId,
+        title: '[ ] New Task',
+        createdAt: new Date().toISOString(),
+        parentId: selectedTask.parentId, // Inherit parentage
+        statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
+        week: selectedTask.week,
+        isNew: true,
+      };
+      updateAndSaveTasks(currentTasks => {
+        const afterIndex = currentTasks.findIndex(t => t.id === selectedTaskId);
+        const newTasks = [...currentTasks];
+        newTasks.splice(afterIndex + 1, 0, newTask);
+        return newTasks;
+      });
+      setSelectedTaskId(newTaskId);
     }
-}, [tasks, currentWeekKey, updateAndSaveTasks]);
+  }, [tasks, currentWeekKey, updateAndSaveTasks]);
 
 
   useEffect(() => {
@@ -343,21 +366,21 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
 
       if (e.key === 'Delete') {
         if (selectedTaskId) {
-            e.preventDefault();
-            const task = tasks.find(t => t.id === selectedTaskId);
-            if (task) {
-                setTaskToDelete(task);
-                setIsDeleteAlertOpen(true);
-            }
+          e.preventDefault();
+          const task = tasks.find(t => t.id === selectedTaskId);
+          if (task) {
+            setTaskToDelete(task);
+            setIsDeleteAlertOpen(true);
+          }
         }
         return;
       }
-      
+
       if (!selectedTaskId) return;
 
       const selectedTask = tasks.find(t => t.id === selectedTaskId);
       if (!selectedTask) return;
-      
+
       const selectedTaskIndex = navigableTasks.findIndex(t => t.id === selectedTaskId);
 
       if (e.key === 'ArrowUp' && !e.ctrlKey) {
@@ -408,7 +431,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
   const handleStatusChange = (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => {
     const task = getTaskById(taskId);
     if (task?.title.startsWith('[v]')) return;
-    
+
     if (isMobile) {
       setSelectedTaskId(taskId);
     }
@@ -427,7 +450,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
       })
     );
   };
-  
+
   const handleAddTask = async () => {
     const newTaskId = await generateTaskId(tasks.map(t => t.id));
     const newTask: Task = {
@@ -450,7 +473,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
     updateAndSaveTasks(currentTasks => [newTask, ...currentTasks]);
     setSelectedTaskId(newTask.id);
   };
-  
+
   const handleAddTaskAfter = async (afterTaskId: string) => {
     const afterTask = getTaskById(afterTaskId);
     if (!afterTask) return;
@@ -482,37 +505,37 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
   };
 
   const handleAddSubTasks = useCallback(async (parentId: string, subTaskTitles: string[]) => {
-      const parentTask = tasks.find(t => t.id === parentId);
-      if (!parentTask) return;
+    const parentTask = tasks.find(t => t.id === parentId);
+    if (!parentTask) return;
 
-      const newSubTasks: Task[] = [];
-      const existingIds = tasks.map(t => t.id);
+    const newSubTasks: Task[] = [];
+    const existingIds = tasks.map(t => t.id);
 
-      for (const title of subTaskTitles) {
-          const newId = await generateTaskId(existingIds.concat(newSubTasks.map(t => t.id)));
-          const newTask: Task = {
-              id: newId,
-              title: `[ ] ${title}`,
-              createdAt: new Date().toISOString(),
-              parentId: parentId,
-              week: parentTask.week,
-              statuses: {
-                  monday: 'default', tuesday: 'default', wednesday: 'default',
-                  thursday: 'default', friday: 'default', saturday: 'default',
-                  sunday: 'default',
-              },
-          };
-          newSubTasks.push(newTask);
-      }
+    for (const title of subTaskTitles) {
+      const newId = await generateTaskId(existingIds.concat(newSubTasks.map(t => t.id)));
+      const newTask: Task = {
+        id: newId,
+        title: `[ ] ${title}`,
+        createdAt: new Date().toISOString(),
+        parentId: parentId,
+        week: parentTask.week,
+        statuses: {
+          monday: 'default', tuesday: 'default', wednesday: 'default',
+          thursday: 'default', friday: 'default', saturday: 'default',
+          sunday: 'default',
+        },
+      };
+      newSubTasks.push(newTask);
+    }
 
-      updateAndSaveTasks(currentTasks => {
-          const parentIndex = currentTasks.findIndex(t => t.id === parentId);
-          if (parentIndex === -1) return currentTasks;
+    updateAndSaveTasks(currentTasks => {
+      const parentIndex = currentTasks.findIndex(t => t.id === parentId);
+      if (parentIndex === -1) return currentTasks;
 
-          const newTasks = [...currentTasks];
-          newTasks.splice(parentIndex + 1, 0, ...newSubTasks);
-          return newTasks;
-      });
+      const newTasks = [...currentTasks];
+      newTasks.splice(parentIndex + 1, 0, ...newSubTasks);
+      return newTasks;
+    });
   }, [tasks, updateAndSaveTasks]);
 
 
@@ -528,20 +551,20 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
     updateAndSaveTasks(currentTasks => currentTasks.filter(task => task.id !== taskId && task.parentId !== taskId));
     setSelectedTaskId(null);
   };
-  
+
   const handleConfirmDelete = () => {
     if (taskToDelete) {
-        handleDeleteTask(taskToDelete.id);
+      handleDeleteTask(taskToDelete.id);
     }
     setIsDeleteAlertOpen(false);
     setTaskToDelete(null);
   };
-  
+
   const handleTriggerDelete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    if(task) {
-        setTaskToDelete(task);
-        setIsDeleteAlertOpen(true);
+    if (task) {
+      setTaskToDelete(task);
+      setIsDeleteAlertOpen(true);
     }
   };
 
@@ -549,12 +572,12 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
     updateAndSaveTasks(currentTasks =>
       currentTasks.map(task => {
         if (task.id === taskId) {
-            const isDone = task.title.startsWith('[v]');
-            const newTitle = isDone
-              ? `[ ]${task.title.substring(3)}`
-              : `[v]${task.title.substring(3)}`;
-            
-            return { ...task, title: newTitle };
+          const isDone = task.title.startsWith('[v]');
+          const newTitle = isDone
+            ? `[ ]${task.title.substring(3)}`
+            : `[v]${task.title.substring(3)}`;
+
+          return { ...task, title: newTitle };
         }
         return task
       })
@@ -568,12 +591,12 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
       const hoverIndex = newTasks.findIndex(t => t.id === hoverId);
 
       if (dragIndex === -1 || hoverIndex === -1) {
-          return newTasks;
+        return newTasks;
       }
 
       const [movedTask] = newTasks.splice(dragIndex, 1);
       newTasks.splice(hoverIndex, 0, movedTask);
-      
+
       return newTasks;
     });
   }, [updateAndSaveTasks]);
@@ -583,22 +606,22 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
     updateAndSaveTasks(currentTasks => {
       const taskToMove = currentTasks.find(t => t.id === taskId);
       if (!taskToMove) return currentTasks;
-  
+
       const childrenToMove = currentTasks.filter(t => t.parentId === taskId);
       const taskIdsToMove = [taskId, ...childrenToMove.map(t => t.id)];
-  
+
       const [year, weekNumber] = taskToMove.week.split('-').map(Number);
-      
+
       const firstDayOfYear = parse(`${year}-01-04`, 'yyyy-MM-dd', new Date());
       const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
-      const taskDate = addDays(startOfFirstWeek, (weekNumber -1) * 7);
-      
+      const taskDate = addDays(startOfFirstWeek, (weekNumber - 1) * 7);
+
       const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
-      
+
       const newWeek = getWeek(newDate, { weekStartsOn: 1 });
       const newYear = getYear(newDate);
       const newWeekKey = `${newYear}-${newWeek}`;
-  
+
       return currentTasks.map(task => {
         if (taskIdsToMove.includes(task.id)) {
           return { ...task, week: newWeekKey };
@@ -610,10 +633,10 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
 
   const handleMoveUnfinishedToNextWeek = useCallback(() => {
     const currentWeekKey = `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`;
-    
+
     updateAndSaveTasks(currentTasks => {
       const unfinishedTasks = currentTasks.filter(t => t.week === currentWeekKey && !t.title.startsWith('[v]'));
-      
+
       if (unfinishedTasks.length === 0) {
         toast({ title: "All tasks are finished!", description: "Nothing to move to the next week." });
         return currentTasks;
@@ -628,9 +651,9 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
 
       toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
 
-      return currentTasks.map(task => 
-        unfinishedTaskIds.includes(task.id) 
-          ? { ...task, week: nextWeekKey } 
+      return currentTasks.map(task =>
+        unfinishedTaskIds.includes(task.id)
+          ? { ...task, week: nextWeekKey }
           : task
       );
     });
@@ -641,9 +664,9 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
       const markdown = await getTasksMarkdown(tasks);
       if (!markdown || markdown.trim() === '# WeekList Tasks') {
         toast({
-            variant: 'destructive',
-            title: 'Export failed',
-            description: 'There are no tasks to export.',
+          variant: 'destructive',
+          title: 'Export failed',
+          description: 'There are no tasks to export.',
         });
         return;
       }
@@ -684,9 +707,9 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
             toast({ title: 'Success', description: `Imported ${newTasks.length} tasks successfully.` });
           } else {
             toast({
-                variant: 'destructive',
-                title: 'Import failed',
-                description: 'No tasks were found in the file. See debug logs for details.',
+              variant: 'destructive',
+              title: 'Import failed',
+              description: 'No tasks were found in the file. See debug logs for details.',
             });
           }
         } catch (error) {
@@ -700,8 +723,8 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
       }
     };
     reader.readAsText(file);
-    
-    if(event.target) event.target.value = '';
+
+    if (event.target) event.target.value = '';
   };
 
 
@@ -720,7 +743,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
   const goToNextWeek = () => {
     setCurrentDate(newDate => addDays(newDate, 7));
   };
-  
+
   const goToToday = () => {
     setCurrentDate(new Date());
   };
@@ -728,7 +751,7 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
   if (!isClient) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
-  
+
   const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
 
@@ -740,8 +763,8 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
 
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
-  
-  
+
+
   return (
     <DndProvider backend={DndBackend} options={dndOptions}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
@@ -752,110 +775,113 @@ const handleAddTaskSmart = useCallback(async (selectedTaskId: string | null) => 
           accept=".md,.txt"
           className="hidden"
         />
-        <Header 
-          isSaving={isPending} 
+        <Header
+          isSaving={isPending}
           onDownload={handleDownload}
           onUpload={handleUploadClick}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="w-full px-2 max-w-7xl">
-             {isLoading ? (
-                <div className="flex items-center justify-center min-h-[50vh]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            ) : (
-            <>
-            <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
-              <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
-                  <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2 text-center justify-center">
-                  <h2 
-                    className="text-base md:text-xl font-bold font-headline whitespace-nowrap"
-                   >{weekDisplay}</h2>
-                  {!isCurrentWeek && (
-                  <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
-                      <Calendar className="h-4 w-4" />
-                  </Button>
-                  )}
+            {isLoading ? (
+              <div className="flex items-center justify-center min-h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-              <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
-                  <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="px-2 sm:px-0">
-              <TaskGrid
-                tasks={navigableTasks}
-                selectedTaskId={selectedTaskId}
-                onStatusChange={handleStatusChange}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleTriggerDelete}
-                onToggleDone={handleToggleDone}
-                onAddTask={handleAddTask}
-                onAddTaskAfter={handleAddTaskAfter}
-                onAddSubTasks={handleAddSubTasks}
-                onMoveTask={handleMoveTask}
-                onSetTaskParent={handleSetTaskParent}
-                getTaskById={getTaskById}
-                weekDates={weekDates}
-                onMoveToWeek={handleMoveTaskToWeek}
-                onMoveTaskUpDown={handleMoveTaskUpDown}
-                onSelectTask={handleSelectTask}
-                allTasks={tasks}
-                showWeekends={showWeekends}
-                onToggleWeekends={handleToggleWeekends}
-                weeklyTasksCount={weeklyTasks.length}
-                today={today}
-              />
-                <div className="mt-4 flex flex-row items-start justify-between gap-4">
-                  <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
-                    <Legend />
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+                  <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-2 text-center justify-center">
+                    <h2
+                      className="text-base md:text-xl font-bold font-headline whitespace-nowrap"
+                    >{weekDisplay}</h2>
+                    {!isCurrentWeek && (
+                      <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
+                        <Calendar className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex justify-end text-right sm:justify-end sm:text-right">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
-                          Move all unfinished tasks to next week
-                          <ArrowRight className="ml-2 size-4 inline-block" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will move all unfinished tasks from the current week to the next one.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
-                            Continue
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                  <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="px-2 sm:px-0">
+                  <TaskGrid
+                    tasks={navigableTasks}
+                    selectedTaskId={selectedTaskId}
+                    onStatusChange={handleStatusChange}
+                    onUpdateTask={handleUpdateTask}
+                    onDeleteTask={handleTriggerDelete}
+                    onToggleDone={handleToggleDone}
+                    onAddTask={handleAddTask}
+                    onAddTaskAfter={handleAddTaskAfter}
+                    onAddSubTasks={handleAddSubTasks}
+                    onMoveTask={handleMoveTask}
+                    onSetTaskParent={handleSetTaskParent}
+                    getTaskById={getTaskById}
+                    weekDates={weekDates}
+                    isAIFeatureEnabled={isAIFeatureEnabled}
+                    hideCompleted={hideCompleted}
+                    onToggleHideCompleted={handleToggleHideCompleted}
+                    onMoveToWeek={handleMoveTaskToWeek}
+                    onMoveTaskUpDown={handleMoveTaskUpDown}
+                    onSelectTask={handleSelectTask}
+                    allTasks={tasks}
+                    showWeekends={showWeekends}
+                    onToggleWeekends={handleToggleWeekends}
+                    weeklyTasksCount={weeklyTasks.length}
+                    today={today}
+                  />
+                  <div className="mt-4 flex flex-row items-start justify-between gap-4">
+                    <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
+                      <Legend />
+                    </div>
+                    <div className="flex justify-end text-right sm:justify-end sm:text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
+                            Move all unfinished tasks to next week
+                            <ArrowRight className="ml-2 size-4 inline-block" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will move all unfinished tasks from the current week to the next one.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
-            </div>
-            </>
+              </>
             )}
           </div>
         </main>
         <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete the task "{taskToDelete?.title.substring(taskToDelete.title.indexOf(']') + 2)}" and all its sub-tasks.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleConfirmDelete}>
-                        Delete
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the task "{taskToDelete?.title.substring(taskToDelete.title.indexOf(']') + 2)}" and all its sub-tasks.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
         </AlertDialog>
       </div>
     </DndProvider>
