@@ -44,6 +44,8 @@ interface TaskGridProps {
   isAIFeatureEnabled?: boolean;
   hideCompleted?: boolean;
   onToggleHideCompleted?: () => void;
+  fitToScreen?: boolean;
+  onToggleFitToScreen?: () => void;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -75,6 +77,8 @@ export function TaskGrid({
   isAIFeatureEnabled = false,
   hideCompleted = false,
   onToggleHideCompleted,
+  fitToScreen = false,
+  onToggleFitToScreen,
 }: TaskGridProps) {
 
   const taskTree = tasks.reduce((acc, task, index) => {
@@ -159,14 +163,17 @@ export function TaskGrid({
 
 
   return (
-    <div className={cn("grid gap-px bg-border border rounded-lg shadow-lg relative", gridColsClass)} onClick={(e) => e.stopPropagation()}>
+    <div className={cn(
+      "grid gap-px bg-border border rounded-lg shadow-lg relative",
+      gridColsClass,
+      !fitToScreen && "min-w-[720px]"
+    )} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
         const isToday = isSameDay(weekDates[index], today);
         return (
           <div key={index} className={cn(
             "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base",
-            !isPrint && "sticky top-14 z-10",
             index === 0 && "rounded-tl-lg",
             isToday && !isPrint && "border-b-2 border-primary"
           )}>
@@ -178,7 +185,6 @@ export function TaskGrid({
       <div className={cn(
         "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between rounded-tr-lg",
         taskHeaderSpan,
-        !isPrint && "sticky top-14 z-10"
       )}>
         <div className='flex items-center gap-2'>
           <span className="text-sm">Task</span>
@@ -205,6 +211,14 @@ export function TaskGrid({
                     onClick={onToggleHideCompleted}
                   >
                     Hide Completed
+                  </DropdownMenuCheckboxItem>
+                )}
+                {onToggleFitToScreen && (
+                  <DropdownMenuCheckboxItem
+                    checked={fitToScreen}
+                    onClick={onToggleFitToScreen}
+                  >
+                    Fit to screen
                   </DropdownMenuCheckboxItem>
                 )}
               </DropdownMenuContent>

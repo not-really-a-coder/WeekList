@@ -114,7 +114,9 @@ export default function Home() {
   const [isAIFeatureEnabled, setIsAIFeatureEnabled] = useState(false);
 
   const HIDE_COMPLETED_KEY = 'weeklist-hide-completed';
+  const FIT_TO_SCREEN_KEY = 'weeklist-fit-to-screen';
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [fitToScreen, setFitToScreen] = useState(false);
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -133,6 +135,10 @@ export default function Home() {
       const storedHideCompleted = localStorage.getItem(HIDE_COMPLETED_KEY);
       if (storedHideCompleted) {
         setHideCompleted(JSON.parse(storedHideCompleted));
+      }
+      const storedFitToScreen = localStorage.getItem(FIT_TO_SCREEN_KEY);
+      if (storedFitToScreen !== null) {
+        setFitToScreen(JSON.parse(storedFitToScreen));
       }
 
       const aiStatus = await getAIFeatureStatus();
@@ -187,6 +193,14 @@ export default function Home() {
     setHideCompleted(current => {
       const newValue = !current;
       localStorage.setItem(HIDE_COMPLETED_KEY, JSON.stringify(newValue));
+      return newValue;
+    });
+  }
+
+  const handleToggleFitToScreen = () => {
+    setFitToScreen(current => {
+      const newValue = !current;
+      localStorage.setItem(FIT_TO_SCREEN_KEY, JSON.stringify(newValue));
       return newValue;
     });
   }
@@ -806,7 +820,7 @@ export default function Home() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="px-2 sm:px-0">
+                <div className="px-2 sm:px-0 overflow-x-auto overflow-y-hidden">
                   <TaskGrid
                     tasks={navigableTasks}
                     selectedTaskId={selectedTaskId}
@@ -824,6 +838,8 @@ export default function Home() {
                     isAIFeatureEnabled={isAIFeatureEnabled}
                     hideCompleted={hideCompleted}
                     onToggleHideCompleted={handleToggleHideCompleted}
+                    fitToScreen={fitToScreen}
+                    onToggleFitToScreen={handleToggleFitToScreen}
                     onMoveToWeek={handleMoveTaskToWeek}
                     onMoveTaskUpDown={handleMoveTaskUpDown}
                     onSelectTask={handleSelectTask}
@@ -833,36 +849,37 @@ export default function Home() {
                     weeklyTasksCount={weeklyTasks.length}
                     today={today}
                   />
-                  <div className="mt-4 flex flex-row items-start justify-between gap-4">
-                    <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
-                      <Legend />
-                    </div>
-                    <div className="flex justify-end text-right sm:justify-end sm:text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
-                            Move all unfinished tasks to next week
-                            <ArrowRight className="ml-2 size-4 inline-block" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will move all unfinished tasks from the current week to the next one.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
-                              Continue
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                </div>
+                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
+                  <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
+                    <Legend />
+                  </div>
+                  <div className="flex justify-end text-right sm:justify-end sm:text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
+                          Move all unfinished tasks to next week
+                          <ArrowRight className="ml-2 size-4 inline-block" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will move all unfinished tasks from the current week to the next one.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
+
               </>
             )}
           </div>
@@ -883,7 +900,7 @@ export default function Home() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </DndProvider>
+      </div >
+    </DndProvider >
   );
 }

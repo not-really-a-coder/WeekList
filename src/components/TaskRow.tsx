@@ -280,6 +280,34 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   };
 
 
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = () => {
+    if (!isMobile || isPrint) return;
+    longPressTimerRef.current = setTimeout(() => {
+      setIsMenuOpen(true);
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   return (
     <div
       ref={ref}
@@ -290,6 +318,9 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
         !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
       )}
       onClick={handleRowClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
       {!isPrint && (
         <button
@@ -372,7 +403,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
         {!isPrint && (
           <div className="flex items-center shrink-0">
-            <DropdownMenu>
+            <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="icon"
@@ -381,7 +412,10 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     e.stopPropagation();
                     onSelectTask(task.id)
                   }}
-                  className="transition-opacity md:opacity-0 group-hover/row-hover:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8"
+                  className={cn(
+                    "transition-opacity md:opacity-0 group-hover/row-hover:opacity-100 data-[state=open]:opacity-100 md:w-10 md:h-10 w-8 h-8",
+                    isMobile && "w-0 h-0 p-0 opacity-0 overflow-hidden min-w-0 min-h-0 visible"
+                  )}
                   aria-label="More options"
                 >
                   <MoreHorizontal className="size-4" />
@@ -398,6 +432,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                     <span>{isDone ? 'Reopen the task' : 'Close the task'}</span>
                   </DropdownMenuItem>
                 )}
+
                 {isAIFeatureEnabled && (
                   <DropdownMenuItem onClick={handleBreakdownClick} disabled={isBreakingDown || isDone}>
                     <Wand2 className={cn("mr-2 size-4", isBreakingDown && "animate-pulse")} />
