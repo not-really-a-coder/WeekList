@@ -820,7 +820,7 @@ export default function Home() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="px-2 sm:px-0 overflow-x-auto overflow-y-hidden">
+                <div className="px-2 sm:px-0 pb-2 overflow-x-auto overflow-y-hidden">
                   <TaskGrid
                     tasks={navigableTasks}
                     selectedTaskId={selectedTaskId}
@@ -850,7 +850,7 @@ export default function Home() {
                     today={today}
                   />
                 </div>
-                <div className="mt-4 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
+                <div className="mt-2 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>

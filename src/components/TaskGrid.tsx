@@ -164,9 +164,9 @@ export function TaskGrid({
 
   return (
     <div className={cn(
-      "grid gap-px bg-border border rounded-lg shadow-lg relative",
+      "grid gap-px bg-border border rounded-lg relative",
       gridColsClass,
-      !fitToScreen && "min-w-[720px]"
+      !fitToScreen && "min-w-[680px]"
     )} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
@@ -210,7 +210,7 @@ export function TaskGrid({
                     onSelect={(e) => e.preventDefault()}
                     onClick={onToggleHideCompleted}
                   >
-                    Hide Completed
+                    Hide Closed
                   </DropdownMenuCheckboxItem>
                 )}
                 {onToggleFitToScreen && (

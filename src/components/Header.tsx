@@ -52,7 +52,7 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
     openPrintPage();
     setShowPrintDialog(false);
   };
-  
+
   const handlePrintInDarkMode = () => {
     openPrintPage();
     setShowPrintDialog(false);
@@ -60,7 +60,7 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
 
   return (
     <>
-      <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10 print:hidden">
+      <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50 print:hidden">
         <div className="flex items-center justify-between px-4 py-2 w-full max-w-7xl gap-4">
           <div className="flex items-center gap-3 flex-shrink-0">
             <Logo className="size-8" />
