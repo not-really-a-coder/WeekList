@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download, Upload, Menu, Check, Printer } from 'lucide-react';
+import { Loader2, Download, Upload, Menu, Printer } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -13,51 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useTheme } from 'next-themes';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface HeaderProps {
   isSaving: boolean;
   onDownload: () => void;
   onUpload: () => void;
+  onPrint: () => void;
 }
 
-export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [showPrintDialog, setShowPrintDialog] = useState(false);
-
-  const openPrintPage = () => {
-    window.open('/print', '_blank');
-  };
-
-  const handlePrint = () => {
-    if (resolvedTheme === 'dark') {
-      setShowPrintDialog(true);
-    } else {
-      openPrintPage();
-    }
-  };
-
-  const handleSwitchThemeAndPrint = () => {
-    setTheme('light');
-    openPrintPage();
-    setShowPrintDialog(false);
-  };
-
-  const handlePrintInDarkMode = () => {
-    openPrintPage();
-    setShowPrintDialog(false);
-  }
-
+export function Header({ isSaving, onDownload, onUpload, onPrint }: HeaderProps) {
   return (
     <>
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50 print:hidden">
@@ -77,18 +41,20 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onClick={onUpload}>
-                  <Upload className="mr-2" />
+                  <Upload className="mr-2 size-4" />
                   Import (.md)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onDownload}>
-                  <Download className="mr-2" />
+                  <Download className="mr-2 size-4" />
                   Export (.md)
+                  <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+S</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handlePrint}>
-                  <Printer className="mr-2" />
+                <DropdownMenuItem onClick={onPrint}>
+                  <Printer className="mr-2 size-4" />
                   Print
+                  <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+P</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <ThemeToggle />
@@ -97,23 +63,6 @@ export function Header({ isSaving, onDownload, onUpload }: HeaderProps) {
           </div>
         </div>
       </header>
-      <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Switch to Light Theme for Printing?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Printing in dark mode is not recommended. For the best results, we suggest switching to the light theme before printing your document.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button variant="outline" onClick={handlePrintInDarkMode}>Print in Dark theme</Button>
-            <AlertDialogAction onClick={handleSwitchThemeAndPrint}>
-              Switch to Light theme & Print
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

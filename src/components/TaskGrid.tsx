@@ -116,7 +116,7 @@ export function TaskGrid({
           {visibleWeekdays.map((day, dayIndex) => (
             <div key={day} className={cn(
               "bg-card transition-colors flex items-center justify-center relative",
-              "group-data-[state=selected]/row:bg-accent/10",
+              "group-data-[state=selected]/row:bg-accent/100",
               isLastTask && dayIndex === 0 && "rounded-bl-lg"
             )}>
               <StatusCell
@@ -130,7 +130,7 @@ export function TaskGrid({
           ))}
           <div className={cn("bg-card flex items-center transition-colors relative",
             taskColumnSpan,
-            "group-data-[state=selected]/row:bg-accent/10",
+            "group-data-[state=selected]/row:bg-accent/100",
             isLastTask && "rounded-br-lg"
           )}>
             <TaskRow
@@ -166,7 +166,7 @@ export function TaskGrid({
     <div className={cn(
       "grid gap-px bg-border border rounded-lg relative",
       gridColsClass,
-      !fitToScreen && "min-w-[680px]"
+      !fitToScreen && "min-w-[650px]"
     )} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {

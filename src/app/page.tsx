@@ -16,6 +16,7 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse, getDate } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Legend } from '@/components/Legend';
+import { useTheme } from 'next-themes';
 import { getTasks, getTasksMarkdown, parseTasksMarkdown, getAIFeatureStatus } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 
@@ -23,6 +24,25 @@ const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 const ID_LENGTH = 4;
 const LOCAL_STORAGE_KEY = 'weeklist-tasks';
 const SHOW_WEEKENDS_KEY = 'weeklist-show-weekends';
+
+// File System Access API types
+interface FileSystemFileHandle {
+  kind: 'file';
+  name: string;
+  getFile: () => Promise<File>;
+  createWritable: () => Promise<FileSystemWritableFileStream>;
+}
+
+interface FileSystemWritableFileStream extends WritableStream {
+  write: (data: string | BufferSource | Blob) => Promise<void>;
+  close: () => Promise<void>;
+}
+
+declare global {
+  interface Window {
+    showSaveFilePicker?: (options?: any) => Promise<FileSystemFileHandle>;
+  }
+}
 
 
 async function generateTaskId(existingIds: string[]): Promise<string> {
@@ -111,12 +131,148 @@ export default function Home() {
 
 
 
+
+
+
   const [isAIFeatureEnabled, setIsAIFeatureEnabled] = useState(false);
 
   const HIDE_COMPLETED_KEY = 'weeklist-hide-completed';
   const FIT_TO_SCREEN_KEY = 'weeklist-fit-to-screen';
   const [hideCompleted, setHideCompleted] = useState(false);
   const [fitToScreen, setFitToScreen] = useState(false);
+
+
+  const { resolvedTheme, setTheme } = useTheme();
+
+  // Smart Export State
+  const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [pendingMarkdown, setPendingMarkdown] = useState<string | null>(null);
+
+  // Print State
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+
+  const openPrintPage = useCallback(() => {
+    window.open('/print', '_blank');
+  }, []);
+
+  const handlePrint = useCallback(() => {
+    if (resolvedTheme === 'dark') {
+      setShowPrintDialog(true);
+    } else {
+      openPrintPage();
+    }
+  }, [resolvedTheme, openPrintPage]);
+
+  const handleSwitchThemeAndPrint = useCallback(() => {
+    setTheme('light');
+    openPrintPage();
+    setShowPrintDialog(false);
+  }, [setTheme, openPrintPage]);
+
+  const handlePrintInDarkMode = useCallback(() => {
+    openPrintPage();
+    setShowPrintDialog(false);
+  }, [openPrintPage]);
+
+  const fallbackDownload = useCallback((markdown: string) => {
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'weeklist.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const performSave = useCallback(async (handle: FileSystemFileHandle, markdown: string) => {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(markdown);
+      await writable.close();
+      toast({ title: 'Saved', description: `Successfully saved ${handle.name}` });
+    } catch (error) {
+      console.error('Save failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Save failed',
+        description: 'Could not overwrite the file. You might need to grant permission.',
+      });
+    }
+  }, [toast]);
+
+  const performSaveAs = useCallback(async (markdown: string) => {
+    try {
+      if (!window.showSaveFilePicker) throw new Error('Not supported');
+
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'weeklist.md',
+        types: [{
+          description: 'Markdown File',
+          accept: { 'text/markdown': ['.md'] },
+        }],
+      });
+
+      await performSave(handle, markdown);
+      setFileHandle(handle);
+    } catch (error) {
+      if ((error as any).name !== 'AbortError') {
+        console.error('Save As failed:', error);
+        fallbackDownload(markdown);
+      }
+    }
+  }, [performSave, setFileHandle, fallbackDownload]);
+
+  const handleDownload = useCallback(async () => {
+    try {
+      const markdown = await getTasksMarkdown(tasks);
+      if (!markdown || markdown.trim() === '# WeekList Tasks') {
+        toast({
+          variant: 'destructive',
+          title: 'Export failed',
+          description: 'There are no tasks to export.',
+        });
+        return;
+      }
+
+      const supportsFileSystem = typeof window.showSaveFilePicker === 'function';
+
+      if (supportsFileSystem) {
+        if (fileHandle) {
+          setPendingMarkdown(markdown);
+          setIsSaveDialogOpen(true);
+        } else {
+          await performSaveAs(markdown);
+        }
+      } else {
+        await fallbackDownload(markdown);
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error generating markdown',
+        description: 'Could not generate the markdown content.',
+      });
+    }
+  }, [tasks, fileHandle, performSaveAs, fallbackDownload, toast, setIsSaveDialogOpen, setPendingMarkdown]);
+
+  const handleOverwrite = async () => {
+    if (fileHandle && pendingMarkdown) {
+      await performSave(fileHandle, pendingMarkdown);
+    }
+    setIsSaveDialogOpen(false);
+    setPendingMarkdown(null);
+  };
+
+  const handleSaveNew = async () => {
+    if (pendingMarkdown) {
+      await performSaveAs(pendingMarkdown);
+    }
+    setIsSaveDialogOpen(false);
+    setPendingMarkdown(null);
+  };
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -378,6 +534,18 @@ export default function Home() {
         return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleDownload();
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        handlePrint();
+        return;
+      }
+
       if (e.key === 'Delete') {
         if (selectedTaskId) {
           e.preventDefault();
@@ -435,7 +603,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks, handleAddTaskSmart]);
+  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks, handleAddTaskSmart, handleDownload, handlePrint]);
 
 
   const getTaskById = useCallback((taskId: string) => {
@@ -673,34 +841,7 @@ export default function Home() {
     });
   }, [currentDate, toast, updateAndSaveTasks]);
 
-  const handleDownload = async () => {
-    try {
-      const markdown = await getTasksMarkdown(tasks);
-      if (!markdown || markdown.trim() === '# WeekList Tasks') {
-        toast({
-          variant: 'destructive',
-          title: 'Export failed',
-          description: 'There are no tasks to export.',
-        });
-        return;
-      }
-      const blob = new Blob([markdown], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'weeklist.md';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error downloading file',
-        description: 'Could not generate or download the markdown file.',
-      });
-    }
-  };
+
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -793,6 +934,7 @@ export default function Home() {
           isSaving={isPending}
           onDownload={handleDownload}
           onUpload={handleUploadClick}
+          onPrint={handlePrint}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="w-full px-2 max-w-7xl">
@@ -896,6 +1038,39 @@ export default function Home() {
               <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmDelete}>
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>File Already Exists</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have previously exported to "{fileHandle?.name}". Do you want to overwrite it or save as a new file?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingMarkdown(null)}>Cancel</AlertDialogCancel>
+              <Button variant="outline" onClick={handleSaveNew}>Save As...</Button>
+              <AlertDialogAction onClick={handleOverwrite}>Overwrite</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Switch to Light Theme for Printing?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Printing in dark mode is not recommended. For the best results, we suggest switching to the light theme before printing your document.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button variant="outline" onClick={handlePrintInDarkMode}>Print in Dark theme</Button>
+              <AlertDialogAction onClick={handleSwitchThemeAndPrint}>
+                Switch to Light theme & Print
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
