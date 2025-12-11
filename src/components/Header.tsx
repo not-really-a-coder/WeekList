@@ -4,7 +4,7 @@
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download, Upload, Menu, Printer } from 'lucide-react';
+import { Loader2, Download, Upload, Menu, Printer, CircleHelp } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -13,6 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 
 interface HeaderProps {
   isSaving: boolean;
@@ -25,7 +31,7 @@ export function Header({ isSaving, onDownload, onUpload, onPrint }: HeaderProps)
   return (
     <>
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50 print:hidden">
-        <div className="flex items-center justify-between px-4 py-2 w-full max-w-7xl gap-4">
+        <div className="flex items-center justify-between px-2 py-2 w-full max-w-7xl gap-4">
           <div className="flex items-center gap-3 flex-shrink-0">
             <Logo className="size-8" />
             <div className="flex items-center gap-2">
@@ -34,10 +40,64 @@ export function Header({ isSaving, onDownload, onUpload, onPrint }: HeaderProps)
             </div>
           </div>
           <div className="flex items-center justify-end gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground">
+                  <CircleHelp className="size-5" />
+                  <span className="sr-only">Help</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">Desktop</h4>
+                    <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">↑/↓</span>
+                      <span>Navigate tasks</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+Enter</span>
+                      <span>Create a new task</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Enter</span>
+                      <span>Save changes</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Del</span>
+                      <span>Delete a task</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+↑/↓</span>
+                      <span>Move task up/down</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Tab</span>
+                      <span>Indent task</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Shift+Tab</span>
+                      <span>Un-indent task</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+S</span>
+                      <span>Export tasks</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+P</span>
+                      <span>Print</span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">Mobile</h4>
+                    <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Long-tap</span>
+                      <span>Open context menu</span>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu />
+                <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/10 dark:hover:text-accent-foreground transition-colors">
+                  <Menu className="size-5" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>

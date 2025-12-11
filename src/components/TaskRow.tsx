@@ -285,7 +285,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleTouchStart = () => {
-    if (!isMobile || isPrint) return;
+    if (!isMobile || isPrint || isEditing) return;
     longPressTimerRef.current = setTimeout(() => {
       setIsMenuOpen(true);
       if (navigator.vibrate) {
@@ -364,7 +364,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
                 onChange={(e) => setEditableTitle(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onBlur={handleSave}
-                className="h-8 flex-grow mr-2 bg-background rounded-md border"
+                className="h-8 flex-grow mr-2 bg-background rounded-sm border"
               />
               <Button size="icon" variant="ghost" onClick={handleSave} className="shrink-0">
                 <Save className="size-4" />
