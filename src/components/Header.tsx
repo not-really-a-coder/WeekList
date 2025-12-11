@@ -50,7 +50,7 @@ export function Header({ isSaving, onDownload, onUpload, onPrint }: HeaderProps)
               <PopoverContent className="w-80" align="end">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">Desktop</h4>
+                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">Desktop Hotkeys</h4>
                     <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                       <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">↑/↓</span>
                       <span>Navigate tasks</span>
@@ -84,10 +84,19 @@ export function Header({ isSaving, onDownload, onUpload, onPrint }: HeaderProps)
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">Mobile</h4>
+                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">Mobile Controls</h4>
                     <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                       <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Long-tap</span>
                       <span>Open context menu</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Swipe right</span>
+                      <span>Indent task</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Swipe left</span>
+                      <span>Un-indent task</span>
+
+                      <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Tap & Drag</span>
+                      <span>Reorder task</span>
                     </div>
                   </div>
                 </div>

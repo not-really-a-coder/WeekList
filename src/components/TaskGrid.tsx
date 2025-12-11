@@ -166,7 +166,7 @@ export function TaskGrid({
     <div className={cn(
       "grid gap-px bg-border border rounded-lg relative",
       gridColsClass,
-      !fitToScreen && "min-w-[650px]"
+      !fitToScreen && "min-w-[620px]"
     )} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
