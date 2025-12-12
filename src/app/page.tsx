@@ -19,6 +19,7 @@ import { Legend } from '@/components/Legend';
 import { useTheme } from 'next-themes';
 import { getTasks, getTasksMarkdown, parseTasksMarkdown, getAIFeatureStatus } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
+import { WeekPicker } from '@/components/WeekPicker';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -910,11 +911,7 @@ export default function Home() {
   const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDates = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeekDate, i));
 
-  const weekDisplay = (
-    <>
-      Week of {format(startOfWeekDate, 'MMMM')} {getDayWithSuffix(startOfWeekDate)}, {format(startOfWeekDate, 'yyyy')}
-    </>
-  );
+
 
   const today = new Date();
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
@@ -950,13 +947,15 @@ export default function Home() {
                   </Button>
                   <div className="flex items-center gap-2 text-center justify-center">
                     <h2
-                      className="text-base md:text-xl font-bold font-headline whitespace-nowrap"
-                    >{weekDisplay}</h2>
-                    {!isCurrentWeek && (
-                      <Button variant="ghost" size="icon" onClick={goToToday} aria-label="Go to today">
-                        <Calendar className="h-4 w-4" />
-                      </Button>
-                    )}
+                      className="text-sm sm:text-base md:text-xl font-bold font-headline whitespace-normal sm:whitespace-nowrap"
+                    >
+                      Week of{" "}
+                      <WeekPicker currentDate={currentDate} onWeekChange={setCurrentDate}>
+                        <span className="underline decoration-dotted underline-offset-4 cursor-pointer hover:opacity-70 transition-opacity">
+                          {format(startOfWeekDate, 'MMMM')} {getDayWithSuffix(startOfWeekDate)}, {format(startOfWeekDate, 'yyyy')}
+                        </span>
+                      </WeekPicker>
+                    </h2>
                   </div>
                   <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
                     <ChevronRight className="h-4 w-4" />
