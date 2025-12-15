@@ -59,14 +59,14 @@ export function Header({
           </div>
           <div className="flex items-center justify-end gap-2">
             {!isReadOnly && onShare && (
-              <Button variant="ghost" size="icon" onClick={onShare} className="hover:bg-accent hover:text-accent-foreground" aria-label="Share this list">
+              <Button variant="ghost" size="icon" onClick={onShare} className="size-8 hover:bg-accent hover:text-accent-foreground" aria-label="Share this list">
                 <Share2 className="size-5" />
               </Button>
             )}
             {!isReadOnly && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground">
+                  <Button variant="ghost" size="icon" className="size-8 hover:bg-accent hover:text-accent-foreground">
                     <CircleHelp className="size-5" />
                     <span className="sr-only">Help</span>
                   </Button>
@@ -134,7 +134,7 @@ export function Header({
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/10 dark:hover:text-accent-foreground transition-colors">
+                  <Button variant="ghost" size="icon" className="size-8 hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/10 dark:hover:text-accent-foreground transition-colors">
                     <Menu className="size-5" />
                     <span className="sr-only">Open menu</span>
                   </Button>

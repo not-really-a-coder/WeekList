@@ -6,7 +6,7 @@ import type { Task, TaskStatus } from '@/lib/types';
 import { StatusCell } from './StatusCell';
 import { TaskRow } from './TaskRow';
 import { Button } from './ui/button';
-import { Plus, SlidersHorizontal } from 'lucide-react';
+import { Plus, SlidersHorizontal, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isSameDay } from 'date-fns';
 import {
@@ -196,7 +196,8 @@ export function TaskGrid({
       )}>
         <div className='flex items-center gap-2'>
           <span className="text-sm">Task</span>
-          {(!isPrint || isReadOnly) && (
+          {/* Edit Mode: Standards Dropdown (Visible always) */}
+          {!isPrint && !isReadOnly && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -205,16 +206,14 @@ export function TaskGrid({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {!isReadOnly && (
-                  <DropdownMenuCheckboxItem
-                    checked={showWeekends}
-                    onSelect={(e) => e.preventDefault()}
-                    onClick={onToggleWeekends}
-                  >
-                    Show Weekends
-                  </DropdownMenuCheckboxItem>
-                )}
-                {!isReadOnly && onToggleHideCompleted && (
+                <DropdownMenuCheckboxItem
+                  checked={showWeekends}
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={onToggleWeekends}
+                >
+                  Show Weekends
+                </DropdownMenuCheckboxItem>
+                {onToggleHideCompleted && (
                   <DropdownMenuCheckboxItem
                     checked={hideCompleted}
                     onSelect={(e) => e.preventDefault()}
@@ -232,6 +231,19 @@ export function TaskGrid({
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+
+          {/* Read Only (Share Page): Mobile Toggle Only */}
+          {isReadOnly && onToggleFitToScreen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 md:hidden"
+              onClick={onToggleFitToScreen}
+            >
+              {fitToScreen ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
+              <span className="sr-only">Toggle fit to screen</span>
+            </Button>
           )}
         </div>
         {!isPrint && !isReadOnly && (
