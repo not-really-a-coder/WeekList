@@ -205,6 +205,24 @@ export function TaskGrid({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
+                {!isReadOnly && (
+                  <DropdownMenuCheckboxItem
+                    checked={showWeekends}
+                    onSelect={(e) => e.preventDefault()}
+                    onClick={onToggleWeekends}
+                  >
+                    Show Weekends
+                  </DropdownMenuCheckboxItem>
+                )}
+                {!isReadOnly && onToggleHideCompleted && (
+                  <DropdownMenuCheckboxItem
+                    checked={hideCompleted}
+                    onSelect={(e) => e.preventDefault()}
+                    onClick={onToggleHideCompleted}
+                  >
+                    Hide Closed
+                  </DropdownMenuCheckboxItem>
+                )}
                 <DropdownMenuCheckboxItem
                   checked={fitToScreen}
                   onSelect={(e) => e.preventDefault()}

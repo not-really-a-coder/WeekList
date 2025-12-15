@@ -199,6 +199,7 @@ export default function SharePage({ params }: SharePageProps) {
                                 isReadOnly={true}
                                 onToggleCollapse={handleToggleCollapse}
                                 fitToScreen={fitToScreen}
+                                onToggleFitToScreen={() => setFitToScreen(!fitToScreen)}
                             />
                         </div>
                         <div className="mt-2 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
