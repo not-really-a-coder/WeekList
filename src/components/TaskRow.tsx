@@ -180,7 +180,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
       onMove(dragId, hoverId);
     },
-  });
+  }, [task, tasks, getTaskById, onMove, onSetParent, myNavigableIndex, allWeeklyTasks, isPrint]);
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: ItemTypes.TASK,
@@ -191,7 +191,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
-  });
+  }, [task, index, level, isPrint]);
 
   const opacity = isDragging ? 0.4 : 1;
   drop(preview(ref));

@@ -150,6 +150,9 @@ export default function Home() {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [pendingMarkdown, setPendingMarkdown] = useState<string | null>(null);
 
+  // Child Move Dialog State
+  const [childMoveState, setChildMoveState] = useState<{ taskId: string, direction: 'next' | 'previous', parentId: string } | null>(null);
+
   // Print State
   const [showPrintDialog, setShowPrintDialog] = useState(false);
 
@@ -611,17 +614,13 @@ export default function Home() {
     return tasks.find(t => t.id === taskId);
   }, [tasks]);
 
-  const handleStatusChange = (taskId: string, day: keyof Task['statuses'], currentStatus: TaskStatus) => {
+  const handleStatusChange = (taskId: string, day: keyof Task['statuses'], newStatus: TaskStatus) => {
     const task = getTaskById(taskId);
     if (task?.title.startsWith('[v]')) return;
 
     if (isMobile) {
       setSelectedTaskId(taskId);
     }
-
-    const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
-    const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
-    const newStatus = STATUS_CYCLE[nextIndex];
 
     updateAndSaveTasks(currentTasks =>
       currentTasks.map(task => {
@@ -786,10 +785,15 @@ export default function Home() {
 
 
   const handleMoveTaskToWeek = useCallback((taskId: string, direction: 'next' | 'previous') => {
-    updateAndSaveTasks(currentTasks => {
-      const taskToMove = currentTasks.find(t => t.id === taskId);
-      if (!taskToMove) return currentTasks;
+    const taskToMove = tasks.find(t => t.id === taskId);
+    if (!taskToMove) return;
 
+    if (taskToMove.parentId) {
+      setChildMoveState({ taskId, direction, parentId: taskToMove.parentId });
+      return;
+    }
+
+    updateAndSaveTasks(currentTasks => {
       const childrenToMove = currentTasks.filter(t => t.parentId === taskId);
       const taskIdsToMove = [taskId, ...childrenToMove.map(t => t.id)];
 
@@ -812,35 +816,123 @@ export default function Home() {
         return task;
       });
     });
-  }, [updateAndSaveTasks]);
+  }, [tasks, updateAndSaveTasks]);
 
-  const handleMoveUnfinishedToNextWeek = useCallback(() => {
-    const currentWeekKey = `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`;
+  const handleConfirmMoveChild = useCallback(async (action: 'recreate-parent' | 'unindent') => {
+    if (!childMoveState) return;
+
+    const { taskId, direction, parentId } = childMoveState;
+    const taskToMove = tasks.find(t => t.id === taskId);
+    if (!taskToMove) {
+      setChildMoveState(null);
+      return;
+    }
+
+    const [year, weekNumber] = taskToMove.week.split('-').map(Number);
+    const firstDayOfYear = parse(`${year}-01-04`, 'yyyy-MM-dd', new Date());
+    const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
+    const taskDate = addDays(startOfFirstWeek, (weekNumber - 1) * 7);
+    const newDate = addDays(taskDate, direction === 'next' ? 7 : -7);
+    const newWeek = getWeek(newDate, { weekStartsOn: 1 });
+    const newYear = getYear(newDate);
+    const newWeekKey = `${newYear}-${newWeek}`;
+
+    let newParentTask: Task | null = null;
+
+    if (action === 'recreate-parent') {
+      const parentTask = tasks.find(t => t.id === parentId);
+      if (parentTask) {
+        const newParentId = await generateTaskId(tasks.map(t => t.id));
+        newParentTask = {
+          ...parentTask,
+          id: newParentId,
+          week: newWeekKey,
+          statuses: {
+            monday: 'default', tuesday: 'default', wednesday: 'default',
+            thursday: 'default', friday: 'default', saturday: 'default',
+            sunday: 'default',
+          },
+          createdAt: new Date().toISOString(),
+          isNew: false
+        };
+      }
+    }
 
     updateAndSaveTasks(currentTasks => {
-      const unfinishedTasks = currentTasks.filter(t => t.week === currentWeekKey && !t.title.startsWith('[v]'));
+      let tasksToSave = [...currentTasks];
 
-      if (unfinishedTasks.length === 0) {
-        toast({ title: "All tasks are finished!", description: "Nothing to move to the next week." });
-        return currentTasks;
+      if (newParentTask) {
+        tasksToSave.push(newParentTask);
       }
 
-      const nextWeekDate = addDays(currentDate, 7);
-      const nextWeek = getWeek(nextWeekDate, { weekStartsOn: 1 });
-      const nextYear = getYear(nextWeekDate);
-      const nextWeekKey = `${nextYear}-${nextWeek}`;
+      tasksToSave = tasksToSave.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            week: newWeekKey,
+            parentId: action === 'recreate-parent' && newParentTask ? newParentTask.id : null
+          };
+        }
+        return task;
+      });
 
-      const unfinishedTaskIds = unfinishedTasks.map(t => t.id);
-
-      toast({ title: `Moved ${unfinishedTasks.length} unfinished tasks to the next week.` });
-
-      return currentTasks.map(task =>
-        unfinishedTaskIds.includes(task.id)
-          ? { ...task, week: nextWeekKey }
-          : task
-      );
+      return tasksToSave;
     });
-  }, [currentDate, toast, updateAndSaveTasks]);
+
+    setChildMoveState(null);
+  }, [childMoveState, tasks, updateAndSaveTasks]);
+
+  const handleCopyUnfinishedToNextWeek = useCallback(async () => {
+    const currentWeekKey = `${getYear(currentDate)}-${getWeek(currentDate, { weekStartsOn: 1 })}`;
+    const unfinishedTasks = tasks.filter(t => t.week === currentWeekKey && !t.title.startsWith('[v]'));
+
+    if (unfinishedTasks.length === 0) {
+      toast({ title: "All tasks are finished!", description: "Nothing to move to the next week." });
+      return;
+    }
+
+    const nextWeekDate = addDays(currentDate, 7);
+    const nextWeek = getWeek(nextWeekDate, { weekStartsOn: 1 });
+    const nextYear = getYear(nextWeekDate);
+    const nextWeekKey = `${nextYear}-${nextWeek}`;
+
+    const newTasks: Task[] = [];
+    const idMap = new Map<string, string>();
+    const allIds = tasks.map(t => t.id);
+
+    // First pass: Generate new IDs for all tasks to be copied
+    for (const task of unfinishedTasks) {
+      const newId = await generateTaskId([...allIds, ...Array.from(idMap.values())]);
+      idMap.set(task.id, newId);
+    }
+
+    // Second pass: Create new task objects
+    for (const task of unfinishedTasks) {
+      const newId = idMap.get(task.id)!;
+      // Determine new parent ID
+      // If parent is also being copied, use its new ID.
+      // If parent is NOT being copied (e.g. it was finished), set parentId to null (become top-level).
+      const newParentId = task.parentId && idMap.has(task.parentId) ? idMap.get(task.parentId)! : null;
+
+      newTasks.push({
+        ...task,
+        id: newId,
+        parentId: newParentId,
+        week: nextWeekKey,
+        statuses: {
+          monday: 'default', tuesday: 'default', wednesday: 'default',
+          thursday: 'default', friday: 'default', saturday: 'default',
+          sunday: 'default',
+        },
+        createdAt: new Date().toISOString(),
+        isNew: true
+      });
+    }
+
+    toast({ title: `Copied ${unfinishedTasks.length} open tasks to the next week.` });
+
+    updateAndSaveTasks(currentTasks => [...currentTasks, ...newTasks]);
+  }, [currentDate, tasks, toast, updateAndSaveTasks]);
 
 
 
@@ -999,7 +1091,7 @@ export default function Home() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
-                          Move all unfinished tasks to next week
+                          Copy all open tasks to next week
                           <ArrowRight className="ml-2 size-4 inline-block" />
                         </Button>
                       </AlertDialogTrigger>
@@ -1007,12 +1099,12 @@ export default function Home() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will move all unfinished tasks from the current week to the next one.
+                            This will copy all open tasks from the current week to the next one.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleMoveUnfinishedToNextWeek}>
+                          <AlertDialogAction onClick={handleCopyUnfinishedToNextWeek}>
                             Continue
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -1057,6 +1149,25 @@ export default function Home() {
           </AlertDialogContent>
         </AlertDialog>
 
+        <AlertDialog open={!!childMoveState} onOpenChange={(open) => !open && setChildMoveState(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Move Child Task</AlertDialogTitle>
+              <AlertDialogDescription>
+                This task belongs to a parent task. How would you like to move it to the {childMoveState?.direction} week?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+              <AlertDialogCancel onClick={() => setChildMoveState(null)}>Cancel</AlertDialogCancel>
+              <Button variant="outline" onClick={() => handleConfirmMoveChild('unindent')}>
+                Un-indent and Move
+              </Button>
+              <AlertDialogAction onClick={() => handleConfirmMoveChild('recreate-parent')}>
+                Recreate Parent & Move
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>

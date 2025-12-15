@@ -122,7 +122,7 @@ export function TaskGrid({
               <StatusCell
                 task={task}
                 status={task.statuses[day]}
-                onStatusChange={() => onStatusChange(task.id, day, task.statuses[day])}
+                onStatusChange={(newStatus) => onStatusChange(task.id, day, newStatus)}
                 disabled={isDone || isPrint}
                 onSetTaskParent={onSetTaskParent}
               />
@@ -173,7 +173,7 @@ export function TaskGrid({
         const isToday = isSameDay(weekDates[index], today);
         return (
           <div key={index} className={cn(
-            "bg-muted p-2 font-bold font-headline text-muted-foreground flex flex-col items-center justify-center text-base",
+            "bg-muted p-2 font-bold font-headline text-primary/70 flex flex-col items-center justify-center text-base",
             index === 0 && "rounded-tl-lg",
             isToday && !isPrint && "border-b-2 border-primary"
           )}>
@@ -183,7 +183,7 @@ export function TaskGrid({
         )
       })}
       <div className={cn(
-        "bg-muted p-2 font-bold font-headline text-muted-foreground flex items-center justify-between rounded-tr-lg",
+        "bg-muted p-2 font-bold font-headline text-primary/70 flex items-center justify-between rounded-tr-lg",
         taskHeaderSpan,
       )}>
         <div className='flex items-center gap-2'>
