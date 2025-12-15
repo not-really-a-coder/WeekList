@@ -20,6 +20,11 @@ import { useTheme } from 'next-themes';
 import { getTasks, getTasksMarkdown, parseTasksMarkdown, getAIFeatureStatus } from './actions';
 import { handleBreakDownTask } from '@/app/actions';
 import { WeekPicker } from '@/components/WeekPicker';
+import { encodeShareData } from '@/lib/sharing';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Copy } from 'lucide-react';
 
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
@@ -83,6 +88,8 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
 
   const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
   const currentYear = getYear(currentDate);
@@ -610,6 +617,17 @@ export default function Home() {
   }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks, handleAddTaskSmart, handleDownload, handlePrint]);
 
 
+  const handleToggleCollapse = useCallback((taskId: string) => {
+    updateAndSaveTasks(currentTasks => {
+      return currentTasks.map(t => {
+        if (t.id === taskId) {
+          return { ...t, isCollapsed: !t.isCollapsed };
+        }
+        return t;
+      });
+    });
+  }, [updateAndSaveTasks]);
+
   const getTaskById = useCallback((taskId: string) => {
     return tasks.find(t => t.id === taskId);
   }, [tasks]);
@@ -936,6 +954,19 @@ export default function Home() {
 
 
 
+  const handleShare = () => {
+    const data = encodeShareData(weeklyTasks, currentWeekKey);
+    const url = `${window.location.origin}/share/${data}`;
+    setShareUrl(url);
+    setIsShareDialogOpen(true);
+  };
+
+  const handleCopyShareLink = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({ title: "Link copied to clipboard!" });
+  };
+
+
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -1024,6 +1055,7 @@ export default function Home() {
           onDownload={handleDownload}
           onUpload={handleUploadClick}
           onPrint={handlePrint}
+          onShare={handleShare}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="w-full px-2 max-w-7xl">
@@ -1081,6 +1113,7 @@ export default function Home() {
                     onToggleWeekends={handleToggleWeekends}
                     weeklyTasksCount={weeklyTasks.length}
                     today={today}
+                    onToggleCollapse={handleToggleCollapse}
                   />
                 </div>
                 <div className="mt-2 flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
@@ -1185,6 +1218,39 @@ export default function Home() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+
+        <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Share Week List</DialogTitle>
+              <DialogDescription>
+                Anyone with this link can view this week's tasks in read-only mode.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center space-x-2">
+              <div className="grid flex-1 gap-2">
+                <Label htmlFor="link" className="sr-only">
+                  Link
+                </Label>
+                <Input
+                  id="link"
+                  defaultValue={shareUrl}
+                  readOnly
+                />
+              </div>
+              <Button size="sm" className="px-3" onClick={handleCopyShareLink}>
+                <span className="sr-only">Copy</span>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <DialogFooter className="sm:justify-start">
+              <Button type="button" variant="secondary" onClick={() => setIsShareDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div >
     </DndProvider >
   );

@@ -46,6 +46,9 @@ interface TaskGridProps {
   onToggleHideCompleted?: () => void;
   fitToScreen?: boolean;
   onToggleFitToScreen?: () => void;
+
+  onToggleCollapse: (taskId: string) => void;
+  isReadOnly?: boolean;
 }
 
 const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -79,6 +82,8 @@ export function TaskGrid({
   onToggleHideCompleted,
   fitToScreen = false,
   onToggleFitToScreen,
+  onToggleCollapse,
+  isReadOnly = false,
 }: TaskGridProps) {
 
   const taskTree = tasks.reduce((acc, task, index) => {
@@ -102,7 +107,9 @@ export function TaskGrid({
       return null;
     }
 
-    const children = allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
+    const children = task.isCollapsed
+      ? []
+      : allTasks.filter(child => child.id !== task.id && child.parentId === task.id);
     const taskIndexInAllTasks = allTasks.findIndex(t => t.id === task.id);
     const isSelected = selectedTaskId === task.id;
     const isLastTask = index === weeklyTasksCount - 1;
@@ -116,22 +123,21 @@ export function TaskGrid({
           {visibleWeekdays.map((day, dayIndex) => (
             <div key={day} className={cn(
               "bg-card transition-colors flex items-center justify-center relative",
-              "group-data-[state=selected]/row:bg-accent/100",
-              isLastTask && dayIndex === 0 && "rounded-bl-lg"
+              "group-data-[state=selected]/row:bg-accent/100"
             )}>
               <StatusCell
                 task={task}
                 status={task.statuses[day]}
                 onStatusChange={(newStatus) => onStatusChange(task.id, day, newStatus)}
-                disabled={isDone || isPrint}
+                disabled={isDone || isPrint || isReadOnly}
                 onSetTaskParent={onSetTaskParent}
+                isReadOnly={isReadOnly}
               />
             </div>
           ))}
           <div className={cn("bg-card flex items-center transition-colors relative",
             taskColumnSpan,
-            "group-data-[state=selected]/row:bg-accent/100",
-            isLastTask && "rounded-br-lg"
+            "group-data-[state=selected]/row:bg-accent/100"
           )}>
             <TaskRow
               isPrint={isPrint}
@@ -152,6 +158,8 @@ export function TaskGrid({
               onAddSubTasks={onAddSubTasks}
               onAddTaskAfter={onAddTaskAfter}
               isAIFeatureEnabled={isAIFeatureEnabled}
+              onToggleCollapse={onToggleCollapse}
+              isReadOnly={isReadOnly}
             />
           </div>
         </div>
@@ -164,7 +172,7 @@ export function TaskGrid({
 
   return (
     <div className={cn(
-      "grid gap-px bg-border border rounded-lg relative",
+      "grid gap-px bg-border border rounded-lg relative overflow-hidden",
       gridColsClass,
       !fitToScreen && "min-w-[620px]"
     )} onClick={(e) => e.stopPropagation()}>
@@ -173,7 +181,7 @@ export function TaskGrid({
         const isToday = isSameDay(weekDates[index], today);
         return (
           <div key={index} className={cn(
-            "bg-muted p-2 font-bold font-headline text-primary/70 flex flex-col items-center justify-center text-base",
+            "bg-muted p-2 font-bold font-headline flex flex-col items-center justify-center text-base",
             index === 0 && "rounded-tl-lg",
             isToday && !isPrint && "border-b-2 border-primary"
           )}>
@@ -183,12 +191,12 @@ export function TaskGrid({
         )
       })}
       <div className={cn(
-        "bg-muted p-2 font-bold font-headline text-primary/70 flex items-center justify-between rounded-tr-lg",
+        "bg-muted p-2 font-bold font-headline flex items-center justify-between rounded-tr-lg",
         taskHeaderSpan,
       )}>
         <div className='flex items-center gap-2'>
           <span className="text-sm">Task</span>
-          {!isPrint && (
+          {(!isPrint || isReadOnly) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -198,34 +206,17 @@ export function TaskGrid({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 <DropdownMenuCheckboxItem
-                  checked={showWeekends}
+                  checked={fitToScreen}
                   onSelect={(e) => e.preventDefault()}
-                  onClick={onToggleWeekends}
+                  onClick={onToggleFitToScreen}
                 >
-                  Show Weekends
+                  Fit to screen
                 </DropdownMenuCheckboxItem>
-                {onToggleHideCompleted && (
-                  <DropdownMenuCheckboxItem
-                    checked={hideCompleted}
-                    onSelect={(e) => e.preventDefault()}
-                    onClick={onToggleHideCompleted}
-                  >
-                    Hide Closed
-                  </DropdownMenuCheckboxItem>
-                )}
-                {onToggleFitToScreen && (
-                  <DropdownMenuCheckboxItem
-                    checked={fitToScreen}
-                    onClick={onToggleFitToScreen}
-                  >
-                    Fit to screen
-                  </DropdownMenuCheckboxItem>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
-        {!isPrint && (
+        {!isPrint && !isReadOnly && (
           <Button size="icon" variant="ghost" onClick={onAddTask} aria-label="Add new task">
             <Plus className="size-4" />
           </Button>

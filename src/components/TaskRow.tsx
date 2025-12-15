@@ -6,7 +6,7 @@ import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
 import type { Identifier } from 'dnd-core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Save, Trash2, GripVertical, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2, PlusCircle } from 'lucide-react';
+import { Save, Trash2, GripVertical, CheckCircle2, CornerDownRight, MoreHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Indent, Outdent, Wand2, PlusCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Task } from '@/lib/types';
 import {
   AlertDialog,
@@ -55,6 +55,8 @@ interface TaskRowProps {
   onAddTaskAfter: (taskId: string) => void;
   isPrint?: boolean;
   isAIFeatureEnabled?: boolean;
+  onToggleCollapse: (taskId: string) => void;
+  isReadOnly?: boolean;
 }
 
 interface DragItem {
@@ -68,7 +70,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter, isPrint = false, isAIFeatureEnabled = false }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter, isPrint = false, isAIFeatureEnabled = false, onToggleCollapse, isReadOnly = false }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [editableTitle, setEditableTitle] = useState(task.title.substring(task.title.indexOf(']') + 2));
   const [isBreakingDown, setIsBreakingDown] = useState(false);
@@ -102,11 +104,11 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       };
     },
     canDrop(item, monitor) {
-      if (!ref.current || isPrint) return false;
+      if (!ref.current || isPrint || isReadOnly) return false;
       return true;
     },
     drop(item: DragItem, monitor: DropTargetMonitor) {
-      if (!ref.current || isPrint) return;
+      if (!ref.current || isPrint || isReadOnly) return;
 
       const dragId = item.id;
       const hoverId = task.id;
@@ -155,7 +157,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       }
     },
     hover(item: DragItem, monitor: DropTargetMonitor) {
-      if (!ref.current || isPrint) return;
+      if (!ref.current || isPrint || isReadOnly) return;
 
       const dragId = item.id;
       const hoverId = task.id;
@@ -180,18 +182,18 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
 
       onMove(dragId, hoverId);
     },
-  }, [task, tasks, getTaskById, onMove, onSetParent, myNavigableIndex, allWeeklyTasks, isPrint]);
+  }, [task, tasks, getTaskById, onMove, onSetParent, myNavigableIndex, allWeeklyTasks, isPrint, isReadOnly]);
 
   const [{ isDragging }, drag, preview] = useDrag({
     type: ItemTypes.TASK,
     item: () => {
       return { id: task.id, index, type: ItemTypes.TASK, level };
     },
-    canDrag: !isPrint,
+    canDrag: !isPrint && !isReadOnly,
     collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
-  }, [task, index, level, isPrint]);
+  }, [task, index, level, isPrint, isReadOnly]);
 
   const opacity = isDragging ? 0.4 : 1;
   drop(preview(ref));
@@ -315,14 +317,14 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
       data-handler-id={handlerId}
       className={cn(
         "w-full relative",
-        !isPrint && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
+        !isPrint && !isReadOnly && !isMobile && "group/row-hover hover:z-20 hover:shadow-[0_0_0_1px_hsl(var(--primary))]",
       )}
       onClick={handleRowClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
     >
-      {!isPrint && (
+      {!isPrint && !isReadOnly && (
         <button
           onClick={handleAddBetween}
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 opacity-0 group-data-[state=selected]/row:opacity-100 group-hover/row-hover:opacity-100 transition-opacity"
@@ -341,7 +343,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
           className="flex items-center flex-grow min-w-0 gap-2"
           style={{ paddingLeft: `${level * INDENT_WIDTH}px` }}
         >
-          {!isPrint && (
+          {!isPrint && !isReadOnly && (
             <div
               ref={drag as unknown as React.LegacyRef<HTMLDivElement>}
               onClick={(e) => {
@@ -355,7 +357,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
           )}
           {task.parentId && <CornerDownRight className="size-4 text-muted-foreground shrink-0" />}
 
-          {isEditing && !isPrint ? (
+          {isEditing && !isPrint && !isReadOnly ? (
             <div className="flex items-center flex-grow min-w-0">
               <Input
                 ref={inputRef}
@@ -372,18 +374,33 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             </div>
           ) : (
             <div
-              className="flex items-center flex-grow min-w-0 select-none"
+              className="flex items-center flex-grow min-w-0 select-none cursor-pointer"
               onClick={handleTitleClick}
             >
               <p
                 className={cn(
-                  "text-[0.9rem] md:text-sm font-medium flex-grow line-clamp-2",
+                  "text-[0.9rem] md:text-sm font-medium line-clamp-2",
                   isDone && "line-through text-muted-foreground",
                   isParent && "font-bold"
                 )}
               >
                 {displayTitle}
               </p>
+              {isParent && !isPrint && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleCollapse(task.id);
+                  }}
+                  className="ml-1 p-0.5 hover:bg-muted rounded-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {task.isCollapsed ? (
+                    <ChevronRight className="size-4" />
+                  ) : (
+                    <ChevronDown className="size-4" />
+                  )}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -401,7 +418,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
           </div>
         )}
 
-        {!isPrint && (
+        {!isPrint && !isReadOnly && (
           <div className="flex items-center shrink-0">
             <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <DropdownMenuTrigger asChild>

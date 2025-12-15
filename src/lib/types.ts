@@ -10,6 +10,7 @@ export interface Task {
   parentId?: string | null;
   week: string; // e.g. "2024-34"
   isNew?: boolean;
+  isCollapsed?: boolean;
   statuses: {
     monday: TaskStatus;
     tuesday: TaskStatus;

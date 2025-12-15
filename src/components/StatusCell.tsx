@@ -23,6 +23,7 @@ interface StatusCellProps {
   disabled?: boolean;
   onSetTaskParent?: (childId: string, parentId: string | null) => void;
   task: Task;
+  isReadOnly?: boolean;
 }
 
 const ItemTypes = {
@@ -45,7 +46,7 @@ const statusIcons: Record<TaskStatus, React.ReactNode> = {
   cancelled: <X className="size-4 text-red-500" />,
 };
 
-export function StatusCell({ status, onStatusChange, className, disabled = false, onSetTaskParent, task }: StatusCellProps) {
+export function StatusCell({ status, onStatusChange, className, disabled = false, onSetTaskParent, task, isReadOnly = false }: StatusCellProps) {
 
   const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>(() => ({
     accept: ItemTypes.TASK,
