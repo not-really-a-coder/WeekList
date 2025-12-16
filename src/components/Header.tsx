@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -50,12 +51,14 @@ export function Header({
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50 print:hidden">
         <div className="flex items-center justify-between px-2 py-2 w-full max-w-7xl gap-4">
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Logo className="size-8" />
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
-              {isReadOnly && <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded font-medium">Snapshot</span>}
-              {isSaving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-            </div>
+            <Link href="/" className="flex items-center gap-3">
+              <Logo className="size-8" />
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
+                {isReadOnly && <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded font-medium">Snapshot</span>}
+              </div>
+            </Link>
+            {isSaving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
           </div>
           <div className="flex items-center justify-end gap-2">
             {!isReadOnly && onShare && (

@@ -118,7 +118,7 @@ export function TaskGrid({
     return (
       <React.Fragment key={task.id}>
         <div className={cn(
-          "contents group/row",
+          "contents group/row task-row",
         )} data-state={isSelected ? 'selected' : 'unselected'}>
           {visibleWeekdays.map((day, dayIndex) => (
             <div key={day} className={cn(
@@ -172,24 +172,29 @@ export function TaskGrid({
 
   return (
     <div className={cn(
-      "grid gap-px bg-border border rounded-lg relative overflow-hidden",
+      "grid gap-px bg-border border rounded-lg relative",
       gridColsClass,
-      !fitToScreen && "min-w-[620px]"
+      !fitToScreen && "min-w-[620px]",
+      // Manually round the bottom corners of the last row since we removed overflow-hidden
+      "[&>.task-row:last-child>*:last-child]:rounded-br-lg",
+      "[&>.task-row:last-child>*:first-child]:rounded-bl-lg"
     )} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
-      {dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
-        const isToday = isSameDay(weekDates[index], today);
-        return (
-          <div key={index} className={cn(
-            "bg-muted p-2 font-bold font-headline flex flex-col items-center justify-center text-base",
-            index === 0 && "rounded-tl-lg",
-            isToday && !isPrint && "border-b-2 border-primary"
-          )}>
-            <span className="text-sm">{day}</span>
-            <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
-          </div>
-        )
-      })}
+      {
+        dayHeaders.slice(0, showWeekends ? 7 : 5).map((day, index) => {
+          const isToday = isSameDay(weekDates[index], today);
+          return (
+            <div key={index} className={cn(
+              "bg-muted p-2 font-bold font-headline flex flex-col items-center justify-center text-base",
+              index === 0 && "rounded-tl-lg",
+              isToday && !isPrint && "border-b-2 border-primary"
+            )}>
+              <span className="text-sm">{day}</span>
+              <span className="text-xs font-normal">{format(weekDates[index], 'd')}</span>
+            </div>
+          )
+        })
+      }
       <div className={cn(
         "bg-muted p-2 font-bold font-headline flex items-center justify-between rounded-tr-lg",
         taskHeaderSpan,
@@ -222,19 +227,13 @@ export function TaskGrid({
                     Hide Closed
                   </DropdownMenuCheckboxItem>
                 )}
-                <DropdownMenuCheckboxItem
-                  checked={fitToScreen}
-                  onSelect={(e) => e.preventDefault()}
-                  onClick={onToggleFitToScreen}
-                >
-                  Fit to screen
-                </DropdownMenuCheckboxItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
           )}
 
           {/* Read Only (Share Page): Mobile Toggle Only */}
-          {isReadOnly && onToggleFitToScreen && (
+          {onToggleFitToScreen && (
             <Button
               variant="ghost"
               size="icon"
@@ -254,14 +253,16 @@ export function TaskGrid({
       </div>
 
       {/* Grid Content */}
-      {tasks.length > 0 ? (
-        taskTree.map((task, index) => renderTask(task, tasks.findIndex(t => t.id === task.id)))
-      ) : (
-        <div className={cn("bg-card text-center p-12 text-muted-foreground rounded-b-lg", showWeekends ? "col-span-8" : "col-span-6")}>
-          No tasks for this week. Add one or move to a different week.
-        </div>
-      )}
-    </div>
+      {
+        tasks.length > 0 ? (
+          taskTree.map((task, index) => renderTask(task, tasks.findIndex(t => t.id === task.id)))
+        ) : (
+          <div className={cn("bg-card text-center p-12 text-muted-foreground rounded-b-lg", showWeekends ? "col-span-8" : "col-span-6")}>
+            No tasks for this week. Add one or move to a different week.
+          </div>
+        )
+      }
+    </div >
   );
 }
 

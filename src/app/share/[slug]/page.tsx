@@ -173,7 +173,7 @@ export default function SharePage({ params }: SharePageProps) {
                             <div className="w-10"></div>
                         </div>
 
-                        <div className="px-2 sm:px-0 pb-2 overflow-x-auto overflow-y-hidden">
+                        <div className="px-2 sm:px-0 pb-6 overflow-x-auto">
                             <TaskGrid
                                 tasks={visibleTasks}
                                 allTasks={visibleTasks}
