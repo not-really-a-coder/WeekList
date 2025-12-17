@@ -121,7 +121,7 @@ export default function WelcomePage() {
                                 transition={{ duration: 0.5, delay: 0.4 }}
                                 className="mt-4 text-xs text-muted-foreground/60 font-medium"
                             >
-                                Trial period? No, it's just free
+                                Trial period? No, it's just free.
                             </motion.p>
 
                         </motion.div>

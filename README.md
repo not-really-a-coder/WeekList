@@ -50,6 +50,10 @@ WeekList is built with **Next.js** and designed to be easy to set up.
 -   [ ] Database Support (PostgreSQL/Supabase)
 -   [ ] Mobile App (React Native)
 
+## 📄 License
+
+This project is licensed under the built-in [GPLv3 License](LICENSE).
+
 ---
 
 *Built with ❤️ using Next.js, Tailwind CSS, and Shadcn UI.*

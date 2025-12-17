@@ -1126,7 +1126,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>
-                  <div className="flex justify-end text-right sm:justify-end sm:text-right">
+                  <div className="flex flex-col items-end gap-4 text-right sm:text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal font-normal">
@@ -1149,6 +1149,9 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    {/* <Link href="/welcome" className="text-sm text-muted-foreground hover:text-foreground transition-colors mr-1">
+                      Back to the Welcome page
+                    </Link> */}
                   </div>
                 </div>
 
@@ -1156,11 +1159,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
             )}
           </div>
         </main>
-        <footer className="py-6 text-center text-sm text-muted-foreground border-t mt-auto print:hidden">
-          <Link href="/welcome" className="hover:text-foreground transition-colors">
-            Back to the Welcome page
-          </Link>
-        </footer>
+
         <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

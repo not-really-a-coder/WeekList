@@ -1,0 +1,44 @@
+# Project Requirements for WeekList
+
+## System Requirements
+- Node.js: >= 18.0.0
+- Compilers: TypeScript (via Next.js/build)
+
+## Key Dependencies (Production)
+- next: ^16.0.8
+- react: ^18.3.1
+- react-dom: ^18.3.1
+- tailwindcss: ^3.4.1
+- lucide-react: ^0.475.0
+- date-fns: ^3.6.0
+- framer-motion: ^12.23.26
+- genkit: ^1.25.0
+- @radix-ui/react-alert-dialog: ^1.1.6
+- @radix-ui/react-dialog: ^1.1.15
+- @radix-ui/react-dropdown-menu: ^2.1.6
+- @radix-ui/react-label: ^2.1.8
+- @radix-ui/react-popover: ^1.1.15
+- @radix-ui/react-separator: ^1.1.8
+- @radix-ui/react-slot: ^1.2.3
+- @radix-ui/react-switch: ^1.2.6
+- @radix-ui/react-toast: ^1.2.6
+- class-variance-authority: ^0.7.1
+- clsx: ^2.1.1
+- dotenv: ^16.5.0
+- lz-string: ^1.5.0
+- next-themes: ^0.3.0
+- react-day-picker: ^8.10.1
+- react-dnd: ^16.0.1
+- react-dnd-html5-backend: ^16.0.1
+- react-dnd-touch-backend: ^16.0.1
+- tailwind-merge: ^3.0.1
+- tailwindcss-animate: ^1.0.7
+- zod: ^3.24.2
+
+## Dev Dependencies
+- types/node: ^20
+- types/react: ^18
+- types/react-dom: ^18
+- genkit-cli: ^1.14.1
+- postcss: ^8
+- typescript: ^5
