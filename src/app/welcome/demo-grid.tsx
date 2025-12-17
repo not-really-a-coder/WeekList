@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 
 export function DemoGrid() {
-    const gridColsClass = "grid-cols-[repeat(7,3.5rem)_1fr]"; // Fixed width for columns to ensure perfect alignment
+    const gridColsClass = "grid-cols-[repeat(7,3.15rem)_1fr]"; // Fixed width for columns to ensure perfect alignment
 
     // Dynamic dates logic
     const { weekDates, weekTitle } = useMemo(() => {
@@ -49,151 +49,155 @@ export function DemoGrid() {
                 </button>
             </div>
 
-            {/* Grid Header */}
-            <div className={cn("grid gap-px border-b bg-border", gridColsClass)}>
-                {weekDates.map((date, i) => {
-                    const isToday = isSameDay(date, today);
-                    return (
-                        <div key={i} className={cn(
-                            "bg-muted px-1 py-2 flex flex-col items-center justify-center relative",
-                            isToday && "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#66b2f0]" // Active day indicator
-                        )}>
-                            <span className="text-[10px] font-bold text-foreground">{format(date, 'EEEEE')}</span> {/* M, T, W... */}
-                            <span className="text-xs font-medium text-foreground">{format(date, 'd')}</span>
+            <div className="w-full overflow-x-auto">
+                <div className="min-w-[720px]">
+                    {/* Grid Header */}
+                    <div className={cn("grid gap-px border-b bg-border", gridColsClass)}>
+                        {weekDates.map((date, i) => {
+                            const isToday = isSameDay(date, today);
+                            return (
+                                <div key={i} className={cn(
+                                    "bg-muted px-1 py-2 flex flex-col items-center justify-center relative",
+                                    isToday && "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#66b2f0]" // Active day indicator
+                                )}>
+                                    <span className="text-[10px] font-bold text-foreground">{format(date, 'EEEEE')}</span> {/* M, T, W... */}
+                                    <span className="text-xs font-medium text-foreground">{format(date, 'd')}</span>
+                                </div>
+                            );
+                        })}
+
+                        {/* Task Header */}
+                        <div className="bg-muted px-4 py-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-foreground">Task</span>
+                                <SlidersHorizontal className="size-3.5 text-foreground" />
+                            </div>
+                            <Plus className="size-4 text-foreground" />
                         </div>
-                    );
-                })}
-
-                {/* Task Header */}
-                <div className="bg-muted px-4 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-foreground">Task</span>
-                        <SlidersHorizontal className="size-3.5 text-foreground" />
                     </div>
-                    <Plus className="size-4 text-foreground" />
+
+                    {/* Grid Rows */}
+                    <div className="bg-border grid gap-px">
+                        {/* Row 1 */}
+                        {/* Parent Task: Quality of Life */}
+                        <Row
+                            statuses={{
+                                [getDayKey(0)]: "check",
+                                [getDayKey(1)]: "check",
+                                [getDayKey(2)]: "dot",
+                                [getDayKey(3)]: "dot",
+                                [getDayKey(4)]: "dot",
+                                [getDayKey(5)]: "dot"
+                            }}
+                            text="Improve the quality of life"
+                            isParent={true}
+                            isCollapsed={false}
+                        />
+
+                        {/* Child 3 */}
+                        <Row
+                            statuses={{
+                                [getDayKey(0)]: "check",
+                                [getDayKey(1)]: "dot",
+                                [getDayKey(2)]: "dot",
+                                [getDayKey(3)]: "dot",
+                                [getDayKey(4)]: "dot",
+                                [getDayKey(5)]: "dot",
+                                [getDayKey(6)]: "dot"
+                            }}
+                            text="Spend quality time with family"
+                            level={1}
+                            className="border-l-2 border-l-red-500"
+                        />
+
+                        {/* Child 1 */}
+                        <Row
+                            statuses={{
+                                [getDayKey(0)]: "check",
+                                [getDayKey(2)]: "dot",
+                                [getDayKey(4)]: "arrow",
+                                [getDayKey(5)]: "dot"
+                            }}
+                            text="Run at least 15 minutes in the park"
+                            level={1}
+                        />
+
+                        <Row
+                            statuses={{
+                                [getDayKey(0)]: "check"
+                            }}
+                            text="Cancel all unused software subscriptions"
+                            level={1}
+                            isCompleted={true}
+                            taskStatus="check"
+                        />
+
+                        {/* Branch Parent */}
+                        <Row
+                            statuses={{
+                                [getDayKey(0)]: "check",
+                                [getDayKey(1)]: "arrow",
+                                [getDayKey(2)]: "dot",
+                                [getDayKey(3)]: "dot"
+                            }}
+                            text="Kick-off website redesign project"
+                            isParent={true}
+                            isCollapsed={false}
+                            className="border-l-2 border-l-red-500"
+                        />
+
+                        {/* Branch Child 1 */}
+                        <Row
+                            statuses={{ [getDayKey(0)]: "check" }}
+                            text="Finalize homepage copy with marketing team"
+                            level={1}
+                            isCompleted={true}
+                            taskStatus="check"
+                        />
+
+                        {/* Branch Child 2 */}
+                        <Row
+                            statuses={{ [getDayKey(2)]: "dot" }}
+                            text="Review mobile responsiveness on staging"
+                            level={1}
+                        />
+
+                        {/* Branch Child 3 */}
+                        <Row
+                            statuses={{ [getDayKey(3)]: "dot" }}
+                            text="Prepare assets for Monday launch"
+                            level={1}
+                        />
+
+                        {/* Row 3 */}
+                        <Row
+                            statuses={{
+                                [getDayKey(1)]: "dot",
+                                [getDayKey(3)]: "dot"
+                            }}
+                            text="Get over with personal routine"
+                            isParent={true}
+                            isCollapsed={false}
+                        />
+
+                        {/* Child 3 */}
+                        <Row
+                            statuses={{
+                                [getDayKey(1)]: "arrow",
+                                [getDayKey(3)]: "dot"
+                            }}
+                            text="Pay utility bills"
+                            level={1}
+                        />
+                        <Row
+                            statuses={{
+                                [getDayKey(3)]: "dot"
+                            }}
+                            text="Grocery shopping"
+                            level={1}
+                        />
+                    </div>
                 </div>
-            </div>
-
-            {/* Grid Rows */}
-            <div className="bg-border grid gap-px">
-                {/* Row 1 */}
-                {/* Parent Task: Quality of Life */}
-                <Row
-                    statuses={{
-                        [getDayKey(0)]: "check",
-                        [getDayKey(1)]: "check",
-                        [getDayKey(2)]: "dot",
-                        [getDayKey(3)]: "dot",
-                        [getDayKey(4)]: "dot",
-                        [getDayKey(5)]: "dot"
-                    }}
-                    text="Improve the quality of life"
-                    isParent={true}
-                    isCollapsed={false}
-                />
-
-                {/* Child 3 */}
-                <Row
-                    statuses={{
-                        [getDayKey(0)]: "check",
-                        [getDayKey(1)]: "dot",
-                        [getDayKey(2)]: "dot",
-                        [getDayKey(3)]: "dot",
-                        [getDayKey(4)]: "dot",
-                        [getDayKey(5)]: "dot",
-                        [getDayKey(6)]: "dot"
-                    }}
-                    text="Spend quality time with family"
-                    level={1}
-                    className="border-l-2 border-l-red-500"
-                />
-
-                {/* Child 1 */}
-                <Row
-                    statuses={{
-                        [getDayKey(0)]: "check",
-                        [getDayKey(2)]: "dot",
-                        [getDayKey(4)]: "arrow",
-                        [getDayKey(5)]: "dot"
-                    }}
-                    text="Run at least 15 minutes in the park"
-                    level={1}
-                />
-
-                <Row
-                    statuses={{
-                        [getDayKey(0)]: "check"
-                    }}
-                    text="Cancel all unused software subscriptions"
-                    level={1}
-                    isCompleted={true}
-                    taskStatus="check"
-                />
-
-                {/* Branch Parent */}
-                <Row
-                    statuses={{
-                        [getDayKey(0)]: "check",
-                        [getDayKey(1)]: "arrow",
-                        [getDayKey(2)]: "dot",
-                        [getDayKey(3)]: "dot"
-                    }}
-                    text="Kick-off website redesign project"
-                    isParent={true}
-                    isCollapsed={false}
-                    className="border-l-2 border-l-red-500"
-                />
-
-                {/* Branch Child 1 */}
-                <Row
-                    statuses={{ [getDayKey(0)]: "check" }}
-                    text="Finalize homepage copy with marketing team"
-                    level={1}
-                    isCompleted={true}
-                    taskStatus="check"
-                />
-
-                {/* Branch Child 2 */}
-                <Row
-                    statuses={{ [getDayKey(2)]: "dot" }}
-                    text="Review mobile responsiveness on staging"
-                    level={1}
-                />
-
-                {/* Branch Child 3 */}
-                <Row
-                    statuses={{ [getDayKey(3)]: "dot" }}
-                    text="Prepare assets for Monday launch"
-                    level={1}
-                />
-
-                {/* Row 3 */}
-                <Row
-                    statuses={{
-                        [getDayKey(1)]: "dot",
-                        [getDayKey(3)]: "dot"
-                    }}
-                    text="Get over with personal routine"
-                    isParent={true}
-                    isCollapsed={false}
-                />
-
-                {/* Child 3 */}
-                <Row
-                    statuses={{
-                        [getDayKey(1)]: "arrow",
-                        [getDayKey(3)]: "dot"
-                    }}
-                    text="Pay utility bills"
-                    level={1}
-                />
-                <Row
-                    statuses={{
-                        [getDayKey(3)]: "dot"
-                    }}
-                    text="Grocery shopping"
-                    level={1}
-                />
             </div>
 
             {/* Legend Footer */}
@@ -258,18 +262,18 @@ function Row({
     isParent?: boolean,
     isCollapsed?: boolean
 }) {
-    const gridColsClass = "grid-cols-[repeat(7,3.5rem)_1fr]"; // Fixed width for columns to ensure perfect alignment
+    const gridColsClass = "grid-cols-[repeat(7,3.15rem)_1fr]"; // Fixed width for columns to ensure perfect alignment
     const days = ['m', 't', 'w', 'th', 'f', 's', 'su'];
 
     return (
         <div className={cn("grid gap-px group", gridColsClass)}>
             {days.map(day => (
-                <div key={day} className="bg-background min-h-[3rem] flex items-center justify-center transition-colors">
+                <div key={day} className="bg-card min-h-[3rem] flex items-center justify-center transition-colors">
                     <StatusIcon type={statuses[day]} />
                 </div>
             ))}
             <div className={cn(
-                "bg-background min-h-[3rem] flex items-center justify-between px-4 py-1 relative transition-colors",
+                "bg-card min-h-[3rem] flex items-center justify-between px-4 py-1 relative transition-colors",
                 // Hover effect: Pseudo-element border to ensure visibility and prevent layout shifts/clipping
                 "after:absolute after:inset-0 after:border after:border-[#66b2f0] after:opacity-0 hover:after:opacity-100 after:pointer-events-none after:transition-opacity",
                 className

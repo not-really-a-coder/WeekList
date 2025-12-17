@@ -31,7 +31,7 @@ export default function WelcomePage() {
             <main className="flex-grow">
 
                 {/* --- HERO SECTION --- */}
-                <section className="relative pt-5 pb-32 px-6 overflow-hidden">
+                <section className="relative pt-5 pb-16 px-6 overflow-hidden">
                     {/* Background decoration */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
                         <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] opacity-50" />
@@ -91,6 +91,15 @@ export default function WelcomePage() {
                             </Button> */}
                         </motion.div>
 
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            className="mt-4 text-xs text-muted-foreground/60 font-medium"
+                        >
+                            No authorization required. Yet.
+                        </motion.p>
+
                         {/* Hero Visual */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -99,6 +108,21 @@ export default function WelcomePage() {
                             className="mt-16 w-full max-w-5xl mx-auto md:px-4"
                         >
                             <DemoGrid />
+                            <div className="mt-16 flex justify-center">
+                                <Button asChild size="lg" className="h-12 px-8 rounded-full text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all w-full sm:w-auto">
+                                    <Link href="/?start=true">
+                                        Experience Yourself
+                                    </Link>
+                                </Button>
+                            </div>
+                            <motion.p
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5, delay: 0.4 }}
+                                className="mt-4 text-xs text-muted-foreground/60 font-medium"
+                            >
+                                Trial period? No, it's just free
+                            </motion.p>
 
                         </motion.div>
                     </div>
