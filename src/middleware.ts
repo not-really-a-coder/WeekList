@@ -1,10 +1,17 @@
+
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
+    // Check if the user is explicitly starting the app
+    if (request.nextUrl.searchParams.get('start') === 'true') {
+        const response = NextResponse.redirect(new URL('/', request.url))
+        response.cookies.set('weeklist-welcome-seen', 'true', { path: '/', maxAge: 31536000 })
+        return response
+    }
+
     // Check if the user has visited before
     const hasSeenWelcome = request.cookies.has('weeklist-welcome-seen')
-    const isWelcomePage = request.nextUrl.pathname === '/welcome'
 
     // If no cookie and not on welcome page (and is root path), redirect to welcome
     if (!hasSeenWelcome && request.nextUrl.pathname === '/') {

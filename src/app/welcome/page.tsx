@@ -21,12 +21,7 @@ export default function WelcomePage() {
                 <div className="flex items-center gap-4">
 
                     <Button asChild className="rounded-full px-6 font-semibold shadow-lg hover:shadow-primary/25 transition-all">
-                        <Link
-                            href="/"
-                            onClick={() => {
-                                document.cookie = "weeklist-welcome-seen=true; path=/; max-age=31536000";
-                            }}
-                        >
+                        <Link href="/?start=true">
                             Start Planning
                         </Link>
                     </Button>
@@ -36,7 +31,7 @@ export default function WelcomePage() {
             <main className="flex-grow">
 
                 {/* --- HERO SECTION --- */}
-                <section className="relative pt-20 pb-32 px-6 overflow-hidden">
+                <section className="relative pt-5 pb-32 px-6 overflow-hidden">
                     {/* Background decoration */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
                         <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] opacity-50" />
@@ -59,7 +54,7 @@ export default function WelcomePage() {
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.1 }}
-                            className="text-5xl md:text-7xl font-extrabold font-headline tracking-tight leading-[1.1] mb-6 text-foreground"
+                            className="text-5xl md:text-7xl font-extrabold font-headline tracking-tight leading-[1.1] mb-2 text-foreground"
                         >
                             Your Week, <br />
                             <span className="inline-flex flex-col h-[1.1em] overflow-hidden relative w-full items-center justify-center">
@@ -84,12 +79,7 @@ export default function WelcomePage() {
                             className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
                         >
                             <Button asChild size="lg" className="h-12 px-8 rounded-full text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all w-full sm:w-auto">
-                                <Link
-                                    href="/"
-                                    onClick={() => {
-                                        document.cookie = "weeklist-welcome-seen=true; path=/; max-age=31536000";
-                                    }}
-                                >
+                                <Link href="/?start=true">
                                     Try Now
                                     <ArrowRight className="ml-2 size-4" />
                                 </Link>
@@ -198,12 +188,7 @@ export default function WelcomePage() {
 
                         <div className="mt-12 text-center">
                             <Button asChild size="lg" variant="secondary" className="rounded-full">
-                                <Link
-                                    href="/"
-                                    onClick={() => {
-                                        document.cookie = "weeklist-welcome-seen=true; path=/; max-age=31536000";
-                                    }}
-                                >Try WeekList for Free</Link>
+                                <Link href="/?start=true">Try WeekList for Free</Link>
                             </Button>
                         </div>
                     </div>
