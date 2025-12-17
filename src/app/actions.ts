@@ -18,150 +18,155 @@ async function generateTaskId(existingIds: string[]): Promise<string> {
   return newId;
 }
 
-const exampleTaskTitles = [
-    'Review Q2 financials and prepare a summary report for the board meeting',
-    'Onboard the new marketing hire, including setting up their accounts and scheduling orientation meetings',
-    'Finalize the project proposal for the "Phoenix" initiative, incorporating feedback from the last review',
-    'Cancel all unused software subscriptions to reduce overhead costs',
-    'Plan the annual summer team-building event, including venue selection, catering, and activities',
-    'Revise the website copy for the new product landing page based on A/B testing results',
-    'Order new ergonomic office chairs and standing desks for the entire engineering team',
-    'Book flights and accommodations for the upcoming conference in San Francisco',
-    'Conduct weekly grocery shopping, making sure to pick up fresh vegetables and supplies for the weekend BBQ',
-    'Complete the final draft of the Q2 performance report and submit it to HR',
-    'Renew the corporate gym membership for all employees before the end-of-month deadline',
-    'Schedule a plumber to fix the leak in the upstairs bathroom and get a quote for a new water heater',
-    'Book a dental check-up and cleaning for the family',
-    'Pay the quarterly electricity and water utility bills online',
-    'Pick up the dry cleaning from the shop on Main Street before it closes at 6 PM',
-    'Draft the monthly customer newsletter, featuring new product updates and a customer success story',
-    'Prepare for the upcoming client presentation by gathering all necessary data, creating the slides, and rehearsing the key talking points',
-    'Research and compare new CRM software options to replace the current outdated system',
-    'Follow up with all clients who have outstanding invoices from the previous month',
-    'Plan the Q4 team offsite, including brainstorming locations, creating an agenda, and getting budget approval',
-    'Update the product roadmap for Q4 to reflect the latest strategic priorities and resource allocations',
-    'Organize and declutter the digital file storage system, creating a more intuitive folder structure',
-    'Perform a comprehensive security audit of the main application server and document any vulnerabilities',
-    'Write and publish a new blog post on the company website about recent industry trends',
-    'Coordinate with the design team to create new marketing assets for the upcoming social media campaign',
-];
+
 
 const generateRandomStatus = (): TaskStatus => {
-    const statuses: TaskStatus[] = ['default', 'planned', 'completed', 'rescheduled', 'cancelled'];
-    return statuses[Math.floor(Math.random() * statuses.length)];
+  const statuses: TaskStatus[] = ['default', 'planned', 'completed', 'rescheduled', 'cancelled'];
+  return statuses[Math.floor(Math.random() * statuses.length)];
 };
 
-const shuffleArray = <T>(array: T[]): T[] => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-};
 
-const generateWeekTasks = async (date: Date, usedTitles: Set<string>): Promise<Task[]> => {
-    const year = getYear(date);
-    const week = getWeek(date, { weekStartsOn: 1 });
-    const weekKey = `${year}-${week}`;
-    const weekTasks: Task[] = [];
-    const allIds: string[] = [];
 
-    const availableTitles = shuffleArray(exampleTaskTitles.filter(t => !usedTitles.has(t)));
+const generateOnboardingTasks = async (date: Date): Promise<Task[]> => {
+  const year = getYear(date);
+  const week = getWeek(date, { weekStartsOn: 1 });
+  const weekKey = `${year}-${week}`;
+  const weekTasks: Task[] = [];
+  const allIds: string[] = [];
+  const createdDate = new Date().toISOString().split('T')[0];
 
-    if (availableTitles.length < 5) {
-        console.warn("Not enough unique task titles available for a full week's generation.");
-        return [];
-    }
+  const getRandomStatuses = () => ({
+    monday: generateRandomStatus(),
+    tuesday: generateRandomStatus(),
+    wednesday: generateRandomStatus(),
+    thursday: generateRandomStatus(),
+    friday: generateRandomStatus(),
+    saturday: generateRandomStatus(),
+    sunday: generateRandomStatus(),
+  });
 
-    const parentId = await generateTaskId(allIds);
-    allIds.push(parentId);
-    const parentTitle = availableTitles[0];
-    usedTitles.add(parentTitle);
-    const parentTask: Task = {
-        id: parentId,
-        title: `[ ] ${parentTitle}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        parentId: null,
-        statuses: { monday: 'planned', tuesday: 'default', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-        week: weekKey,
-    };
-    weekTasks.push(parentTask);
-
-    const childId = await generateTaskId(allIds);
-    allIds.push(childId);
-    const childTitle = availableTitles[1];
-    usedTitles.add(childTitle);
-    const childTask: Task = {
-        id: childId,
-        title: `[ ] ${childTitle}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        parentId: parentId,
-        statuses: { monday: 'default', tuesday: 'planned', wednesday: 'default', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-        week: weekKey,
-    };
-    weekTasks.push(childTask);
-    
-    const importantId = await generateTaskId(allIds);
-    allIds.push(importantId);
-    const importantTitle = availableTitles[2];
-    usedTitles.add(importantTitle);
-    const importantTask: Task = {
-        id: importantId,
-        title: `[ ] !${importantTitle}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        parentId: null,
-        statuses: { monday: 'default', tuesday: 'default', wednesday: 'planned', thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default' },
-        week: weekKey,
-    };
-    weekTasks.push(importantTask);
-
-    const closedId = await generateTaskId(allIds);
-    allIds.push(closedId);
-    const closedTitle = availableTitles[3];
-    usedTitles.add(closedTitle);
-    const closedTask: Task = {
-        id: closedId,
-        title: `[v] ${closedTitle}`,
-        createdAt: new Date().toISOString().split('T')[0],
-        parentId: null,
-        statuses: { monday: 'completed', tuesday: 'completed', wednesday: 'completed', thursday: 'completed', friday: 'completed', saturday: 'default', sunday: 'default' },
-        week: weekKey,
-    };
-    weekTasks.push(closedTask);
-
-    const longDescId = await generateTaskId(allIds);
-allIds.push(longDescId);
-const longTaskTitle = 'This is a task with a deliberately very long description to test how the user interface handles text overflow, wrapping, and general layout within the constrained space of the task row. It needs to be long enough to see if the line-clamping is effective and if the UI remains usable.';
-usedTitles.add(longTaskTitle);
- const longTask: Task = {
-    id: longDescId,
-    title: `[ ] ${longTaskTitle}`,
-    createdAt: new Date().toISOString().split('T')[0],
+  // 1. Welcome Task
+  const t1Id = await generateTaskId(allIds);
+  allIds.push(t1Id);
+  weekTasks.push({
+    id: t1Id,
+    title: '[ ] Welcome to WeekList! Click / tap "+" or hit Ctrl+Enter to add a task',
+    createdAt: createdDate,
     parentId: null,
-    statuses: { monday: 'default', tuesday: 'default', wednesday: 'default', thursday: 'planned', friday: 'default', saturday: 'default', sunday: 'default' },
+    statuses: getRandomStatuses(),
     week: weekKey,
-};
-weekTasks.push(longTask);
+  });
 
+  // 2. Planning Task
+  const t2Id = await generateTaskId(allIds);
+  allIds.push(t2Id);
+  weekTasks.push({
+    id: t2Id,
+    title: '[ ] You can plan each task for a specific weekday and change the status later',
+    createdAt: createdDate,
+    parentId: null,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
 
-    const remainingTitles = availableTitles.slice(4, 6);
-    for (const title of remainingTitles) {
-        const newId = await generateTaskId(allIds);
-        allIds.push(newId);
-        usedTitles.add(title);
-        const task: Task = {
-            id: newId,
-            title: `[ ] ${title}`,
-            createdAt: new Date().toISOString().split('T')[0],
-            parentId: null,
-            statuses: { monday: generateRandomStatus(), tuesday: generateRandomStatus(), wednesday: generateRandomStatus(), thursday: generateRandomStatus(), friday: generateRandomStatus(), saturday: generateRandomStatus(), sunday: generateRandomStatus() },
-            week: weekKey,
-        };
-        weekTasks.push(task);
-    }
+  // 3. Organization Task (Parent)
+  const t3Id = await generateTaskId(allIds);
+  allIds.push(t3Id);
+  weekTasks.push({
+    id: t3Id,
+    title: '[ ] Try Drag&Drop or keyboard hotkeys to conveniently organize your tasks',
+    createdAt: createdDate,
+    parentId: null,
+    statuses: { ...getRandomStatuses(), wednesday: 'planned' }, // Make sure it shows as active/planned
+    week: weekKey,
+  });
+  // Sub-tasks for T3
+  const s1Id = await generateTaskId(allIds); allIds.push(s1Id);
+  weekTasks.push({
+    id: s1Id,
+    title: '[ ] For example, you can place tasks with higher priorities higher in the list',
+    createdAt: createdDate,
+    parentId: t3Id,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+  const s2Id = await generateTaskId(allIds); allIds.push(s2Id);
+  weekTasks.push({
+    id: s2Id,
+    title: '[ ] !Or you can mark the task as Important by adding a "!" symbol in the beginning',
+    createdAt: createdDate,
+    parentId: t3Id,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+  const s3Id = await generateTaskId(allIds); allIds.push(s3Id);
+  weekTasks.push({
+    id: s3Id,
+    title: "[ ] There's just one level of indentation to keep it simple",
+    createdAt: createdDate,
+    parentId: t3Id,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+  const s4Id = await generateTaskId(allIds); allIds.push(s4Id);
+  weekTasks.push({
+    id: s4Id,
+    title: '[ ] You can also expand or collapse nested tasks for improved readability and focus!',
+    createdAt: createdDate,
+    parentId: t3Id,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
 
-    return shuffleArray(weekTasks);
+  // 4. Closed Task
+  const t4Id = await generateTaskId(allIds);
+  allIds.push(t4Id);
+  weekTasks.push({
+    id: t4Id,
+    title: "[v] Mark the task as closed if you're not going to come back to it during the week",
+    createdAt: createdDate,
+    parentId: null,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+
+  // 5. Import/Export Task
+  const t5Id = await generateTaskId(allIds);
+  allIds.push(t5Id);
+  weekTasks.push({
+    id: t5Id,
+    title: "[ ] Check out Export and Import to markdown in the top right menu. You're in full control of your data",
+    createdAt: createdDate,
+    parentId: null,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+
+  // 6. Context Menu Task
+  const t6Id = await generateTaskId(allIds);
+  allIds.push(t6Id);
+  weekTasks.push({
+    id: t6Id,
+    title: '[ ] There are more things you can do with your list - check them in the task context menu!',
+    createdAt: createdDate,
+    parentId: null,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+
+  // 7. Happy Planning Task
+  const t7Id = await generateTaskId(allIds);
+  allIds.push(t7Id);
+  weekTasks.push({
+    id: t7Id,
+    title: '[ ] Feel free to delete these tasks to start your own WeekList. Happy Planning!',
+    createdAt: createdDate,
+    parentId: null,
+    statuses: getRandomStatuses(),
+    week: weekKey,
+  });
+
+  return weekTasks;
 };
 
 
@@ -183,45 +188,29 @@ export async function handleBreakDownTask(taskTitle: string): Promise<string[]> 
 
 
 export async function getTasks(): Promise<Task[]> {
-    const today = new Date();
-    const allTasks: Task[] = [];
-    const usedTitles = new Set<string>();
+  const today = new Date();
+  // Only generate for the current week
+  const weekDate = startOfWeek(today, { weekStartsOn: 1 });
+  const allTasks = await generateOnboardingTasks(weekDate);
 
-    for (let i = -2; i <= 2; i++) {
-        const weekDate = addWeeks(startOfWeek(today, { weekStartsOn: 1 }), i);
-        const weeklyTasks = await generateWeekTasks(weekDate, usedTitles);
-        allTasks.push(...weeklyTasks);
+  // Logic to ensure parent-child order
+  const result: Task[] = [];
+  const processedIds = new Set<string>();
+
+  for (const task of allTasks) {
+    if (processedIds.has(task.id) || task.parentId) continue;
+
+    result.push(task);
+    processedIds.add(task.id);
+
+    const children = allTasks.filter(t => t.parentId === task.id);
+    for (const child of children) {
+      result.push(child);
+      processedIds.add(child.id);
     }
-    
-    const taskMap = new Map(allTasks.map(t => [t.id, t]));
-    const result: Task[] = [];
-    const processedIds = new Set<string>();
+  }
 
-    // This logic ensures parent tasks are followed by their children
-    for (const task of allTasks) {
-        // Skip if already processed or if it's a child (will be handled by parent)
-        if (processedIds.has(task.id) || task.parentId) continue;
-
-        const parentIndex = result.length;
-        result.push(task);
-        processedIds.add(task.id);
-
-        const children = allTasks.filter(t => t.parentId === task.id);
-        for (const child of children) {
-            result.push(child);
-            processedIds.add(child.id);
-        }
-    }
-    
-    // Add any orphans that might have been missed (should not happen with current logic, but good for safety)
-    for (const task of allTasks) {
-        if (!processedIds.has(task.id)) {
-            result.push(task);
-            processedIds.add(task.id);
-        }
-    }
-
-    return result;
+  return result;
 }
 
 export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
@@ -244,7 +233,7 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
     const firstDayOfYear = new Date(year, 0, 4); // ISO 8601 week number definition
     const startOfFirstWeek = startOfWeek(firstDayOfYear, { weekStartsOn: 1 });
     const weekStartDate = addWeeks(startOfFirstWeek, weekNum - 1);
-    
+
     markdown += `## Week of ${format(weekStartDate, 'MMMM d, yyyy')}\n\n`;
 
     const weekTasks = groupedByWeek[week];
@@ -284,10 +273,10 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
       }
       return line;
     };
-    
+
     for (const task of weekTasks) {
       if (!task.parentId) {
-          markdown += formatTaskLine(task, 0);
+        markdown += formatTaskLine(task, 0);
       }
     }
     markdown += '\n';
@@ -297,85 +286,85 @@ export async function getTasksMarkdown(tasks: Task[]): Promise<string> {
 }
 
 export async function parseTasksMarkdown(markdown: string): Promise<Task[]> {
-    const tasks: Task[] = [];
-    let currentWeekKey = '';
-    const lines = markdown.split('\n');
+  const tasks: Task[] = [];
+  let currentWeekKey = '';
+  const lines = markdown.split('\n');
 
-    const statusMap: { [key: string]: TaskStatus } = {
-        ' ': 'default', 'o': 'planned', 'v': 'completed', '>': 'rescheduled', 'x': 'cancelled',
-    };
-    const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const statusMap: { [key: string]: TaskStatus } = {
+    ' ': 'default', 'o': 'planned', 'v': 'completed', '>': 'rescheduled', 'x': 'cancelled',
+  };
+  const weekdays: (keyof Task['statuses'])[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-    let parentStack: (Task | null)[] = [null];
+  let parentStack: (Task | null)[] = [null];
 
-    for (const line of lines) {
-        if (line.trim() === '') continue;
+  for (const line of lines) {
+    if (line.trim() === '') continue;
 
-        if (line.startsWith('## Week of ')) {
-            const dateStr = line.substring(11).trim();
-            try {
-                const date = parse(dateStr, 'MMMM d, yyyy', new Date());
-                const year = getYear(date);
-                const week = getWeek(date, { weekStartsOn: 1 });
-                currentWeekKey = `${year}-${week}`;
-            } catch (e) {
-                console.error(`Invalid date format for "${dateStr}". Skipping week.`);
-                currentWeekKey = '';
-            }
-            continue;
-        }
-
-        if (!currentWeekKey) continue;
-
-        const indentMatch = line.match(/^(\s*)-/);
-        if (!indentMatch) continue;
-        
-        const indentLevel = indentMatch[1].length / 2;
-        
-        const taskRegex = /-\s(\[([ v])\])\s\[([ovx >]{7})\]\s(.*?)\s*\{%(.*)\}/;
-        const taskMatch = line.trim().match(taskRegex);
-
-        if (!taskMatch) continue;
-
-        const [, doneMarker, , statusStr, titleText, metadataStr] = taskMatch;
-
-        const metadata: Record<string, string> = {};
-        metadataStr.split(';').forEach(part => {
-            const [key, ...valueParts] = part.split(':');
-            if (key && valueParts.length > 0) {
-                metadata[key.trim()] = valueParts.join(':').trim();
-            }
-        });
-
-        if (!metadata.id || !metadata.created) continue;
-
-        const statuses: Task['statuses'] = {
-            monday: 'default', tuesday: 'default', wednesday: 'default',
-            thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
-        };
-        if (statusStr.length === 7) {
-            weekdays.forEach((day, index) => {
-                statuses[day] = statusMap[statusStr[index]] || 'default';
-            });
-        }
-        
-        const parentId = metadata.parentid || null;
-
-        const task: Task = {
-            id: metadata.id,
-            title: `${doneMarker.trim()} ${titleText.trim()}`,
-            createdAt: metadata.created,
-            parentId: parentId,
-            week: currentWeekKey,
-            statuses: statuses,
-        };
-        
-        tasks.push(task);
+    if (line.startsWith('## Week of ')) {
+      const dateStr = line.substring(11).trim();
+      try {
+        const date = parse(dateStr, 'MMMM d, yyyy', new Date());
+        const year = getYear(date);
+        const week = getWeek(date, { weekStartsOn: 1 });
+        currentWeekKey = `${year}-${week}`;
+      } catch (e) {
+        console.error(`Invalid date format for "${dateStr}". Skipping week.`);
+        currentWeekKey = '';
+      }
+      continue;
     }
-    
-    // The previous implementation of re-ordering was complex and potentially buggy.
-    // The markdown structure itself defines the order. By simply pushing tasks as we parse them,
-    // and correctly identifying their parents from the metadata, the final order will be correct
-    // when rendered by the UI, which uses a tree-like structure.
-    return tasks;
+
+    if (!currentWeekKey) continue;
+
+    const indentMatch = line.match(/^(\s*)-/);
+    if (!indentMatch) continue;
+
+    const indentLevel = indentMatch[1].length / 2;
+
+    const taskRegex = /-\s(\[([ v])\])\s\[([ovx >]{7})\]\s(.*?)\s*\{%(.*)\}/;
+    const taskMatch = line.trim().match(taskRegex);
+
+    if (!taskMatch) continue;
+
+    const [, doneMarker, , statusStr, titleText, metadataStr] = taskMatch;
+
+    const metadata: Record<string, string> = {};
+    metadataStr.split(';').forEach(part => {
+      const [key, ...valueParts] = part.split(':');
+      if (key && valueParts.length > 0) {
+        metadata[key.trim()] = valueParts.join(':').trim();
+      }
+    });
+
+    if (!metadata.id || !metadata.created) continue;
+
+    const statuses: Task['statuses'] = {
+      monday: 'default', tuesday: 'default', wednesday: 'default',
+      thursday: 'default', friday: 'default', saturday: 'default', sunday: 'default'
+    };
+    if (statusStr.length === 7) {
+      weekdays.forEach((day, index) => {
+        statuses[day] = statusMap[statusStr[index]] || 'default';
+      });
+    }
+
+    const parentId = metadata.parentid || null;
+
+    const task: Task = {
+      id: metadata.id,
+      title: `${doneMarker.trim()} ${titleText.trim()}`,
+      createdAt: metadata.created,
+      parentId: parentId,
+      week: currentWeekKey,
+      statuses: statuses,
+    };
+
+    tasks.push(task);
+  }
+
+  // The previous implementation of re-ordering was complex and potentially buggy.
+  // The markdown structure itself defines the order. By simply pushing tasks as we parse them,
+  // and correctly identifying their parents from the metadata, the final order will be correct
+  // when rendered by the UI, which uses a tree-like structure.
+  return tasks;
 }

@@ -2,7 +2,7 @@
 
 **Your Weekly Task Manager for Deep Focus.**
 
-[**Try Here: https://weeklist.vercel.app**](https://weeklist.vercel.app)
+Try Here: [** https://weeklist.vercel.app**](https://weeklist.vercel.app)
 
 WeekList transforms the traditional "Running To-do List" into a powerful digital experience. Designed for clarity, it gives you a high-level view of your entire week, helping you manage priorities, track progress, and stay focused on what matters.
 
