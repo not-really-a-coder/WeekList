@@ -10,12 +10,13 @@ WeekList transforms the traditional "Running To-do List" into a powerful digital
 
 *   **📅 Weekly Grid View**: Visualize your workload. See your week at a glance and move tasks across days effortlessly.
 *   **🔒 Local-First Approach**: Your data stays with you. Import and export your tasks as Markdown files to keep a local backup or move between devices.
+*   **🖱️ Drag & Drop**: Intuitive reordering and rescheduling.
 *   **⌨️ Hotkeys**: Speed up your workflow with keyboard shortcuts for adding, moving, and managing tasks. (Tip: Use `Ctrl+Enter` to quick-add!).
-*   **�️ Print Optimized**: Need a paper copy? WeekList supports clean, organized printing of your weekly schedule.
+*   **🖨️ Print Optimized**: Need a paper copy? WeekList supports clean, organized printing of your weekly schedule.
 *   **🔗 Sharing**: Share a read-only link of your weekly plan with others.
 *   **✅ Rich Statuses**: Go beyond "done". Track tasks as Planned, Completed, Rescheduled, or Cancelled.
 *   **🪜 Sub-tasks**: Organize complex projects with nested steps.
-*   **🖱️ Drag & Drop**: Intuitive reordering and rescheduling.
+
 
 ## 🚀 Getting Started
 
