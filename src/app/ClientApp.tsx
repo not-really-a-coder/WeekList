@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useTransition, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
@@ -73,10 +74,10 @@ const getDayWithSuffix = (date: Date) => {
 };
 
 interface ClientAppProps {
-  initialDate?: Date;
+  initialDate?: string;
 }
 
-export default function ClientApp({ initialDate = new Date() }: ClientAppProps) {
+export default function ClientApp({ initialDate }: ClientAppProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +86,8 @@ export default function ClientApp({ initialDate = new Date() }: ClientAppProps) 
   const DndBackend = isMobile ? TouchBackend : HTML5Backend;
   const dndOptions = isMobile ? { enableMouseEvents: false, enableTouchEvents: true } : {};
 
-  const [currentDate, setCurrentDate] = useState(initialDate);
+  // Parse the initial date string or default to new Date()
+  const [currentDate, setCurrentDate] = useState(() => initialDate ? new Date(initialDate) : new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showWeekends, setShowWeekends] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -1127,7 +1129,7 @@ export default function ClientApp({ initialDate = new Date() }: ClientAppProps) 
                   <div className="flex justify-end text-right sm:justify-end sm:text-right">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal">
+                        <Button variant="link" className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal font-normal">
                           Copy all open tasks to next week
                           <ArrowRight className="ml-2 size-4 inline-block" />
                         </Button>
@@ -1154,6 +1156,11 @@ export default function ClientApp({ initialDate = new Date() }: ClientAppProps) 
             )}
           </div>
         </main>
+        <footer className="py-6 text-center text-sm text-muted-foreground border-t mt-auto print:hidden">
+          <Link href="/welcome" className="hover:text-foreground transition-colors">
+            Back to the Welcome page
+          </Link>
+        </footer>
         <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

@@ -75,5 +75,5 @@ const ClientApp = dynamic(() => import('./ClientApp'), {
 
 export default function Page() {
   const today = new Date();
-  return <ClientApp initialDate={today} />;
+  return <ClientApp initialDate={today.toISOString()} />;
 }

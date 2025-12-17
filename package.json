@@ -29,6 +29,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
+    "framer-motion": "^12.23.26",
     "genkit": "^1.25.0",
     "lucide-react": "^0.475.0",
     "lz-string": "^1.5.0",

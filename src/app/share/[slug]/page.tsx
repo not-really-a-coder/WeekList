@@ -6,6 +6,7 @@ import { decodeShareData, SharedData } from '@/lib/sharing';
 import { TaskGrid } from '@/components/TaskGrid';
 import { getWeek, getYear, startOfWeek, addDays, parse } from 'date-fns';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -68,7 +69,7 @@ export default function SharePage({ params }: SharePageProps) {
     };
 
     if (!resolvedParams || loading) {
-        return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+        return <div className="flex items-center justify-center min-h-screen bg-background text-foreground"><Loader2 className="animate-spin" /></div>;
     }
 
     if (!data) {

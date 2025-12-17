@@ -57,6 +57,7 @@ interface TaskRowProps {
   isAIFeatureEnabled?: boolean;
   onToggleCollapse: (taskId: string) => void;
   isReadOnly?: boolean;
+  hideCompleted?: boolean;
 }
 
 interface DragItem {
@@ -70,7 +71,7 @@ const ItemTypes = {
   TASK: 'task',
 };
 
-export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter, isPrint = false, isAIFeatureEnabled = false, onToggleCollapse, isReadOnly = false }: TaskRowProps) {
+export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDelete, onToggleDone, onMove, onSetParent, getTaskById, onMoveToWeek, onMoveTaskUpDown, onSelectTask, onAddSubTasks, onAddTaskAfter, isPrint = false, isAIFeatureEnabled = false, onToggleCollapse, isReadOnly = false, hideCompleted = false }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(task.isNew);
   const [editableTitle, setEditableTitle] = useState(task.title.substring(task.title.indexOf(']') + 2));
   const [isBreakingDown, setIsBreakingDown] = useState(false);
@@ -83,7 +84,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
   const taskText = task.title.substring(task.title.indexOf(']') + 2);
   const isImportant = taskText.startsWith('!');
   const displayTitle = isImportant ? taskText.substring(1) : taskText;
-  const isParent = tasks.some(t => t.parentId === task.id);
+  const isParent = tasks.some(t => t.parentId === task.id && (!hideCompleted || !t.title.startsWith('[v]')));
 
   const isMobile = useIsMobile();
 
@@ -379,7 +380,7 @@ export function TaskRow({ task, tasks, index, level, isSelected, onUpdate, onDel
             >
               <p
                 className={cn(
-                  "text-[0.9rem] md:text-sm font-medium line-clamp-2",
+                  "text-[0.9rem] md:text-sm line-clamp-2",
                   isDone && "line-through text-muted-foreground",
                   isParent && "font-bold"
                 )}

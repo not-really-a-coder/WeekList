@@ -160,6 +160,7 @@ export function TaskGrid({
               isAIFeatureEnabled={isAIFeatureEnabled}
               onToggleCollapse={onToggleCollapse}
               isReadOnly={isReadOnly}
+              hideCompleted={hideCompleted}
             />
           </div>
         </div>
