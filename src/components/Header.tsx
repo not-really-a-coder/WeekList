@@ -5,8 +5,9 @@ import Link from 'next/link';
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download, Upload, Menu, Printer, CircleHelp, Share2, Check } from 'lucide-react';
+import { Loader2, Download, Upload, Menu, Printer, CircleHelp, Share2, Check, Info } from 'lucide-react';
 import { Button } from './ui/button';
+import { AboutDialog } from './AboutDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,8 @@ export function Header({
   hideClosed,
   onToggleHideClosed
 }: HeaderProps) {
+  const [showAbout, setShowAbout] = React.useState(false);
+
   return (
     <>
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50 print:hidden">
@@ -163,12 +166,18 @@ export function Header({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <ThemeToggle />
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowAbout(true)}>
+                    <Info className="mr-2 size-4" />
+                    About Weeklist
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
           </div>
         </div>
       </header>
+      <AboutDialog open={showAbout} onOpenChange={setShowAbout} />
     </>
   );
 }

@@ -3,12 +3,27 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, Shield, Zap, Calendar, MousePointer2, Github } from 'lucide-react';
+import { ArrowRight, Check, Shield, Zap, Calendar, MousePointer2, Github, Linkedin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/Logo';
 import { DemoGrid } from './demo-grid';
 
 export default function WelcomePage() {
+    // Defensive cleanup for potential lingering Radix UI Dialog locks
+    React.useEffect(() => {
+        // immediate cleanup
+        document.body.style.pointerEvents = '';
+        document.body.removeAttribute('data-scroll-locked');
+
+        // slight delay to catch any race conditions
+        const timer = setTimeout(() => {
+            document.body.style.pointerEvents = '';
+            document.body.removeAttribute('data-scroll-locked');
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="flex flex-col min-h-screen bg-background overflow-hidden selection:bg-primary/20">
 
@@ -210,9 +225,11 @@ export default function WelcomePage() {
                             ))}
                         </div>
 
-                        <div className="mt-12 text-center">
-                            <Button asChild size="lg" variant="secondary" className="rounded-full">
-                                <Link href="/?start=true">Try WeekList for Free</Link>
+                        <div className="mt-32 flex justify-center">
+                            <Button asChild size="lg" className="h-12 px-8 rounded-full text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 transition-all w-full sm:w-auto">
+                                <Link href="/?start=true">
+                                    Open WeekList
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -244,11 +261,62 @@ export default function WelcomePage() {
                     </div>
                 </section>*/}
 
-                <footer className="py-12 px-6 border-t bg-background text-center text-sm text-muted-foreground flex flex-col items-center gap-4">
+                {/* --- FAQ SECTION --- */}
+                <section className="py-6 px-6 max-w-4xl mx-auto">
+                    <h2 className="text-3xl font-bold font-headline mb-12 text-center">Common Questions</h2>
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <div className="space-y-8">
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">Is WeekList really free?</h4>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    Yes, by far it's free and open-source, distributed under GPL 3.0 license.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">Where is my data stored?</h4>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    Strictly on your device (in LocalStorage). We don't have databases or files stored on the server with your data. Only you can see your tasks online.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">Is sharing with a link still secure?</h4>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    Yes, WeekList uses stateless sharing. It encodes the content of the week directly in the URL. That's why it's so long, but safe from server-side leaks.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="space-y-8">
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">Do you have a mobile app?</h4>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    It works as an app on your phone. You can "Add to Home Screen" on iOS/Android for a native-like experience.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">Can I sync between devices?</h4>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    There's no straightforward way currently, as we pursue a local-only philosophy. You can use any convenient cloud (Google Drive, OneDrive, etc.) to sync exported MD files between your devices.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">How do I backup my data?</h4>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    You can "Export to Markdown" at any time from the menu to save a copy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <footer className="py-6 px-6 border-t bg-background text-center text-sm text-muted-foreground flex flex-wrap justify-center items-center gap-6">
                     <p>&copy; {new Date().getFullYear()} WeekList. Built for focus.</p>
                     <a href="https://github.com/not-really-a-coder/WeekList" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground transition-colors">
                         <Github className="size-4" />
                         <span>View on GitHub</span>
+                    </a>
+                    <a href="https://www.linkedin.com/in/leonidardaev/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground transition-colors">
+                        <Linkedin className="size-4" />
+                        <span>Leonid Ardaev</span>
                     </a>
                 </footer>
 
