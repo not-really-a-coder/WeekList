@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, Shield, Zap, Calendar, MousePointer2, Github, Linkedin } from 'lucide-react';
+import { ArrowRight, Check, Shield, Zap, Calendar, MousePointer2, Github, Linkedin, Rocket } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/Logo';
 import { DemoGrid } from './demo-grid';
@@ -317,6 +317,10 @@ export default function WelcomePage() {
                     <a href="https://www.linkedin.com/in/leonidardaev/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground transition-colors">
                         <Linkedin className="size-4" />
                         <span>Leonid Ardaev</span>
+                    </a>
+                    <a href="https://www.producthunt.com/products/weeklist" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground transition-colors">
+                        <Rocket className="size-4" />
+                        <span>Product Hunt</span>
                     </a>
                 </footer>
 

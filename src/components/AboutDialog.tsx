@@ -83,10 +83,14 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
                                 <span>Github Repo</span>
                             </Link>
 
-                            <div className="flex items-center gap-2 opacity-60 cursor-not-allowed select-none w-fit tooltipp">
-                                <Rocket className="size-4 text-muted-foreground" />
-                                <span>Product Hunt (tbc)</span>
-                            </div>
+                            <Link
+                                href="https://www.producthunt.com/products/weeklist"
+                                target="_blank"
+                                className="hover:underline flex items-center gap-2 group w-fit"
+                            >
+                                <Rocket className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                <span>Product Hunt</span>
+                            </Link>
 
                             <div className="text-muted-foreground pt-1">
                                 Don't use any of these?{' '}
