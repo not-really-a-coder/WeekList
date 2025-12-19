@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     // Check if the user is explicitly starting the app
     if (request.nextUrl.searchParams.get('start') === 'true') {
         const response = NextResponse.redirect(new URL('/', request.url))

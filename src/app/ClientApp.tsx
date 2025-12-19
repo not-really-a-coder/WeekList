@@ -48,6 +48,7 @@ interface FileSystemWritableFileStream extends WritableStream {
 declare global {
   interface Window {
     showSaveFilePicker?: (options?: any) => Promise<FileSystemFileHandle>;
+    showOpenFilePicker?: (options?: any) => Promise<FileSystemFileHandle[]>;
   }
 }
 
@@ -158,8 +159,9 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
 
   const { resolvedTheme, setTheme } = useTheme();
 
-  // Smart Export State
+  // Smart Export/Import State
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null);
+  const [importFileHandle, setImportFileHandle] = useState<FileSystemFileHandle | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [pendingMarkdown, setPendingMarkdown] = useState<string | null>(null);
 
@@ -539,6 +541,63 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
   }, [tasks, currentWeekKey, updateAndSaveTasks]);
 
 
+
+  const handleSmartImport = useCallback(async () => {
+    if (typeof window.showOpenFilePicker === 'function') {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Markdown File',
+            accept: { 'text/markdown': ['.md', '.txt'] },
+          }],
+          multiple: false,
+        });
+
+        if (handle) {
+          const file = await handle.getFile();
+          const content = await file.text();
+          const newTasks = await parseTasksMarkdown(content);
+          if (newTasks.length > 0) {
+            updateAndSaveTasks(newTasks);
+            setImportFileHandle(handle);
+            toast({ title: 'Success', description: `Imported ${newTasks.length} tasks. Press Ctrl+R or click refresh icon to reload.` });
+          } else {
+            toast({ variant: 'destructive', title: 'Import failed', description: 'No tasks found.' });
+          }
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Import failed:', error);
+          toast({ variant: 'destructive', title: 'Import error', description: 'Could not open file.' });
+        }
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  }, [updateAndSaveTasks, toast]);
+
+  const handleImportHotkey = useCallback(async () => {
+    if (importFileHandle) {
+      try {
+        const file = await importFileHandle.getFile();
+        const content = await file.text();
+        const newTasks = await parseTasksMarkdown(content);
+        if (newTasks.length > 0) {
+          updateAndSaveTasks(newTasks);
+          toast({ title: 'Reloaded', description: `Re-imported tasks from ${importFileHandle.name}` });
+        } else {
+          toast({ variant: 'destructive', title: 'Reload failed', description: 'No tasks found.' });
+        }
+      } catch (error) {
+        console.error('Re-import failed:', error);
+        toast({ variant: 'destructive', title: 'Reload failed', description: 'Could not read file. Select it again.' });
+        handleSmartImport(); // Fallback to picking again
+      }
+    } else {
+      handleSmartImport();
+    }
+  }, [importFileHandle, updateAndSaveTasks, toast, handleSmartImport]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -548,6 +607,18 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
       if (e.key === 'Enter' && e.ctrlKey) {
         e.preventDefault();
         handleAddTaskSmart(selectedTaskId);
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleDownload();
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+        e.preventDefault();
+        handleImportHotkey();
         return;
       }
 
@@ -620,7 +691,9 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks, handleAddTaskSmart, handleDownload, handlePrint]);
+  }, [selectedTaskId, tasks, handleMoveTaskUpDown, handleSetTaskParent, navigableTasks, handleAddTaskSmart, handleDownload, handlePrint, handleImportHotkey]);
+
+
 
 
   const handleToggleCollapse = useCallback((taskId: string) => {
@@ -973,8 +1046,10 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
   };
 
 
+
+
   const handleUploadClick = () => {
-    fileInputRef.current?.click();
+    handleSmartImport();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1062,6 +1137,8 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
           onUpload={handleUploadClick}
           onPrint={handlePrint}
           onShare={handleShare}
+          canReImport={!!importFileHandle}
+          onReImport={handleImportHotkey}
         />
         <main className="flex-grow py-4" onClick={(e) => e.stopPropagation()}>
           <div className="w-full px-2 max-w-7xl">

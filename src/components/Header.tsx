@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React from 'react';
 import Logo from './Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { Loader2, Download, Upload, Menu, Printer, CircleHelp, Share2, Check, Info } from 'lucide-react';
+import { Loader2, Download, Upload, Menu, Printer, CircleHelp, Share2, Check, Info, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
 import { AboutDialog } from './AboutDialog';
 import {
@@ -33,6 +33,8 @@ interface HeaderProps {
   onToggleFitToScreen?: () => void;
   hideClosed?: boolean;
   onToggleHideClosed?: () => void;
+  canReImport?: boolean;
+  onReImport?: () => void;
 }
 
 export function Header({
@@ -45,25 +47,32 @@ export function Header({
   fitToScreen,
   onToggleFitToScreen,
   hideClosed,
-  onToggleHideClosed
+  onToggleHideClosed,
+  canReImport,
+  onReImport
 }: HeaderProps) {
   const [showAbout, setShowAbout] = React.useState(false);
 
   return (
     <>
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-50 print:hidden">
-        <div className="flex items-center justify-between px-2 py-2 w-full max-w-7xl gap-4">
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <Link href="/" className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-2 py-2 w-full max-w-7xl gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 md:gap-3">
               <Logo className="size-8" />
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold font-headline text-foreground">WeekList</h1>
+                <h1 className="text-xl md:text-2xl font-bold font-headline text-foreground">WeekList</h1>
                 {isReadOnly && <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded font-medium">Snapshot</span>}
               </div>
             </Link>
             {isSaving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
           </div>
           <div className="flex items-center justify-end gap-2">
+            {!isReadOnly && canReImport && onReImport && (
+              <Button variant="ghost" size="icon" onClick={onReImport} className="size-8 hover:bg-accent hover:text-accent-foreground" aria-label="Reload from file (Ctrl+R)">
+                <RefreshCw className="size-5" />
+              </Button>
+            )}
             {!isReadOnly && onShare && (
               <Button variant="ghost" size="icon" onClick={onShare} className="size-8 hover:bg-accent hover:text-accent-foreground" aria-label="Share this list">
                 <Share2 className="size-5" />
@@ -104,7 +113,10 @@ export function Header({
                         <span>Un-indent task</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+S</span>
-                        <span>Export tasks</span>
+                        <span>(Re)Export tasks to .md</span>
+
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+R</span>
+                        <span>(Re)Import tasks from .md</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+P</span>
                         <span>Print</span>
@@ -151,6 +163,7 @@ export function Header({
                       <DropdownMenuItem onClick={onUpload}>
                         <Upload className="mr-2 size-4" />
                         Import (.md)
+                        <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+R</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={onDownload}>
                         <Download className="mr-2 size-4" />

@@ -3,6 +3,8 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Analytics } from '@vercel/analytics/react';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { CookieConsent } from '@/components/CookieConsent';
 
 
 export const metadata: Metadata = {
@@ -25,6 +27,8 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <Sonner />
+          <CookieConsent />
         </ThemeProvider>
         <Analytics />
       </body>

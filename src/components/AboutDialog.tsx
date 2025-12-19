@@ -55,7 +55,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
                 <div className="grid gap-6 py-2 text-sm">
                     <div className="grid grid-cols-[auto_1fr] gap-x-8 gap-y-2">
                         <div className="text-muted-foreground">Public Preview</div>
-                        <div className="font-medium">19.12.2025</div>
+                        <div className="font-medium">22.12.2025</div>
                         <div className="text-muted-foreground">Last Updated</div>
                         <div className="font-medium">{updateDate}</div>
                     </div>
@@ -86,6 +86,16 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
                             <div className="flex items-center gap-2 opacity-60 cursor-not-allowed select-none w-fit tooltipp">
                                 <Rocket className="size-4 text-muted-foreground" />
                                 <span>Product Hunt (tbc)</span>
+                            </div>
+
+                            <div className="text-muted-foreground pt-1">
+                                Don't use any of these?{' '}
+                                <a
+                                    href="mailto:weeklist.feedback@gmail.com"
+                                    className="text-primary hover:underline"
+                                >
+                                    Email your feedback here.
+                                </a>
                             </div>
                         </div>
                     </div>

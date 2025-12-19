@@ -10,8 +10,8 @@ const Logo = (props: React.SVGProps<SVGSVGElement>) => (
   >
     <defs>
       <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))' }} />
-        <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))' }} />
+        <stop offset="0%" style={{ stopColor: 'hsl(20, 90%, 50%)' }} />
+        <stop offset="100%" style={{ stopColor: 'hsl(40, 90%, 60%)' }} />
       </linearGradient>
     </defs>
     <path
