@@ -1148,7 +1148,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+                <div className="flex items-center justify-between mb-4 sm:px-0">
                   <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -1168,7 +1168,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="px-2 sm:px-0 pb-5 overflow-x-auto">
+                <div className="sm:px-0 pb-5 overflow-x-auto">
                   <TaskGrid
                     tasks={navigableTasks}
                     selectedTaskId={selectedTaskId}
@@ -1199,7 +1199,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                     onToggleCollapse={handleToggleCollapse}
                   />
                 </div>
-                <div className="flex flex-row items-start justify-between gap-4 px-2 sm:px-0">
+                <div className="flex flex-row items-start justify-between gap-4 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>
