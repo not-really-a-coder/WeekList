@@ -12,7 +12,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, Loader2, RotateCcw } from 'lucide-react';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { addDays, getWeek, getYear, parseISO, setWeek, startOfWeek, format, parse, getDate } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -27,10 +27,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Copy } from 'lucide-react';
 
+import { StartFreshDialog } from '@/components/StartFreshDialog';
+
 const ID_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const ID_LENGTH = 4;
 const LOCAL_STORAGE_KEY = 'weeklist-tasks';
 const SHOW_WEEKENDS_KEY = 'weeklist-show-weekends';
+const HIDE_COMPLETED_KEY = 'weeklist-hide-completed';
+const FIT_TO_SCREEN_KEY = 'weeklist-fit-to-screen';
+const COOKIE_CONSENT_KEY = 'weeklist-cookie-consent';
 
 // File System Access API types
 interface FileSystemFileHandle {
@@ -97,6 +102,9 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  const [isStartFreshOpen, setIsStartFreshOpen] = useState(false);
+
+
 
   const currentWeek = getWeek(currentDate, { weekStartsOn: 1 });
   const currentYear = getYear(currentDate);
@@ -292,6 +300,55 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
     setIsSaveDialogOpen(false);
     setPendingMarkdown(null);
   };
+
+  // Start Fresh Logic
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has('StartFresh')) {
+        setIsStartFreshOpen(true);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, []);
+
+  const handleStartFreshConfirm = useCallback(({ deleteAll, deleteCurrentWeek, resetPrefs }: { deleteAll: boolean; deleteCurrentWeek: boolean; resetPrefs: boolean }) => {
+    if (deleteAll) {
+      setTasks([]);
+      localStorage.setItem(LOCAL_STORAGE_KEY, '[]');
+      if (typeof setFileHandle === 'function') setFileHandle(null);
+      if (typeof setImportFileHandle === 'function') setImportFileHandle(null);
+    } else if (deleteCurrentWeek) {
+      // Need currentWeekKey. It's defined further down?
+      // currentWeekKey depends on currentDate.
+      // Let's calculate it here locally or use state if possible?
+      // 'currentWeekKey' variable is defined at line 110.
+      // is it available here?
+      // It's a const defined in the render body. Yes, it's available since line 110.
+      // But we are at line 300. So yes.
+      const remainingTasks = tasks.filter(t => t.week !== currentWeekKey);
+      setTasks(remainingTasks);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(remainingTasks));
+    }
+
+    if (resetPrefs) {
+      localStorage.removeItem(SHOW_WEEKENDS_KEY);
+      setShowWeekends(true);
+      localStorage.removeItem(HIDE_COMPLETED_KEY);
+      setHideCompleted(false);
+      localStorage.removeItem(FIT_TO_SCREEN_KEY);
+      setFitToScreen(false);
+      setTheme('system');
+      localStorage.removeItem('theme');
+    }
+
+    toast({ title: 'Fresh Start', description: 'WeekList has been reset according to your choices.' });
+  }, [tasks, currentWeekKey, setTheme, toast]);
+
+  const handleStartFreshExport = useCallback(() => {
+    handleDownload();
+  }, [handleDownload]);
 
   const loadTasks = useCallback(async () => {
     setIsLoading(true);
@@ -1121,6 +1178,9 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
   const isCurrentWeek = getYear(currentDate) === getYear(today) && getWeek(currentDate, { weekStartsOn: 1 }) === getWeek(today, { weekStartsOn: 1 });
 
 
+
+
+
   return (
     <DndProvider backend={DndBackend} options={dndOptions}>
       <div className="min-h-screen bg-background text-foreground flex flex-col" onClick={() => setSelectedTaskId(null)}>
@@ -1229,6 +1289,14 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                     {/* <Link href="/welcome" className="text-sm text-muted-foreground hover:text-foreground transition-colors mr-1">
                       Back to the Welcome page
                     </Link> */}
+                    <Button
+                      variant="link"
+                      className="max-w-[170px] sm:max-w-xs h-auto p-0 text-right leading-tight whitespace-normal font-normal"
+                      onClick={() => setIsStartFreshOpen(true)}
+                    >
+                      Start Fresh
+                      <RotateCcw className="ml-2 size-4 inline-block" />
+                    </Button>
                   </div>
                 </div>
 
@@ -1337,7 +1405,15 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
               </Button>
             </DialogFooter>
           </DialogContent>
+
+          <StartFreshDialog
+            open={isStartFreshOpen}
+            onOpenChange={setIsStartFreshOpen}
+            onConfirm={handleStartFreshConfirm}
+            onExport={handleStartFreshExport}
+          />
         </Dialog>
+
       </div >
     </DndProvider >
   );

@@ -7,25 +7,8 @@ export function CookieConsent() {
         // Global Debug: Clear LocalStorage via URL detection
         if (typeof window !== 'undefined') {
             const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.has('ClearLocalStorage')) {
-                localStorage.clear();
-                // Prevent onboarding tasks from reappearing by setting an empty list
-                localStorage.setItem('weeklist-tasks', '[]');
-                localStorage.setItem('weeklist-cookie-consent', 'true'); // Optional: skip consent again if they just cleared it? No, user asked to see consent debug. Keep it cleared? 
-                // Actually, if we clear logic, consent is gone. That's fine.
+            // legacy ClearLocalStorage logic removed
 
-                toast("System Reset", {
-                    description: "Local storage has been cleared.",
-                    duration: 5000,
-                });
-
-                // Remove the parameter from the URL cleanly
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, '', newUrl);
-
-                // Force reload to clear application state
-                setTimeout(() => window.location.reload(), 1000);
-            }
         }
 
         const timer = setTimeout(() => {
