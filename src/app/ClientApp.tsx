@@ -661,31 +661,27 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
         return;
       }
 
-      if (e.key === 'Enter' && e.ctrlKey) {
+      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+
+      if (e.key === 'Enter' && isCmdOrCtrl) {
         e.preventDefault();
         handleAddTaskSmart(selectedTaskId);
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      if (isCmdOrCtrl && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
         handleDownload();
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+      if (isCmdOrCtrl && (e.key === 'r' || e.key === 'R')) {
         e.preventDefault();
         handleImportHotkey();
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-        e.preventDefault();
-        handleDownload();
-        return;
-      }
-
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+      if (isCmdOrCtrl && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
         handlePrint();
         return;
@@ -710,20 +706,20 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
 
       const selectedTaskIndex = navigableTasks.findIndex(t => t.id === selectedTaskId);
 
-      if (e.key === 'ArrowUp' && !e.ctrlKey) {
+      if (e.key === 'ArrowUp' && !isCmdOrCtrl) {
         e.preventDefault();
         if (selectedTaskIndex > 0) {
           setSelectedTaskId(navigableTasks[selectedTaskIndex - 1].id);
         }
-      } else if (e.key === 'ArrowDown' && !e.ctrlKey) {
+      } else if (e.key === 'ArrowDown' && !isCmdOrCtrl) {
         e.preventDefault();
         if (selectedTaskIndex < navigableTasks.length - 1) {
           setSelectedTaskId(navigableTasks[selectedTaskIndex + 1].id);
         }
-      } else if (e.key === 'ArrowUp' && e.ctrlKey) {
+      } else if (e.key === 'ArrowUp' && isCmdOrCtrl) {
         e.preventDefault();
         handleMoveTaskUpDown(selectedTaskId, 'up');
-      } else if (e.key === 'ArrowDown' && e.ctrlKey) {
+      } else if (e.key === 'ArrowDown' && isCmdOrCtrl) {
         e.preventDefault();
         handleMoveTaskUpDown(selectedTaskId, 'down');
       } else if (e.key === 'Tab' && !e.shiftKey) {

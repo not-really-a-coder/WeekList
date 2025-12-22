@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 
+import { useOS } from '@/hooks/use-os';
+
 interface HeaderProps {
   isSaving: boolean;
   onDownload: () => void;
@@ -52,6 +54,8 @@ export function Header({
   onReImport
 }: HeaderProps) {
   const [showAbout, setShowAbout] = React.useState(false);
+  const os = useOS();
+  const modifier = os === 'mac' ? '⌘' : 'Ctrl';
 
   return (
     <>
@@ -69,7 +73,7 @@ export function Header({
           </div>
           <div className="flex items-center justify-end gap-2">
             {!isReadOnly && canReImport && onReImport && (
-              <Button variant="ghost" size="icon" onClick={onReImport} className="size-8 hover:bg-accent hover:text-accent-foreground" aria-label="Reload from file (Ctrl+R)">
+              <Button variant="ghost" size="icon" onClick={onReImport} className="size-8 hover:bg-accent hover:text-accent-foreground" aria-label={`Reload from file (${modifier}+R)`}>
                 <RefreshCw className="size-5" />
               </Button>
             )}
@@ -94,8 +98,8 @@ export function Header({
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">↑/↓</span>
                         <span>Navigate tasks</span>
 
-                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+Enter</span>
-                        <span>Create a new task</span>
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{modifier}+Enter</span>
+                        <span>Add new task (smartly)</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Enter</span>
                         <span>Save changes</span>
@@ -103,7 +107,7 @@ export function Header({
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Del</span>
                         <span>Delete a task</span>
 
-                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+↑/↓</span>
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{modifier}+&#8593;/&#8595;</span>
                         <span>Move task up/down</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Tab</span>
@@ -112,13 +116,13 @@ export function Header({
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Shift+Tab</span>
                         <span>Un-indent task</span>
 
-                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+S</span>
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{modifier}+S</span>
                         <span>Save tasks to .md</span>
 
-                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+R</span>
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{modifier}+R</span>
                         <span>(Re)Load tasks from .md</span>
 
-                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+P</span>
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{modifier}+P</span>
                         <span>Print</span>
                       </div>
                     </div>
@@ -163,19 +167,19 @@ export function Header({
                       <DropdownMenuItem onClick={onUpload}>
                         <Upload className="mr-2 size-4" />
                         Load (.md)
-                        <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+R</span>
+                        <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">{modifier}+R</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={onDownload}>
                         <Download className="mr-2 size-4" />
                         Save (.md)
-                        <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+S</span>
+                        <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">{modifier}+S</span>
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuItem onClick={onPrint}>
                     <Printer className="mr-2 size-4" />
                     Print
-                    <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+P</span>
+                    <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">{modifier}+P</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <ThemeToggle />

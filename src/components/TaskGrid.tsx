@@ -96,15 +96,20 @@ export function TaskGrid({
   const visibleWeekdays = showWeekends ? weekdays : weekdays.slice(0, 5);
   const taskColumnSpan = showWeekends ? 'col-start-8' : 'col-start-6';
   const taskHeaderSpan = showWeekends ? 'col-start-8' : 'col-start-6';
+  // Desktop (sm): Fixed at 3.5rem ("square")
   let gridColsClass = '';
   if (showWeekends) {
-    gridColsClass = fitToScreen
-      ? 'grid-cols-[repeat(7,1.7rem)_1fr]'
-      : 'grid-cols-[repeat(7,2.2rem)_1fr]';
+    if (fitToScreen) {
+      gridColsClass = 'grid-cols-[repeat(7,1.8rem)_1fr] sm:grid-cols-[repeat(7,3.5rem)_1fr]';
+    } else {
+      gridColsClass = 'grid-cols-[repeat(7,2.2rem)_1fr] sm:grid-cols-[repeat(7,3.5rem)_1fr]';
+    }
   } else {
-    gridColsClass = fitToScreen
-      ? 'grid-cols-[repeat(5,1.7rem)_1fr]'
-      : 'grid-cols-[repeat(5,2.2rem)_1fr]';
+    if (fitToScreen) {
+      gridColsClass = 'grid-cols-[repeat(5,1.8rem)_1fr] sm:grid-cols-[repeat(5,3.5rem)_1fr]';
+    } else {
+      gridColsClass = 'grid-cols-[repeat(5,2.2rem)_1fr] sm:grid-cols-[repeat(5,3.5rem)_1fr]';
+    }
   }
   const rowColumnSpan = showWeekends ? 'col-span-8' : 'col-span-6';
 
