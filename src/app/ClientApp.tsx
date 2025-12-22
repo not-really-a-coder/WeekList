@@ -1259,7 +1259,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                     onToggleCollapse={handleToggleCollapse}
                   />
                 </div>
-                <div className="flex flex-row items-start justify-between gap-4 sm:px-0">
+                <div className="mt-2 flex flex-row items-start justify-between gap-4 sm:px-0">
                   <div className="flex-shrink-0 min-w-[45%] sm:min-w-0">
                     <Legend />
                   </div>

@@ -96,9 +96,16 @@ export function TaskGrid({
   const visibleWeekdays = showWeekends ? weekdays : weekdays.slice(0, 5);
   const taskColumnSpan = showWeekends ? 'col-start-8' : 'col-start-6';
   const taskHeaderSpan = showWeekends ? 'col-start-8' : 'col-start-6';
-  const gridColsClass = showWeekends
-    ? 'grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,12fr)]'
-    : 'grid-cols-[repeat(5,minmax(0,1fr))_minmax(0,14fr)]';
+  let gridColsClass = '';
+  if (showWeekends) {
+    gridColsClass = fitToScreen
+      ? 'grid-cols-[repeat(7,1.7rem)_1fr]'
+      : 'grid-cols-[repeat(7,2.2rem)_1fr]';
+  } else {
+    gridColsClass = fitToScreen
+      ? 'grid-cols-[repeat(5,1.7rem)_1fr]'
+      : 'grid-cols-[repeat(5,2.2rem)_1fr]';
+  }
   const rowColumnSpan = showWeekends ? 'col-span-8' : 'col-span-6';
 
   const renderTask = (task: Task, index: number, level = 0) => {
@@ -175,7 +182,7 @@ export function TaskGrid({
     <div className={cn(
       "grid gap-px bg-border border rounded-lg relative",
       gridColsClass,
-      !fitToScreen && "min-w-[620px]",
+      !fitToScreen && "min-w-[650px]",
       // Manually round the bottom corners of the last row since we removed overflow-hidden
       "[&>.task-row:last-child>*:last-child]:rounded-br-lg",
       "[&>.task-row:last-child>*:first-child]:rounded-bl-lg"
