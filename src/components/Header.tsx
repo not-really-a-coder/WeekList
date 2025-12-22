@@ -113,10 +113,10 @@ export function Header({
                         <span>Un-indent task</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+S</span>
-                        <span>(Re)Export tasks to .md</span>
+                        <span>Save tasks to .md</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+R</span>
-                        <span>(Re)Import tasks from .md</span>
+                        <span>(Re)Load tasks from .md</span>
 
                         <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Ctrl+P</span>
                         <span>Print</span>
@@ -162,12 +162,12 @@ export function Header({
                     <>
                       <DropdownMenuItem onClick={onUpload}>
                         <Upload className="mr-2 size-4" />
-                        Import (.md)
+                        Load (.md)
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+R</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={onDownload}>
                         <Download className="mr-2 size-4" />
-                        Export (.md)
+                        Save (.md)
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground opacity-60 hidden md:inline-block">Ctrl+S</span>
                       </DropdownMenuItem>
                     </>

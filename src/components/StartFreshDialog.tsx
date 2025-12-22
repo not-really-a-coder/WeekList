@@ -120,10 +120,10 @@ export function StartFreshDialog({ open, onOpenChange, onConfirm, onExport }: St
                                 Are you sure?
                             </DialogTitle>
                             <DialogDescription>
-                                This action cannot be undone.
                                 {deleteOption === 'all'
                                     ? ' All your tasks will be permanently deleted.'
                                     : ' Tasks for this week will be permanently deleted.'}
+                                <br />This action cannot be undone.<br />Consider backing up your tasks to .md before deleting.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -135,7 +135,7 @@ export function StartFreshDialog({ open, onOpenChange, onConfirm, onExport }: St
                             <Button variant="ghost" onClick={handleBack} className="mr-auto">Back</Button>
                             <Button variant="outline" onClick={onExport} className="gap-2">
                                 <Download className="size-4" />
-                                Export to MD
+                                Save to .md
                             </Button>
                             <Button variant="destructive" onClick={handleConfirm} className="gap-2">
                                 <Trash2 className="size-4" />
@@ -145,6 +145,6 @@ export function StartFreshDialog({ open, onOpenChange, onConfirm, onExport }: St
                     </>
                 )}
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

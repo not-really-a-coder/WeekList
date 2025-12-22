@@ -258,8 +258,8 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
       if (!markdown || markdown.trim() === '# WeekList Tasks') {
         toast({
           variant: 'destructive',
-          title: 'Export failed',
-          description: 'There are no tasks to export.',
+          title: 'Save to .md failed',
+          description: 'There are no tasks to save.',
         });
         return;
       }
@@ -1228,7 +1228,7 @@ export default function ClientApp({ initialDate }: ClientAppProps) {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="sm:px-0 pb-5 overflow-x-auto">
+                <div className="sm:px-0 pb-2 overflow-x-auto">
                   <TaskGrid
                     tasks={navigableTasks}
                     selectedTaskId={selectedTaskId}

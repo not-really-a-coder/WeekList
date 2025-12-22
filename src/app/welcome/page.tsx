@@ -208,7 +208,7 @@ export default function WelcomePage() {
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
-                                { title: "For Work", icon: <BriefcaseIcon className="size-5" />, desc: "Securely plan working week output. Export for stand-ups." },
+                                { title: "For Work", icon: <BriefcaseIcon className="size-5" />, desc: "Securely plan working week output. Save to markdown for stand-ups." },
                                 {
                                     title: "For Life", icon: <CoffeeIcon className="size-5" />, desc: "Missed the planned gym? Reschedule it. It's a plan, not a prison."
                                 },
@@ -301,7 +301,7 @@ export default function WelcomePage() {
                             <div>
                                 <h4 className="font-bold text-lg mb-2">How do I backup my data?</h4>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    You can "Export to Markdown" at any time from the menu to save a copy.
+                                    You can "Save to Markdown" at any time from the menu to save a copy.
                                 </p>
                             </div>
                         </div>
